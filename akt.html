@@ -1,0 +1,808 @@
+GB1.0
+
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MarktLage">
+<meta name="theme-color" content="#080c14">
+<title>MarktLage – Aktuelle Chancen</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+–bg: #080c14;
+–bg2: #0d1220;
+–bg3: #111827;
+–border: #1a2540;
+–border2: #243454;
+–text: #bdd0ee;
+–text2: #6a8aae;
+–text3: #344f70;
+–accent: #5ba3ff;
+–gold: #f0b429;
+–green: #22c55e;
+–red: #f43f5e;
+–purple: #a78bfa;
+–teal: #2dd4bf;
+–mono: ‘DM Mono’, monospace;
+–serif: ‘Playfair Display’, serif;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: var(–mono);
+font-size: 13px;
+min-height: 100dvh;
+overflow-x: hidden;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(26,37,64,0.4) 1px, transparent 1px),
+linear-gradient(90deg, rgba(26,37,64,0.4) 1px, transparent 1px);
+background-size: 40px 40px;
+mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+pointer-events: none;
+z-index: 0;
+}
+
+body::after {
+content: ‘’;
+position: fixed;
+top: -200px; left: 50%; transform: translateX(-50%);
+width: 800px; height: 400px;
+background: radial-gradient(ellipse, rgba(91,163,255,0.07) 0%, transparent 70%);
+pointer-events: none;
+z-index: 0;
+}
+
+.app {
+position: relative;
+z-index: 1;
+max-width: 720px;
+margin: 0 auto;
+padding: 0 16px 100px;
+}
+
+/* HEADER */
+header {
+padding: 32px 0 24px;
+border-bottom: 1px solid var(–border);
+margin-bottom: 28px;
+}
+
+.header-inner {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 16px;
+}
+
+.logo {
+font-family: var(–serif);
+font-size: 32px;
+font-weight: 700;
+color: var(–text);
+letter-spacing: -1px;
+line-height: 1;
+margin-bottom: 6px;
+}
+
+.logo em {
+font-style: italic;
+font-weight: 400;
+color: var(–accent);
+}
+
+.tagline {
+font-size: 10px;
+color: var(–text3);
+letter-spacing: 0.14em;
+text-transform: uppercase;
+}
+
+.last-update {
+font-size: 10px;
+color: var(–text3);
+text-align: right;
+padding-top: 4px;
+letter-spacing: 0.04em;
+line-height: 1.7;
+}
+
+/* DISCLAIMER */
+.disclaimer {
+background: rgba(240,180,41,0.05);
+border: 1px solid rgba(240,180,41,0.15);
+border-left: 3px solid rgba(240,180,41,0.5);
+padding: 10px 14px;
+border-radius: 4px;
+margin-bottom: 24px;
+font-size: 11px;
+color: rgba(240,180,41,0.7);
+line-height: 1.6;
+}
+
+/* FILTERS */
+.filters-section { margin-bottom: 20px; }
+
+.filters-title {
+font-size: 10px;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(–text3);
+margin-bottom: 10px;
+}
+
+.filters-row {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+margin-bottom: 8px;
+}
+
+.filter-pill {
+padding: 5px 12px;
+border-radius: 20px;
+border: 1px solid var(–border2);
+background: var(–bg2);
+font-family: var(–mono);
+font-size: 11px;
+color: var(–text2);
+letter-spacing: 0.04em;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.filter-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+.filter-pill.geo .dot { background: var(–red); }
+.filter-pill.macro .dot { background: var(–gold); }
+.filter-pill.tech .dot { background: var(–purple); }
+.filter-pill.eco .dot { background: var(–teal); }
+
+.params-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.param-tag {
+padding: 4px 10px;
+border-radius: 4px;
+font-size: 10px;
+letter-spacing: 0.06em;
+border: 1px solid var(–border);
+color: var(–text3);
+}
+
+.param-tag.horizon { border-color: rgba(91,163,255,0.3); color: rgba(91,163,255,0.7); }
+.param-tag.risk { border-color: rgba(244,63,94,0.3); color: rgba(244,63,94,0.7); }
+
+/* SCAN BUTTON */
+.scan-section { margin-bottom: 28px; }
+
+.scan-btn {
+width: 100%;
+background: linear-gradient(135deg, #152f60 0%, #0b1e45 100%);
+border: 1px solid var(–border2);
+border-radius: 10px;
+padding: 20px 24px;
+font-family: var(–mono);
+color: var(–text);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+transition: all 0.25s;
+text-align: left;
+position: relative;
+overflow: hidden;
+}
+
+.scan-btn::before {
+content: ‘’;
+position: absolute;
+top: 0; left: -100%;
+width: 100%; height: 100%;
+background: linear-gradient(90deg, transparent, rgba(91,163,255,0.1), transparent);
+transition: left 0.6s;
+}
+
+.scan-btn:hover::before { left: 100%; }
+.scan-btn:hover { border-color: var(–accent); box-shadow: 0 0 30px rgba(91,163,255,0.12); }
+.scan-btn:active { transform: scale(0.99); }
+.scan-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.scan-btn-label {
+font-size: 10px;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(–text3);
+margin-bottom: 5px;
+}
+
+.scan-btn-title {
+font-family: var(–serif);
+font-size: 20px;
+font-weight: 700;
+color: var(–text);
+letter-spacing: -0.3px;
+margin-bottom: 4px;
+}
+
+.scan-btn-sub {
+font-size: 11px;
+color: var(–text2);
+}
+
+.scan-btn-arrow {
+font-size: 24px;
+color: var(–accent);
+opacity: 0.7;
+flex-shrink: 0;
+}
+
+/* STATUS */
+.status-wrap { display: none; margin-bottom: 28px; }
+.status-wrap.visible { display: block; }
+
+.status-header {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 14px;
+}
+
+.spinner {
+width: 16px; height: 16px;
+border: 2px solid var(–border2);
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.status-msg { font-size: 12px; color: var(–text2); font-style: italic; }
+
+.progress-steps {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 8px;
+}
+
+.pstep {
+padding: 10px 8px;
+border-radius: 6px;
+border: 1px solid var(–border);
+background: var(–bg2);
+font-size: 10px;
+letter-spacing: 0.05em;
+color: var(–text3);
+text-align: center;
+line-height: 1.4;
+transition: all 0.3s;
+}
+
+.pstep .pstep-icon { font-size: 15px; display: block; margin-bottom: 5px; }
+.pstep.active { border-color: var(–accent); color: var(–accent); background: rgba(91,163,255,0.07); }
+.pstep.done { border-color: var(–green); color: var(–green); background: rgba(34,197,94,0.07); }
+
+/* CONTEXT BANNER */
+.context-banner {
+display: none;
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 16px 18px;
+margin-bottom: 24px;
+}
+
+.context-banner.visible { display: block; }
+
+.context-banner-title {
+font-size: 10px;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(–text3);
+margin-bottom: 8px;
+}
+
+.context-banner-text {
+font-size: 12px;
+color: var(–text2);
+line-height: 1.8;
+font-style: italic;
+}
+
+/* STOCKS */
+.stocks-section { display: none; }
+.stocks-section.visible { display: block; }
+
+.stocks-header {
+display: flex;
+align-items: baseline;
+justify-content: space-between;
+margin-bottom: 16px;
+}
+
+.stocks-title {
+font-family: var(–serif);
+font-size: 18px;
+font-weight: 400;
+font-style: italic;
+color: var(–text);
+}
+
+.stocks-count {
+font-size: 11px;
+color: var(–text3);
+letter-spacing: 0.06em;
+}
+
+.stocks-list {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+/* STOCK CARD */
+.stock-card {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 10px;
+overflow: hidden;
+transition: border-color 0.2s;
+animation: fadeSlideIn 0.4s ease both;
+}
+
+@keyframes fadeSlideIn {
+from { opacity: 0; transform: translateY(14px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.stock-card:hover { border-color: var(–border2); }
+
+.stock-card-top {
+padding: 16px 18px 14px;
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 14px;
+}
+
+.stock-ticker-row {
+display: flex;
+align-items: center;
+gap: 10px;
+margin-bottom: 6px;
+flex-wrap: wrap;
+}
+
+.stock-ticker {
+font-size: 19px;
+font-weight: 500;
+letter-spacing: 0.08em;
+color: var(–accent);
+}
+
+.stock-name {
+font-family: var(–serif);
+font-size: 13px;
+font-style: italic;
+color: var(–text2);
+}
+
+.stock-sector-badge {
+font-size: 9px;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+padding: 2px 8px;
+border-radius: 3px;
+border: 1px solid;
+}
+
+.stock-sector-badge.geo { color: var(–red); border-color: rgba(244,63,94,0.3); background: rgba(244,63,94,0.08); }
+.stock-sector-badge.macro { color: var(–gold); border-color: rgba(240,180,41,0.3); background: rgba(240,180,41,0.07); }
+.stock-sector-badge.tech { color: var(–purple); border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.07); }
+.stock-sector-badge.eco { color: var(–teal); border-color: rgba(45,212,191,0.3); background: rgba(45,212,191,0.07); }
+
+.stock-thesis {
+font-size: 12px;
+color: var(–text);
+line-height: 1.75;
+}
+
+.stock-right {
+flex-shrink: 0;
+text-align: right;
+}
+
+.potential-label {
+font-size: 9px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(–text3);
+margin-bottom: 3px;
+}
+
+.potential-value {
+font-size: 24px;
+font-weight: 500;
+color: var(–green);
+letter-spacing: -0.5px;
+}
+
+.risk-badge {
+font-size: 10px;
+color: var(–red);
+margin-top: 3px;
+}
+
+.stock-drivers {
+border-top: 1px solid var(–border);
+padding: 11px 18px;
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+}
+
+.driver-chip {
+font-size: 10px;
+padding: 3px 9px;
+border-radius: 4px;
+border: 1px solid var(–border);
+color: var(–text2);
+letter-spacing: 0.03em;
+}
+
+.stock-risks {
+border-top: 1px solid var(–border);
+padding: 10px 18px;
+font-size: 11px;
+color: rgba(244,63,94,0.75);
+line-height: 1.6;
+}
+
+.stock-risks-label {
+font-size: 9px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: rgba(244,63,94,0.5);
+margin-bottom: 2px;
+}
+
+.stock-confidence {
+border-top: 1px solid var(–border);
+padding: 10px 18px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.conf-label {
+font-size: 10px;
+color: var(–text3);
+letter-spacing: 0.06em;
+white-space: nowrap;
+}
+
+.conf-track {
+flex: 1;
+height: 4px;
+background: var(–bg3);
+border-radius: 2px;
+overflow: hidden;
+}
+
+.conf-fill {
+height: 100%;
+border-radius: 2px;
+background: linear-gradient(90deg, var(–accent), var(–purple));
+transition: width 1s ease 0.3s;
+width: 0%;
+}
+
+.conf-value {
+font-size: 11px;
+color: var(–accent);
+white-space: nowrap;
+}
+
+/* ERROR */
+.error-box {
+display: none;
+background: rgba(244,63,94,0.07);
+border: 1px solid rgba(244,63,94,0.2);
+border-radius: 6px;
+padding: 14px 16px;
+font-size: 12px;
+color: var(–red);
+margin-bottom: 20px;
+line-height: 1.6;
+}
+
+.error-box.visible { display: block; }
+
+/* FOOTER */
+.footer {
+margin-top: 40px;
+padding-top: 16px;
+border-top: 1px solid var(–border);
+font-size: 10px;
+color: var(–text3);
+line-height: 1.8;
+letter-spacing: 0.04em;
+}
+
+@media (max-width: 480px) {
+.progress-steps { grid-template-columns: repeat(2, 1fr); }
+.stock-card-top { flex-direction: column; }
+.stock-right { text-align: left; display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 26px; }
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+<header>
+<div class="header-inner">
+<div>
+<div class="logo">Markt<em>Lage</em></div>
+<div class="tagline">KI-Chancenanalyse · Spekulativ · Kurzfristig</div>
+</div>
+<div class="last-update" id="lastUpdate">Noch kein<br>Scan</div>
+</div>
+</header>
+
+<div class="disclaimer">
+⚠ Keine Anlageberatung. Alle Einschätzungen sind KI-generiert, informativ und spekulativ. Verluste sind möglich. Investitionsentscheidungen trägt allein der Nutzer.
+</div>
+
+<div class="filters-section">
+<div class="filters-title">Aktive Analysefaktoren</div>
+<div class="filters-row">
+<div class="filter-pill geo"> <span class="dot"></span> Geopolitik &amp; Kriege</div>
+<div class="filter-pill macro"><span class="dot"></span> Zinsen &amp; Inflation</div>
+<div class="filter-pill tech"> <span class="dot"></span> Technologie-Trends</div>
+<div class="filter-pill eco"> <span class="dot"></span> Klima &amp; Energie</div>
+</div>
+<div class="params-row">
+<div class="param-tag horizon">⏱ Kurzfristig (Wochen)</div>
+<div class="param-tag risk">🎯 Spekulativ · Hohes Risiko</div>
+</div>
+</div>
+
+<div class="scan-section">
+<button class="scan-btn" id="scanBtn" onclick="startScan()">
+<div>
+<div class="scan-btn-label">KI-Weltlage-Scan</div>
+<div class="scan-btn-title">Chancen jetzt ermitteln</div>
+<div class="scan-btn-sub">Claude recherchiert die aktuelle globale Lage &amp; leitet Kandidaten ab</div>
+</div>
+<div class="scan-btn-arrow">→</div>
+</button>
+</div>
+
+<div class="status-wrap" id="statusWrap">
+<div class="status-header">
+<div class="spinner"></div>
+<div class="status-msg" id="statusMsg">Initialisiere …</div>
+</div>
+<div class="progress-steps">
+<div class="pstep" id="ps1"><span class="pstep-icon">🌍</span>Weltlage<br>scannen</div>
+<div class="pstep" id="ps2"><span class="pstep-icon">📊</span>Sektoren<br>bewerten</div>
+<div class="pstep" id="ps3"><span class="pstep-icon">🎯</span>Kandidaten<br>auswählen</div>
+<div class="pstep" id="ps4"><span class="pstep-icon">✍️</span>Analyse<br>schreiben</div>
+</div>
+</div>
+
+<div class="error-box" id="errorBox"></div>
+
+<div class="context-banner" id="contextBanner">
+<div class="context-banner-title">Aktuelle Marktlage laut KI-Recherche</div>
+<div class="context-banner-text" id="contextText"></div>
+</div>
+
+<div class="stocks-section" id="stocksSection">
+<div class="stocks-header">
+<div class="stocks-title">Identifizierte Chancen</div>
+<div class="stocks-count" id="stocksCount"></div>
+</div>
+<div class="stocks-list" id="stocksList"></div>
+</div>
+
+<div class="footer" id="footer" style="display:none">
+Analyse-Zeitpunkt: <span id="analyseTime"></span> ·
+Anthropic Claude mit Web Search ·
+Alle Angaben ohne Gewähr · Kein Ersatz für professionelle Finanzberatung.
+</div>
+
+</div>
+
+<script>
+const API = 'https://api.anthropic.com/v1/messages';
+
+function ps(n, s) { document.getElementById('ps'+n).className = 'pstep ' + s; }
+function msg(t) { document.getElementById('statusMsg').textContent = t; }
+
+async function startScan() {
+const btn = document.getElementById('scanBtn');
+btn.disabled = true;
+document.getElementById('errorBox').className = 'error-box';
+document.getElementById('stocksSection').className = 'stocks-section';
+document.getElementById('contextBanner').className = 'context-banner';
+document.getElementById('footer').style.display = 'none';
+document.getElementById('statusWrap').className = 'status-wrap visible';
+[1,2,3,4].forEach(n => ps(n,''));
+
+try {
+ps(1,'active'); msg('Scanne aktuelle Weltlage …');
+const result = await callClaude();
+ps(1,'done'); ps(2,'done'); ps(3,'done'); ps(4,'done');
+msg('Analyse abgeschlossen.');
+setTimeout(() => document.getElementById('statusWrap').className = 'status-wrap', 1000);
+
+renderContext(result.kontext);
+renderStocks(result.aktien);
+
+const now = new Date().toLocaleString('de-DE');
+document.getElementById('analyseTime').textContent = now;
+document.getElementById('lastUpdate').innerHTML = 'Letzter Scan<br>' + new Date().toLocaleDateString('de-DE');
+document.getElementById('footer').style.display = 'block';
+
+} catch(e) {
+document.getElementById('statusWrap').className = 'status-wrap';
+const b = document.getElementById('errorBox');
+b.textContent = '⚠ Fehler: ' + (e.message || 'Unbekannt. Bitte nochmals versuchen.');
+b.className = 'error-box visible';
+}
+
+btn.disabled = false;
+}
+
+async function callClaude() {
+const today = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
+
+const prompt = `Heute ist der ${today}. Du bist ein erfahrener, spekulativer Aktienanalyst mit Fokus auf kurzfristige Chancen (Wochen-Horizont).
+
+DEINE AUFGABE: Recherchiere die aktuelle globale Lage gründlich und identifiziere 6 bis 8 konkrete, real handelbare Aktien mit erheblichem kurzfristigen Gewinnpotenzial. Profil: spekulativ, hohes Risiko, hohes Potenzial.
+
+ANALYSEFAKTOREN:
+1. GEOPOLITIK & KRIEGE: Aktuelle Konflikte, Rüstungsausgaben, Sanktionen, Allianzen, Friedensgespräche
+2. ZINSEN & INFLATION: Fed/EZB-Entscheidungen, aktuelle Inflationsdaten, Erwartungen, Währungen
+3. TECHNOLOGIE: KI-Entwicklungen, neue Produkte/Quartalsberichte, Chip-Markt, regulatorische Eingriffe
+4. KLIMA & ENERGIE: Energiepreise, Rohstoffe, erneuerbare Energien, CO2-Regulierung
+
+Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt (keine Backticks, kein Markdown, kein Text davor oder danach):
+
+{
+"kontext": "2-3 prägnante Sätze zur aktuellen globalen Marktlage die den Rahmen beschreiben.",
+"aktien": [
+{
+"ticker": "TICKER",
+"name": "Vollständiger Firmenname",
+"sektor": "geo",
+"sektorLabel": "Rüstung & Sicherheit",
+"these": "2-3 konkrete Sätze warum diese Aktie JETZT kurzfristiges Potenzial hat. Spezifisch, aktuell, überzeugend.",
+"treiber": ["Konkreter Treiber 1", "Treiber 2", "Treiber 3"],
+"risiken": "Die wichtigsten Gegenrisiken in 1-2 Sätzen.",
+"potenzialProzent": 20,
+"konfidenz": 65
+}
+]
+}
+
+REGELN:
+- "sektor" muss genau eines sein: geo | macro | tech | eco
+- "potenzialProzent": spekulative Schätzung des Aufwärtspotenzials über Wochen (realistisch: 10-50%)
+- "konfidenz": deine Überzeugungsstärke in % (40-85, sei ehrlich)
+- Ticker müssen real an NYSE, NASDAQ, XETRA oder anderen Hauptbörsen handelbar sein
+- Alle Texte auf DEUTSCH
+- Keine erfundenen Ticker oder Unternehmen
+- Antworte NUR mit dem JSON`;
+
+const r = await fetch(API, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+model: 'claude-sonnet-4-20250514',
+max_tokens: 3000,
+tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+messages: [{ role: 'user', content: prompt }]
+})
+});
+
+if (!r.ok) throw new Error('API ' + r.status);
+const d = await r.json();
+
+// Progress animation during tool use
+const hasSearch = d.content.some(b => b.type === 'tool_use');
+if (hasSearch) {
+ps(1,'done'); ps(2,'active'); msg('Sektoren werden bewertet …');
+await delay(400);
+ps(2,'done'); ps(3,'active'); msg('Kandidaten werden ausgewählt …');
+await delay(400);
+ps(3,'done'); ps(4,'active'); msg('Analyse wird formuliert …');
+}
+
+const txt = d.content.filter(b => b.type==='text').map(b=>b.text).join('');
+const clean = txt.replace(/```json|```/g,'').trim();
+const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+if (s===-1||e===-1) throw new Error('Antwort konnte nicht verarbeitet werden. Bitte nochmals versuchen.');
+return JSON.parse(clean.slice(s, e+1));
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function renderContext(text) {
+if (!text) return;
+document.getElementById('contextText').textContent = text;
+document.getElementById('contextBanner').className = 'context-banner visible';
+}
+
+function renderStocks(stocks) {
+if (!stocks?.length) return;
+document.getElementById('stocksCount').textContent = stocks.length + ' Kandidaten';
+document.getElementById('stocksSection').className = 'stocks-section visible';
+
+const list = document.getElementById('stocksList');
+list.innerHTML = '';
+
+stocks.forEach((s, i) => {
+const card = document.createElement('div');
+card.className = 'stock-card';
+card.style.animationDelay = (i * 0.075) + 's';
+
+const sektor = (s.sektor || 'tech').replace(/[^a-z]/g,'');
+const drivers = (s.treiber || []).map(d => `<div class="driver-chip">${d}</div>`).join('');
+const pct = s.potenzialProzent ? `+${s.potenzialProzent}%` : '?';
+const kf = Math.min(85, Math.max(30, s.konfidenz || 55));
+
+card.innerHTML = `
+<div class="stock-card-top">
+<div class="stock-left">
+<div class="stock-ticker-row">
+<div class="stock-ticker">${s.ticker || '?'}</div>
+<div class="stock-name">${s.name || ''}</div>
+<div class="stock-sector-badge ${sektor}">${s.sektorLabel || sektor}</div>
+</div>
+<div class="stock-thesis">${s.these || ''}</div>
+</div>
+<div class="stock-right">
+<div class="potential-label">Potenzial</div>
+<div class="potential-value">${pct}</div>
+<div class="risk-badge">⚡ Spekulativ</div>
+</div>
+</div>
+${drivers ? `<div class="stock-drivers">${drivers}</div>` : ''}
+${s.risiken ? `<div class="stock-risks"><div class="stock-risks-label">Risiken</div>${s.risiken}</div>` : ''}
+<div class="stock-confidence">
+<div class="conf-label">KI-Konfidenz</div>
+<div class="conf-track"><div class="conf-fill" id="cf${i}"></div></div>
+<div class="conf-value">${kf}%</div>
+</div>`;
+
+list.appendChild(card);
+setTimeout(() => {
+const f = document.getElementById('cf'+i);
+if (f) f.style.width = kf + '%';
+}, 300 + i * 80);
+});
+}
+</script>
+
+</body>
+</html>
