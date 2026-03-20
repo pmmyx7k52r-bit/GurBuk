@@ -1,5 +1,3 @@
-GB1.0
-
 <!DOCTYPE html>
 
 <html lang="de">
@@ -8,11 +6,12 @@ GB1.0
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MarktLage">
+<meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
-<title>MarktLage – Aktuelle Chancen</title>
+<title>MarktTipps</title>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;MarktTipps&quot;,&quot;short_name&quot;:&quot;MarktTipps&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%23080c14&quot;,&quot;theme_color&quot;:&quot;%23080c14&quot;,&quot;start_url&quot;:&quot;.&quot;}">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 
 :root {
 –bg: #080c14;
@@ -24,11 +23,11 @@ GB1.0
 –text2: #6a8aae;
 –text3: #344f70;
 –accent: #5ba3ff;
-–gold: #f0b429;
 –green: #22c55e;
 –red: #f43f5e;
+–gold: #f0b429;
+–orange: #fb923c;
 –purple: #a78bfa;
-–teal: #2dd4bf;
 –mono: ‘DM Mono’, monospace;
 –serif: ‘Playfair Display’, serif;
 }
@@ -46,510 +45,265 @@ overflow-x: hidden;
 
 body::before {
 content: ‘’;
-position: fixed;
-inset: 0;
+position: fixed; inset: 0;
 background-image:
 linear-gradient(rgba(26,37,64,0.4) 1px, transparent 1px),
 linear-gradient(90deg, rgba(26,37,64,0.4) 1px, transparent 1px);
 background-size: 40px 40px;
-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
-pointer-events: none;
-z-index: 0;
+mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, black 40%, transparent 100%);
+pointer-events: none; z-index: 0;
 }
 
 body::after {
 content: ‘’;
-position: fixed;
-top: -200px; left: 50%; transform: translateX(-50%);
+position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
 width: 800px; height: 400px;
 background: radial-gradient(ellipse, rgba(91,163,255,0.07) 0%, transparent 70%);
-pointer-events: none;
-z-index: 0;
+pointer-events: none; z-index: 0;
 }
 
 .app {
-position: relative;
-z-index: 1;
-max-width: 720px;
-margin: 0 auto;
-padding: 0 16px 100px;
+position: relative; z-index: 1;
+max-width: 520px; margin: 0 auto; padding: 0 16px 80px;
 }
 
-/* HEADER */
+/* Header */
 header {
-padding: 32px 0 24px;
+padding: 24px 0 16px;
 border-bottom: 1px solid var(–border);
-margin-bottom: 28px;
-}
-
-.header-inner {
-display: flex;
-align-items: flex-start;
-justify-content: space-between;
-gap: 16px;
+margin-bottom: 16px;
+display: flex; justify-content: space-between; align-items: flex-end;
 }
 
 .logo {
 font-family: var(–serif);
-font-size: 32px;
-font-weight: 700;
-color: var(–text);
-letter-spacing: -1px;
-line-height: 1;
-margin-bottom: 6px;
+font-size: 26px; font-weight: 700;
+color: var(–text); letter-spacing: -1px; line-height: 1;
 }
 
-.logo em {
-font-style: italic;
-font-weight: 400;
-color: var(–accent);
-}
+.logo em { font-style: italic; font-weight: 400; color: var(–accent); }
 
 .tagline {
-font-size: 10px;
-color: var(–text3);
-letter-spacing: 0.14em;
-text-transform: uppercase;
+font-size: 10px; color: var(–text3);
+letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px;
 }
 
-.last-update {
-font-size: 10px;
-color: var(–text3);
-text-align: right;
-padding-top: 4px;
-letter-spacing: 0.04em;
-line-height: 1.7;
+.header-right { text-align: right; }
+.last-scan { font-size: 10px; color: var(–text3); line-height: 1.7; }
+.finnhub-badge { font-size: 10px; color: var(–green); margin-top: 2px; }
+.rate-badge { font-size: 10px; color: var(–text3); margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+
+.tab {
+padding: 8px 16px; border-radius: 6px;
+font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+border: 1px solid transparent; background: none;
+font-family: var(–mono); color: var(–text3); cursor: pointer;
+transition: all 0.2s;
 }
 
-/* DISCLAIMER */
+.tab.active { background: #0d1e42; border-color: var(–border2); color: var(–accent); }
+.tab:not(.active):hover { color: var(–text2); }
+
+/* Disclaimer */
 .disclaimer {
-background: rgba(240,180,41,0.05);
-border: 1px solid rgba(240,180,41,0.15);
 border-left: 3px solid rgba(240,180,41,0.5);
-padding: 10px 14px;
-border-radius: 4px;
-margin-bottom: 24px;
-font-size: 11px;
-color: rgba(240,180,41,0.7);
-line-height: 1.6;
+padding: 7px 12px; margin-bottom: 16px;
+font-size: 10px; color: rgba(240,180,41,0.7); line-height: 1.5;
 }
 
-/* FILTERS */
-.filters-section { margin-bottom: 20px; }
-
-.filters-title {
-font-size: 10px;
-letter-spacing: 0.12em;
-text-transform: uppercase;
-color: var(–text3);
-margin-bottom: 10px;
-}
-
-.filters-row {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
-margin-bottom: 8px;
-}
-
-.filter-pill {
-padding: 5px 12px;
-border-radius: 20px;
-border: 1px solid var(–border2);
-background: var(–bg2);
-font-family: var(–mono);
-font-size: 11px;
-color: var(–text2);
-letter-spacing: 0.04em;
-display: flex;
-align-items: center;
-gap: 6px;
-}
-
-.filter-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-.filter-pill.geo .dot { background: var(–red); }
-.filter-pill.macro .dot { background: var(–gold); }
-.filter-pill.tech .dot { background: var(–purple); }
-.filter-pill.eco .dot { background: var(–teal); }
-
-.params-row { display: flex; gap: 8px; flex-wrap: wrap; }
-
-.param-tag {
-padding: 4px 10px;
-border-radius: 4px;
-font-size: 10px;
-letter-spacing: 0.06em;
-border: 1px solid var(–border);
-color: var(–text3);
-}
-
-.param-tag.horizon { border-color: rgba(91,163,255,0.3); color: rgba(91,163,255,0.7); }
-.param-tag.risk { border-color: rgba(244,63,94,0.3); color: rgba(244,63,94,0.7); }
-
-/* SCAN BUTTON */
-.scan-section { margin-bottom: 28px; }
-
+/* Scan button */
 .scan-btn {
-width: 100%;
-background: linear-gradient(135deg, #152f60 0%, #0b1e45 100%);
-border: 1px solid var(–border2);
-border-radius: 10px;
-padding: 20px 24px;
-font-family: var(–mono);
-color: var(–text);
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: space-between;
-gap: 16px;
-transition: all 0.25s;
-text-align: left;
-position: relative;
-overflow: hidden;
+width: 100%; background: #0d1e42;
+border: 1px solid var(–border2); border-radius: 10px;
+padding: 16px 20px; cursor: pointer;
+display: flex; align-items: center; justify-content: space-between; gap: 16px;
+transition: all 0.2s; margin-bottom: 16px; text-align: left;
+position: relative; overflow: hidden;
 }
 
 .scan-btn::before {
-content: ‘’;
-position: absolute;
-top: 0; left: -100%;
+content: ‘’; position: absolute; top: 0; left: -100%;
 width: 100%; height: 100%;
-background: linear-gradient(90deg, transparent, rgba(91,163,255,0.1), transparent);
+background: linear-gradient(90deg, transparent, rgba(91,163,255,0.08), transparent);
 transition: left 0.6s;
 }
 
 .scan-btn:hover::before { left: 100%; }
-.scan-btn:hover { border-color: var(–accent); box-shadow: 0 0 30px rgba(91,163,255,0.12); }
+.scan-btn:hover { border-color: var(–accent); box-shadow: 0 0 24px rgba(91,163,255,0.1); }
 .scan-btn:active { transform: scale(0.99); }
-.scan-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.scan-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-.scan-btn-label {
-font-size: 10px;
-letter-spacing: 0.12em;
-text-transform: uppercase;
-color: var(–text3);
-margin-bottom: 5px;
-}
-
-.scan-btn-title {
-font-family: var(–serif);
-font-size: 20px;
-font-weight: 700;
-color: var(–text);
-letter-spacing: -0.3px;
-margin-bottom: 4px;
-}
-
-.scan-btn-sub {
-font-size: 11px;
-color: var(–text2);
-}
-
-.scan-btn-arrow {
-font-size: 24px;
-color: var(–accent);
-opacity: 0.7;
-flex-shrink: 0;
-}
-
-/* STATUS */
-.status-wrap { display: none; margin-bottom: 28px; }
-.status-wrap.visible { display: block; }
-
-.status-header {
-display: flex;
-align-items: center;
-gap: 12px;
-margin-bottom: 14px;
-}
+.scan-btn-label { font-size: 10px; color: var(–text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+.scan-btn-title { font-family: var(–serif); font-size: 17px; font-weight: 700; color: var(–text); }
+.scan-btn-arrow { font-size: 20px; color: var(–accent); opacity: 0.7; flex-shrink: 0; }
 
 .spinner {
-width: 16px; height: 16px;
-border: 2px solid var(–border2);
-border-top-color: var(–accent);
-border-radius: 50%;
-animation: spin 0.8s linear infinite;
-flex-shrink: 0;
+width: 18px; height: 18px;
+border: 2px solid var(–border2); border-top-color: var(–accent);
+border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
+}
+
+.spinner-sm {
+width: 14px; height: 14px;
+border: 2px solid var(–border2); border-top-color: var(–accent);
+border-radius: 50%; animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-.status-msg { font-size: 12px; color: var(–text2); font-style: italic; }
+.status-msg { font-size: 11px; color: var(–text2); font-style: italic; text-align: center; margin-bottom: 14px; }
 
-.progress-steps {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 8px;
+.error-box {
+background: rgba(244,63,94,0.07); border: 1px solid rgba(244,63,94,0.2);
+border-radius: 6px; padding: 12px 14px;
+font-size: 11px; color: var(–red); margin-bottom: 14px; line-height: 1.6; word-break: break-word;
 }
 
-.pstep {
-padding: 10px 8px;
-border-radius: 6px;
-border: 1px solid var(–border);
-background: var(–bg2);
-font-size: 10px;
-letter-spacing: 0.05em;
-color: var(–text3);
-text-align: center;
-line-height: 1.4;
-transition: all 0.3s;
+.kontext-box {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 7px; padding: 10px 14px; margin-bottom: 14px;
+font-size: 11px; color: var(–text2); font-style: italic; line-height: 1.7;
 }
 
-.pstep .pstep-icon { font-size: 15px; display: block; margin-bottom: 5px; }
-.pstep.active { border-color: var(–accent); color: var(–accent); background: rgba(91,163,255,0.07); }
-.pstep.done { border-color: var(–green); color: var(–green); background: rgba(34,197,94,0.07); }
+/* Tipps */
+.tipps-label { font-size: 10px; color: var(–text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
 
-/* CONTEXT BANNER */
-.context-banner {
-display: none;
-background: var(–bg2);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 16px 18px;
-margin-bottom: 24px;
+.tipps-list { display: flex; flex-direction: column; gap: 10px; }
+
+.tipp-card {
+background: var(–bg2); border-radius: 10px; overflow: hidden;
+animation: fadeUp 0.3s ease both;
 }
 
-.context-banner.visible { display: block; }
+.card-top { padding: 14px 16px 12px; }
 
-.context-banner-title {
-font-size: 10px;
-letter-spacing: 0.12em;
-text-transform: uppercase;
-color: var(–text3);
+.card-header { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.card-left { flex: 1; }
+
+.ticker-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+.ticker { font-size: 17px; font-weight: 500; letter-spacing: 0.07em; }
+.cname { font-family: var(–serif); font-size: 12px; font-style: italic; color: var(–text2); }
+.insider-badge {
+font-size: 9px; padding: 2px 7px; border-radius: 3px;
+background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.25); color: var(–orange);
+}
+
+.these { font-size: 11px; color: #8aa4c4; line-height: 1.65; }
+.treiber { font-size: 10px; color: var(–text3); margin-top: 5px; }
+.treiber span { color: var(–green); }
+.insider-info { font-size: 10px; margin-top: 4px; }
+
+.card-right { flex-shrink: 0; text-align: right; }
+.pct-label { font-size: 9px; color: var(–text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+.pct-value { font-size: 26px; font-weight: 500; color: var(–green); letter-spacing: -1px; line-height: 1; }
+
+/* Kurs Block */
+.kurs-block {
+display: grid; grid-template-columns: 1fr auto 1fr auto;
+align-items: start; gap: 6px;
+background: var(–bg); border-radius: 7px; padding: 10px 12px; margin-bottom: 10px;
+}
+
+.kurs-cell {}
+.kurs-cell.right { text-align: right; }
+.kurs-cell-label { font-size: 9px; color: var(–text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.kurs-cell-value { font-size: 14px; font-weight: 500; }
+.kurs-cell-eur { font-size: 10px; color: var(–text3); margin-top: 1px; }
+.kurs-cell-sub { font-size: 9px; color: var(–text3); margin-top: 1px; }
+.kurs-cell-sub.live { color: var(–green); }
+
+.kurs-arrow { text-align: center; font-size: 13px; color: var(–green); padding: 12px 4px 0; }
+
+.kurs-divider { padding-left: 8px; border-left: 1px solid var(–border); }
+
+/* Bar */
+.pot-bar { display: flex; align-items: center; gap: 10px; }
+.pot-label { font-size: 9px; color: var(–text3); white-space: nowrap; }
+.pot-track { flex: 1; height: 3px; background: var(–bg3); border-radius: 2px; overflow: hidden; }
+.pot-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(–accent), var(–purple)); transition: width 1s ease 0.3s; }
+.pot-pct { font-size: 10px; white-space: nowrap; }
+
+/* Tracking */
+.update-btn {
+width: 100%; background: #0d1e42; border: 1px solid var(–border2);
+border-radius: 8px; padding: 12px 16px; cursor: pointer;
+display: flex; align-items: center; justify-content: space-between;
+margin-bottom: 16px; transition: all 0.2s; font-family: var(–mono);
+}
+
+.update-btn:hover { border-color: var(–accent); }
+.update-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.update-btn-text { font-size: 11px; color: var(–text); }
+.update-btn-icon { font-size: 16px; color: var(–accent); }
+
+.section-label { font-size: 10px; color: var(–text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+
+.tracking-card {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 10px; padding: 12px 16px; margin-bottom: 10px;
+}
+
+.tracking-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.tracking-ticker { font-size: 16px; font-weight: 500; color: var(–accent); }
+.tracking-name { font-family: var(–serif); font-size: 11px; font-style: italic; color: var(–text2); }
+.tracking-date { font-size: 10px; color: var(–text3); margin-top: 2px; }
+.tracking-pct { font-size: 18px; font-weight: 500; }
+
+.kurs-grid {
+display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+background: var(–bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;
+}
+
+.kurs-grid-cell {}
+.kgc-label { font-size: 9px; color: var(–text3); margin-bottom: 2px; }
+.kgc-value { font-size: 11px; font-weight: 500; }
+.kgc-eur { font-size: 9px; color: var(–text3); }
+
+.progress-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pb-label { font-size: 9px; color: var(–text3); white-space: nowrap; }
+.pb-track { flex: 1; height: 4px; background: var(–bg3); border-radius: 2px; overflow: hidden; }
+.pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(–accent)); }
+.pb-day { font-size: 9px; color: var(–text3); }
+
+.tracking-status { font-size: 10px; color: var(–text3); }
+
+/* Auswertung */
+.auswertung-summary {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center;
+}
+
+.aus-value { font-size: 24px; font-weight: 500; }
+.aus-label { font-size: 10px; color: var(–text3); margin-top: 3px; }
+
+.aus-card {
+background: var(–bg2); border-radius: 8px; padding: 10px 14px;
+display: flex; justify-content: space-between; align-items: center; gap: 10px;
 margin-bottom: 8px;
 }
 
-.context-banner-text {
-font-size: 12px;
-color: var(–text2);
-line-height: 1.8;
-font-style: italic;
+.aus-ticker { font-size: 14px; font-weight: 500; color: var(–accent); margin-bottom: 2px; }
+.aus-date { font-size: 10px; color: var(–text3); }
+.aus-prognose-label { font-size: 9px; color: var(–text3); margin-bottom: 2px; }
+.aus-prognose { font-size: 12px; color: var(–accent); }
+.aus-ergebnis-label { font-size: 9px; color: var(–text3); margin-bottom: 2px; text-align: right; }
+.aus-ergebnis { font-size: 16px; font-weight: 500; text-align: right; }
+.aus-icon { font-size: 18px; }
+
+.empty-state {
+text-align: center; padding: 40px 20px;
+color: var(–text3); font-size: 12px; line-height: 1.8;
 }
 
-/* STOCKS */
-.stocks-section { display: none; }
-.stocks-section.visible { display: block; }
-
-.stocks-header {
-display: flex;
-align-items: baseline;
-justify-content: space-between;
-margin-bottom: 16px;
-}
-
-.stocks-title {
-font-family: var(–serif);
-font-size: 18px;
-font-weight: 400;
-font-style: italic;
-color: var(–text);
-}
-
-.stocks-count {
-font-size: 11px;
-color: var(–text3);
-letter-spacing: 0.06em;
-}
-
-.stocks-list {
-display: flex;
-flex-direction: column;
-gap: 12px;
-}
-
-/* STOCK CARD */
-.stock-card {
-background: var(–bg2);
-border: 1px solid var(–border);
-border-radius: 10px;
-overflow: hidden;
-transition: border-color 0.2s;
-animation: fadeSlideIn 0.4s ease both;
-}
-
-@keyframes fadeSlideIn {
-from { opacity: 0; transform: translateY(14px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.stock-card:hover { border-color: var(–border2); }
-
-.stock-card-top {
-padding: 16px 18px 14px;
-display: flex;
-align-items: flex-start;
-justify-content: space-between;
-gap: 14px;
-}
-
-.stock-ticker-row {
-display: flex;
-align-items: center;
-gap: 10px;
-margin-bottom: 6px;
-flex-wrap: wrap;
-}
-
-.stock-ticker {
-font-size: 19px;
-font-weight: 500;
-letter-spacing: 0.08em;
-color: var(–accent);
-}
-
-.stock-name {
-font-family: var(–serif);
-font-size: 13px;
-font-style: italic;
-color: var(–text2);
-}
-
-.stock-sector-badge {
-font-size: 9px;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-padding: 2px 8px;
-border-radius: 3px;
-border: 1px solid;
-}
-
-.stock-sector-badge.geo { color: var(–red); border-color: rgba(244,63,94,0.3); background: rgba(244,63,94,0.08); }
-.stock-sector-badge.macro { color: var(–gold); border-color: rgba(240,180,41,0.3); background: rgba(240,180,41,0.07); }
-.stock-sector-badge.tech { color: var(–purple); border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.07); }
-.stock-sector-badge.eco { color: var(–teal); border-color: rgba(45,212,191,0.3); background: rgba(45,212,191,0.07); }
-
-.stock-thesis {
-font-size: 12px;
-color: var(–text);
-line-height: 1.75;
-}
-
-.stock-right {
-flex-shrink: 0;
-text-align: right;
-}
-
-.potential-label {
-font-size: 9px;
-letter-spacing: 0.1em;
-text-transform: uppercase;
-color: var(–text3);
-margin-bottom: 3px;
-}
-
-.potential-value {
-font-size: 24px;
-font-weight: 500;
-color: var(–green);
-letter-spacing: -0.5px;
-}
-
-.risk-badge {
-font-size: 10px;
-color: var(–red);
-margin-top: 3px;
-}
-
-.stock-drivers {
+footer {
+margin-top: 28px; padding-top: 14px;
 border-top: 1px solid var(–border);
-padding: 11px 18px;
-display: flex;
-gap: 6px;
-flex-wrap: wrap;
-}
-
-.driver-chip {
-font-size: 10px;
-padding: 3px 9px;
-border-radius: 4px;
-border: 1px solid var(–border);
-color: var(–text2);
-letter-spacing: 0.03em;
-}
-
-.stock-risks {
-border-top: 1px solid var(–border);
-padding: 10px 18px;
-font-size: 11px;
-color: rgba(244,63,94,0.75);
-line-height: 1.6;
-}
-
-.stock-risks-label {
-font-size: 9px;
-letter-spacing: 0.1em;
-text-transform: uppercase;
-color: rgba(244,63,94,0.5);
-margin-bottom: 2px;
-}
-
-.stock-confidence {
-border-top: 1px solid var(–border);
-padding: 10px 18px;
-display: flex;
-align-items: center;
-gap: 12px;
-}
-
-.conf-label {
-font-size: 10px;
-color: var(–text3);
-letter-spacing: 0.06em;
-white-space: nowrap;
-}
-
-.conf-track {
-flex: 1;
-height: 4px;
-background: var(–bg3);
-border-radius: 2px;
-overflow: hidden;
-}
-
-.conf-fill {
-height: 100%;
-border-radius: 2px;
-background: linear-gradient(90deg, var(–accent), var(–purple));
-transition: width 1s ease 0.3s;
-width: 0%;
-}
-
-.conf-value {
-font-size: 11px;
-color: var(–accent);
-white-space: nowrap;
-}
-
-/* ERROR */
-.error-box {
-display: none;
-background: rgba(244,63,94,0.07);
-border: 1px solid rgba(244,63,94,0.2);
-border-radius: 6px;
-padding: 14px 16px;
-font-size: 12px;
-color: var(–red);
-margin-bottom: 20px;
-line-height: 1.6;
-}
-
-.error-box.visible { display: block; }
-
-/* FOOTER */
-.footer {
-margin-top: 40px;
-padding-top: 16px;
-border-top: 1px solid var(–border);
-font-size: 10px;
-color: var(–text3);
-line-height: 1.8;
-letter-spacing: 0.04em;
-}
-
-@media (max-width: 480px) {
-.progress-steps { grid-template-columns: repeat(2, 1fr); }
-.stock-card-top { flex-direction: column; }
-.stock-right { text-align: left; display: flex; align-items: center; gap: 12px; }
-.logo { font-size: 26px; }
+font-size: 10px; color: var(–text3); line-height: 1.8;
 }
 </style>
 
@@ -558,250 +312,489 @@ letter-spacing: 0.04em;
 <div class="app">
 
 <header>
-<div class="header-inner">
 <div>
-<div class="logo">Markt<em>Lage</em></div>
-<div class="tagline">KI-Chancenanalyse · Spekulativ · Kurzfristig</div>
+<div class="logo">Markt<em>Tipps</em></div>
+<div class="tagline">Tipps des Tages · 7 Tage · Echtzeit</div>
 </div>
-<div class="last-update" id="lastUpdate">Noch kein<br>Scan</div>
+<div class="header-right">
+<div class="last-scan" id="lastScan">Noch kein Scan</div>
+<div class="finnhub-badge">● Finnhub aktiv</div>
+<div class="rate-badge" id="rateBadge"></div>
 </div>
 </header>
 
-<div class="disclaimer">
-⚠ Keine Anlageberatung. Alle Einschätzungen sind KI-generiert, informativ und spekulativ. Verluste sind möglich. Investitionsentscheidungen trägt allein der Nutzer.
+<div class="tabs">
+<button class="tab active" id="tabScan" onclick="switchTab('scan')">📊 Scan</button>
+<button class="tab" id="tabTracking" onclick="switchTab('tracking')">📈 Tracking <span id="trackingCount"></span></button>
 </div>
 
-<div class="filters-section">
-<div class="filters-title">Aktive Analysefaktoren</div>
-<div class="filters-row">
-<div class="filter-pill geo"> <span class="dot"></span> Geopolitik &amp; Kriege</div>
-<div class="filter-pill macro"><span class="dot"></span> Zinsen &amp; Inflation</div>
-<div class="filter-pill tech"> <span class="dot"></span> Technologie-Trends</div>
-<div class="filter-pill eco"> <span class="dot"></span> Klima &amp; Energie</div>
-</div>
-<div class="params-row">
-<div class="param-tag horizon">⏱ Kurzfristig (Wochen)</div>
-<div class="param-tag risk">🎯 Spekulativ · Hohes Risiko</div>
-</div>
-</div>
+<!-- SCAN TAB -->
 
-<div class="scan-section">
+<div id="scanTab">
+<div class="disclaimer">⚠ Keine Anlageberatung. KI-generiert &amp; spekulativ. Verluste möglich.</div>
+
+```
 <button class="scan-btn" id="scanBtn" onclick="startScan()">
 <div>
-<div class="scan-btn-label">KI-Weltlage-Scan</div>
-<div class="scan-btn-title">Chancen jetzt ermitteln</div>
-<div class="scan-btn-sub">Claude recherchiert die aktuelle globale Lage &amp; leitet Kandidaten ab</div>
+<div class="scan-btn-label">KI · Finnhub Echtzeit · Politiker-Trades</div>
+<div class="scan-btn-title" id="scanBtnTitle">Tipps des Tages abrufen</div>
 </div>
-<div class="scan-btn-arrow">→</div>
+<div id="scanBtnIcon" class="scan-btn-arrow">→</div>
 </button>
+
+<div id="statusMsg" class="status-msg" style="display:none"></div>
+<div id="errorBox" class="error-box" style="display:none"></div>
+<div id="kontextBox" class="kontext-box" style="display:none"></div>
+
+<div id="tippsLabel" class="tipps-label" style="display:none"></div>
+<div id="tippsList" class="tipps-list"></div>
+```
+
 </div>
 
-<div class="status-wrap" id="statusWrap">
-<div class="status-header">
-<div class="spinner"></div>
-<div class="status-msg" id="statusMsg">Initialisiere …</div>
-</div>
-<div class="progress-steps">
-<div class="pstep" id="ps1"><span class="pstep-icon">🌍</span>Weltlage<br>scannen</div>
-<div class="pstep" id="ps2"><span class="pstep-icon">📊</span>Sektoren<br>bewerten</div>
-<div class="pstep" id="ps3"><span class="pstep-icon">🎯</span>Kandidaten<br>auswählen</div>
-<div class="pstep" id="ps4"><span class="pstep-icon">✍️</span>Analyse<br>schreiben</div>
-</div>
+<!-- TRACKING TAB -->
+
+<div id="trackingTab" style="display:none">
+<button class="update-btn" id="updateBtn" onclick="updateKurse()">
+<span class="update-btn-text" id="updateBtnText">Kurse jetzt aktualisieren</span>
+<span class="update-btn-icon" id="updateBtnIcon">↻</span>
+</button>
+
+```
+<div id="trackingError" class="error-box" style="display:none"></div>
+<div id="aktiveSection"></div>
+<div id="auswertungSection"></div>
+```
+
 </div>
 
-<div class="error-box" id="errorBox"></div>
-
-<div class="context-banner" id="contextBanner">
-<div class="context-banner-title">Aktuelle Marktlage laut KI-Recherche</div>
-<div class="context-banner-text" id="contextText"></div>
-</div>
-
-<div class="stocks-section" id="stocksSection">
-<div class="stocks-header">
-<div class="stocks-title">Identifizierte Chancen</div>
-<div class="stocks-count" id="stocksCount"></div>
-</div>
-<div class="stocks-list" id="stocksList"></div>
-</div>
-
-<div class="footer" id="footer" style="display:none">
-Analyse-Zeitpunkt: <span id="analyseTime"></span> ·
-Anthropic Claude mit Web Search ·
-Alle Angaben ohne Gewähr · Kein Ersatz für professionelle Finanzberatung.
-</div>
+<footer>
+Claude · Echtzeit-Kurse via Finnhub/Cloudflare · Keine Gewähr · Kein Ersatz für Finanzberatung.
+</footer>
 
 </div>
 
 <script>
-const API = 'https://api.anthropic.com/v1/messages';
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
+const STORE_KEY = 'markttipps_prognosen_v4';
 
-function ps(n, s) { document.getElementById('ps'+n).className = 'pstep ' + s; }
-function msg(t) { document.getElementById('statusMsg').textContent = t; }
+let currentTab = 'scan';
+let eurRate = null;
+let prognosen = loadPrognosen();
 
+// ── Storage ──────────────────────────────────────────────
+function loadPrognosen() {
+try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; }
+}
+function savePrognosen(data) {
+try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch {}
+prognosen = data;
+}
+
+// ── Utils ─────────────────────────────────────────────────
+function daysDiff(dateStr) {
+return Math.floor((new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
+}
+function fmt(v, sym) {
+if (v == null) return '–';
+return sym + parseFloat(v).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtEur(v, rate, currency) {
+if (v == null || !rate || currency === 'EUR') return null;
+return '€' + (parseFloat(v) * rate).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function tryParse(raw) {
+const clean = raw.replace(/```json|```/gi, '').trim();
+try { return JSON.parse(clean); } catch {}
+const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+if (s !== -1 && e !== -1) try { return JSON.parse(clean.slice(s, e + 1)); } catch {}
+return null;
+}
+
+// ── Tab switching ─────────────────────────────────────────
+function switchTab(tab) {
+currentTab = tab;
+document.getElementById('scanTab').style.display = tab === 'scan' ? 'block' : 'none';
+document.getElementById('trackingTab').style.display = tab === 'tracking' ? 'block' : 'none';
+document.getElementById('tabScan').className = 'tab' + (tab === 'scan' ? ' active' : '');
+document.getElementById('tabTracking').className = 'tab' + (tab === 'tracking' ? ' active' : '');
+if (tab === 'tracking') renderTracking();
+}
+
+// ── Finnhub via Worker ─────────────────────────────────────
+async function getPrice(ticker) {
+try {
+const r = await fetch(`${WORKER}?ticker=${ticker}`);
+const d = await r.json();
+return (d.c && d.c > 0) ? d.c : null;
+} catch { return null; }
+}
+
+async function getProfile(ticker) {
+try {
+const r = await fetch(`${WORKER}?ticker=${ticker}&type=profile`);
+const d = await r.json();
+return { name: d.name || ticker, currency: d.currency || 'USD' };
+} catch { return { name: ticker, currency: 'USD' }; }
+}
+
+// ── Scan ──────────────────────────────────────────────────
 async function startScan() {
 const btn = document.getElementById('scanBtn');
 btn.disabled = true;
-document.getElementById('errorBox').className = 'error-box';
-document.getElementById('stocksSection').className = 'stocks-section';
-document.getElementById('contextBanner').className = 'context-banner';
-document.getElementById('footer').style.display = 'none';
-document.getElementById('statusWrap').className = 'status-wrap visible';
-[1,2,3,4].forEach(n => ps(n,''));
+document.getElementById('scanBtnTitle').textContent = 'Analysiere …';
+document.getElementById('scanBtnIcon').innerHTML = '<div class="spinner"></div>';
+document.getElementById('errorBox').style.display = 'none';
+document.getElementById('kontextBox').style.display = 'none';
+document.getElementById('tippsLabel').style.display = 'none';
+document.getElementById('tippsList').innerHTML = '';
+setStatus('Claude analysiert Marktlage …');
 
 try {
-ps(1,'active'); msg('Scanne aktuelle Weltlage …');
-const result = await callClaude();
-ps(1,'done'); ps(2,'done'); ps(3,'done'); ps(4,'done');
-msg('Analyse abgeschlossen.');
-setTimeout(() => document.getElementById('statusWrap').className = 'status-wrap', 1000);
-
-renderContext(result.kontext);
-renderStocks(result.aktien);
-
-const now = new Date().toLocaleString('de-DE');
-document.getElementById('analyseTime').textContent = now;
-document.getElementById('lastUpdate').innerHTML = 'Letzter Scan<br>' + new Date().toLocaleDateString('de-DE');
-document.getElementById('footer').style.display = 'block';
-
-} catch(e) {
-document.getElementById('statusWrap').className = 'status-wrap';
-const b = document.getElementById('errorBox');
-b.textContent = '⚠ Fehler: ' + (e.message || 'Unbekannt. Bitte nochmals versuchen.');
-b.className = 'error-box visible';
-}
-
-btn.disabled = false;
-}
-
-async function callClaude() {
-const today = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
-
-const prompt = `Heute ist der ${today}. Du bist ein erfahrener, spekulativer Aktienanalyst mit Fokus auf kurzfristige Chancen (Wochen-Horizont).
-
-DEINE AUFGABE: Recherchiere die aktuelle globale Lage gründlich und identifiziere 6 bis 8 konkrete, real handelbare Aktien mit erheblichem kurzfristigen Gewinnpotenzial. Profil: spekulativ, hohes Risiko, hohes Potenzial.
-
-ANALYSEFAKTOREN:
-1. GEOPOLITIK & KRIEGE: Aktuelle Konflikte, Rüstungsausgaben, Sanktionen, Allianzen, Friedensgespräche
-2. ZINSEN & INFLATION: Fed/EZB-Entscheidungen, aktuelle Inflationsdaten, Erwartungen, Währungen
-3. TECHNOLOGIE: KI-Entwicklungen, neue Produkte/Quartalsberichte, Chip-Markt, regulatorische Eingriffe
-4. KLIMA & ENERGIE: Energiepreise, Rohstoffe, erneuerbare Energien, CO2-Regulierung
-
-Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt (keine Backticks, kein Markdown, kein Text davor oder danach):
-
-{
-"kontext": "2-3 prägnante Sätze zur aktuellen globalen Marktlage die den Rahmen beschreiben.",
-"aktien": [
-{
-"ticker": "TICKER",
-"name": "Vollständiger Firmenname",
-"sektor": "geo",
-"sektorLabel": "Rüstung & Sicherheit",
-"these": "2-3 konkrete Sätze warum diese Aktie JETZT kurzfristiges Potenzial hat. Spezifisch, aktuell, überzeugend.",
-"treiber": ["Konkreter Treiber 1", "Treiber 2", "Treiber 3"],
-"risiken": "Die wichtigsten Gegenrisiken in 1-2 Sätzen.",
-"potenzialProzent": 20,
-"konfidenz": 65
-}
-]
-}
-
-REGELN:
-- "sektor" muss genau eines sein: geo | macro | tech | eco
-- "potenzialProzent": spekulative Schätzung des Aufwärtspotenzials über Wochen (realistisch: 10-50%)
-- "konfidenz": deine Überzeugungsstärke in % (40-85, sei ehrlich)
-- Ticker müssen real an NYSE, NASDAQ, XETRA oder anderen Hauptbörsen handelbar sein
-- Alle Texte auf DEUTSCH
-- Keine erfundenen Ticker oder Unternehmen
-- Antworte NUR mit dem JSON`;
-
-const r = await fetch(API, {
+const today = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const r = await fetch(CLAUDE_API, {
 method: 'POST',
 headers: { 'Content-Type': 'application/json' },
 body: JSON.stringify({
 model: 'claude-sonnet-4-20250514',
-max_tokens: 3000,
-tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-messages: [{ role: 'user', content: prompt }]
+max_tokens: 1000,
+messages: [{ role: 'user', content: `Heute: ${today}. Antworte NUR mit JSON, kein Text davor oder danach.
+
+{"eurUsdRate":0.92,"kontext":"Marktlage in einem Satz.","tipps":[{"ticker":"TICKER","name":"Firmenname","anstiegProzent":12.0,"these":"Warum steigt diese Aktie in 7 Tagen?","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":""}]}
+
+Fülle 5 spekulative Aktien ein. Gib aktuellen EUR/USD Kurs an.
+Berücksichtige: Geopolitik, Zinsen, KI/Tech, Energie, Trump/Pelosi-Trades.
+Nur US-Ticker (NYSE/NASDAQ). Deutsch. Nur JSON.` }]
 })
 });
 
 if (!r.ok) throw new Error('API ' + r.status);
 const d = await r.json();
+const raw = d.content.filter(b => b.type === 'text').map(b => b.text).join('');
+const result = tryParse(raw);
+if (!result?.tipps?.length) throw new Error('Fehler: ' + raw.slice(0, 200));
 
-// Progress animation during tool use
-const hasSearch = d.content.some(b => b.type === 'tool_use');
-if (hasSearch) {
-ps(1,'done'); ps(2,'active'); msg('Sektoren werden bewertet …');
-await delay(400);
-ps(2,'done'); ps(3,'active'); msg('Kandidaten werden ausgewählt …');
-await delay(400);
-ps(3,'done'); ps(4,'active'); msg('Analyse wird formuliert …');
+eurRate = result.eurUsdRate || 0.92;
+if (eurRate) document.getElementById('rateBadge').textContent = '1 USD = €' + eurRate.toFixed(4);
+
+if (result.kontext) {
+document.getElementById('kontextBox').textContent = result.kontext;
+document.getElementById('kontextBox').style.display = 'block';
 }
 
-const txt = d.content.filter(b => b.type==='text').map(b=>b.text).join('');
-const clean = txt.replace(/```json|```/g,'').trim();
-const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
-if (s===-1||e===-1) throw new Error('Antwort konnte nicht verarbeitet werden. Bitte nochmals versuchen.');
-return JSON.parse(clean.slice(s, e+1));
+setStatus('Echtzeit-Kurse werden von Finnhub geladen …');
+
+const enriched = await Promise.all(result.tipps.map(async (t) => {
+const [price, profile] = await Promise.all([getPrice(t.ticker), getProfile(t.ticker)]);
+return { ...t, startkurs: price, waehrung: profile.currency, name: profile.name || t.name };
+}));
+
+// Save prognosen
+const scanDate = new Date().toISOString();
+const newPrognosen = enriched.map(t => ({
+id: t.ticker + '_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+ticker: t.ticker, name: t.name, currency: t.waehrung || 'USD',
+startkurs: t.startkurs,
+zielkurs: t.startkurs ? t.startkurs * (1 + t.anstiegProzent / 100) : null,
+anstiegProzent: parseFloat(t.anstiegProzent),
+these: t.these, haupttreiber: t.haupttreiber, scanDate,
+verlauf: t.startkurs ? [{ date: scanDate, price: t.startkurs }] : [],
+abgeschlossen: false, insiderSignal: t.insiderSignal || false,
+eurRate: eurRate,
+}));
+savePrognosen([...newPrognosen, ...prognosen].slice(0, 60));
+updateTrackingCount();
+
+// Render
+hideStatus();
+const label = document.getElementById('tippsLabel');
+label.textContent = enriched.length + ' Tipps · nächste 7 Tage · Echtzeit-Kurse · gespeichert';
+label.style.display = 'block';
+
+const list = document.getElementById('tippsList');
+enriched.forEach((t, i) => {
+const card = buildTippCard(t, i);
+list.appendChild(card);
+});
+
+const now = new Date();
+document.getElementById('lastScan').innerHTML =
+now.toLocaleDateString('de-DE') + '<br>' +
+now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+
+} catch (err) {
+hideStatus();
+showError(err.message);
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function renderContext(text) {
-if (!text) return;
-document.getElementById('contextText').textContent = text;
-document.getElementById('contextBanner').className = 'context-banner visible';
+btn.disabled = false;
+document.getElementById('scanBtnTitle').textContent = 'Tipps des Tages abrufen';
+document.getElementById('scanBtnIcon').textContent = '→';
 }
 
-function renderStocks(stocks) {
-if (!stocks?.length) return;
-document.getElementById('stocksCount').textContent = stocks.length + ' Kandidaten';
-document.getElementById('stocksSection').className = 'stocks-section visible';
+function buildTippCard(t, i) {
+const insider = !!t.insiderSignal;
+const pct = parseFloat(t.anstiegProzent) || 10;
+const sym = t.waehrung === 'EUR' ? '€' : t.waehrung === 'GBP' ? '£' : '$';
+const start = t.startkurs;
+const ziel = start ? start * (1 + pct / 100) : null;
+const gewinn = start && ziel ? ziel - start : null;
+const accent = insider ? 'var(--orange)' : 'var(--accent)';
+const borderColor = insider ? 'rgba(251,146,60,0.3)' : 'rgba(91,163,255,0.15)';
+const rate = t.waehrung !== 'EUR' ? eurRate : null;
 
-const list = document.getElementById('stocksList');
-list.innerHTML = '';
-
-stocks.forEach((s, i) => {
 const card = document.createElement('div');
-card.className = 'stock-card';
-card.style.animationDelay = (i * 0.075) + 's';
+card.className = 'tipp-card';
+card.style.border = '1px solid ' + borderColor;
+card.style.animationDelay = (i * 0.06) + 's';
 
-const sektor = (s.sektor || 'tech').replace(/[^a-z]/g,'');
-const drivers = (s.treiber || []).map(d => `<div class="driver-chip">${d}</div>`).join('');
-const pct = s.potenzialProzent ? `+${s.potenzialProzent}%` : '?';
-const kf = Math.min(85, Math.max(30, s.konfidenz || 55));
+const eurStart = fmtEur(start, rate, t.waehrung);
+const eurZiel = fmtEur(ziel, rate, t.waehrung);
+const eurGewinn = fmtEur(gewinn, rate, t.waehrung);
 
 card.innerHTML = `
-<div class="stock-card-top">
-<div class="stock-left">
-<div class="stock-ticker-row">
-<div class="stock-ticker">${s.ticker || '?'}</div>
-<div class="stock-name">${s.name || ''}</div>
-<div class="stock-sector-badge ${sektor}">${s.sektorLabel || sektor}</div>
+<div class="card-top">
+<div class="card-header">
+<div class="card-left">
+<div class="ticker-row">
+<span class="ticker" style="color:${accent}">${t.ticker}</span>
+<span class="cname">${t.name}</span>
+${insider ? '<span class="insider-badge">🏛️ Politiker-Trade</span>' : ''}
 </div>
-<div class="stock-thesis">${s.these || ''}</div>
+<div class="these">${t.these}</div>
+${t.haupttreiber ? `<div class="treiber"><span>↑</span> ${t.haupttreiber}</div>` : ''}
+${insider && t.insiderInfo ? `<div class="insider-info" style="color:${accent}">${t.insiderInfo}</div>` : ''}
 </div>
-<div class="stock-right">
-<div class="potential-label">Potenzial</div>
-<div class="potential-value">${pct}</div>
-<div class="risk-badge">⚡ Spekulativ</div>
+<div class="card-right">
+<div class="pct-label">7 Tage</div>
+<div class="pct-value">+${pct.toFixed(1)}%</div>
 </div>
 </div>
-${drivers ? `<div class="stock-drivers">${drivers}</div>` : ''}
-${s.risiken ? `<div class="stock-risks"><div class="stock-risks-label">Risiken</div>${s.risiken}</div>` : ''}
-<div class="stock-confidence">
-<div class="conf-label">KI-Konfidenz</div>
-<div class="conf-track"><div class="conf-fill" id="cf${i}"></div></div>
-<div class="conf-value">${kf}%</div>
+
+<div class="kurs-block">
+<div class="kurs-cell">
+<div class="kurs-cell-label">Startkurs</div>
+<div class="kurs-cell-value" style="color:var(--text)">${fmt(start, sym)}</div>
+${eurStart ? `<div class="kurs-cell-eur">(${eurStart})</div>` : ''}
+<div class="kurs-cell-sub live">● Echtzeit</div>
+</div>
+<div class="kurs-arrow">→</div>
+<div class="kurs-cell right">
+<div class="kurs-cell-label">Zielkurs</div>
+<div class="kurs-cell-value" style="color:var(--green)">${fmt(ziel, sym)}</div>
+${eurZiel ? `<div class="kurs-cell-eur">(${eurZiel})</div>` : ''}
+<div class="kurs-cell-sub">in 7 Tagen</div>
+</div>
+<div class="kurs-cell kurs-divider right">
+<div class="kurs-cell-label">+/Aktie</div>
+<div class="kurs-cell-value" style="color:var(--green)">${fmt(gewinn, sym)}</div>
+${eurGewinn ? `<div class="kurs-cell-eur">(${eurGewinn})</div>` : ''}
+<div class="kurs-cell-sub">Gewinn</div>
+</div>
+</div>
+
+<div class="pot-bar">
+<span class="pot-label">Potenzial</span>
+<div class="pot-track"><div class="pot-fill" style="width:${Math.min(100, pct * 2.5)}%"></div></div>
+<span class="pot-pct" style="color:${accent}">+${pct.toFixed(1)}%</span>
+</div>
 </div>`;
 
-list.appendChild(card);
-setTimeout(() => {
-const f = document.getElementById('cf'+i);
-if (f) f.style.width = kf + '%';
-}, 300 + i * 80);
-});
+return card;
 }
+
+// ── Update Kurse ──────────────────────────────────────────
+async function updateKurse() {
+const btn = document.getElementById('updateBtn');
+btn.disabled = true;
+document.getElementById('updateBtnText').textContent = 'Echtzeit-Kurse werden aktualisiert …';
+document.getElementById('updateBtnIcon').innerHTML = '<div class="spinner-sm"></div>';
+document.getElementById('trackingError').style.display = 'none';
+
+try {
+const aktiv = prognosen.filter(p => !p.abgeschlossen && daysDiff(p.scanDate) <= 8);
+if (aktiv.length) {
+const today = new Date().toISOString();
+const updated = [...prognosen];
+for (const p of aktiv) {
+const price = await getPrice(p.ticker);
+if (!price) continue;
+const idx = updated.findIndex(x => x.id === p.id);
+if (idx === -1) continue;
+const isSameDay = updated[idx].verlauf.length > 0 &&
+new Date(updated[idx].verlauf[updated[idx].verlauf.length - 1].date).toDateString() === new Date().toDateString();
+updated[idx] = {
+...updated[idx],
+verlauf: isSameDay
+? [...updated[idx].verlauf.slice(0, -1), { date: today, price }]
+: [...updated[idx].verlauf, { date: today, price }],
+abgeschlossen: daysDiff(updated[idx].scanDate) >= 7,
+};
+}
+savePrognosen(updated);
+}
+renderTracking();
+} catch (err) {
+document.getElementById('trackingError').textContent = '⚠ ' + err.message;
+document.getElementById('trackingError').style.display = 'block';
+}
+
+btn.disabled = false;
+document.getElementById('updateBtnText').textContent = 'Kurse jetzt aktualisieren';
+document.getElementById('updateBtnIcon').textContent = '↻';
+}
+
+// ── Render Tracking ───────────────────────────────────────
+function renderTracking() {
+const aktive = prognosen.filter(p => !p.abgeschlossen && daysDiff(p.scanDate) <= 8);
+const abgeschlossene = prognosen.filter(p => p.abgeschlossen);
+updateTrackingCount();
+
+// Aktive
+const aktiveSection = document.getElementById('aktiveSection');
+if (aktive.length) {
+let html = '<div class="section-label">Laufende Prognosen</div>';
+aktive.forEach(p => {
+const sym = p.currency === 'EUR' ? '€' : '$';
+const rate = p.currency !== 'EUR' ? (p.eurRate || eurRate) : null;
+const aktuell = p.verlauf.length > 0 ? p.verlauf[p.verlauf.length - 1].price : null;
+const aktPct = aktuell && p.startkurs ? ((aktuell - p.startkurs) / p.startkurs * 100) : null;
+const tageNoch = Math.max(0, 7 - daysDiff(p.scanDate));
+const fortschritt = Math.min(100, (daysDiff(p.scanDate) / 7) * 100);
+const isUp = aktPct !== null && aktPct >= 0;
+const pctColor = isUp ? 'var(--green)' : 'var(--red)';
+
+const eurAktuell = fmtEur(aktuell, rate, p.currency);
+const eurStart = fmtEur(p.startkurs, rate, p.currency);
+const eurZiel = fmtEur(p.zielkurs, rate, p.currency);
+
+html += `
+<div class="tracking-card">
+<div class="tracking-header">
+<div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+<span class="tracking-ticker">${p.ticker}</span>
+<span class="tracking-name">${p.name}</span>
+</div>
+<div class="tracking-date">Start: ${new Date(p.scanDate).toLocaleDateString('de-DE')} · Noch ${tageNoch} Tag${tageNoch !== 1 ? 'e' : ''}</div>
+</div>
+<div style="text-align:right">
+<div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div>
+<div class="tracking-pct" style="color:${pctColor}">${aktPct !== null ? (isUp ? '+' : '') + aktPct.toFixed(1) + '%' : '–'}</div>
+</div>
+</div>
+
+<div class="kurs-grid">
+<div class="kurs-grid-cell">
+<div class="kgc-label">Start</div>
+<div class="kgc-value" style="color:var(--text)">${fmt(p.startkurs, sym)}</div>
+${eurStart ? `<div class="kgc-eur">(${eurStart})</div>` : ''}
+</div>
+<div class="kurs-grid-cell">
+<div class="kgc-label">Aktuell</div>
+<div class="kgc-value" style="color:${pctColor}">${fmt(aktuell, sym)}</div>
+${eurAktuell ? `<div class="kgc-eur">(${eurAktuell})</div>` : ''}
+</div>
+<div class="kurs-grid-cell">
+<div class="kgc-label">Ziel</div>
+<div class="kgc-value" style="color:var(--accent)">${fmt(p.zielkurs, sym)}</div>
+${eurZiel ? `<div class="kgc-eur">(${eurZiel})</div>` : ''}
+</div>
+<div class="kurs-grid-cell">
+<div class="kgc-label">Prognose</div>
+<div class="kgc-value" style="color:var(--accent)">+${p.anstiegProzent?.toFixed(1)}%</div>
+</div>
+</div>
+
+<div class="progress-bar">
+<span class="pb-label">7 Tage</span>
+<div class="pb-track"><div class="pb-fill" style="width:${fortschritt}%"></div></div>
+<span class="pb-day">Tag ${Math.min(7, daysDiff(p.scanDate))}</span>
+</div>
+
+${aktPct !== null ? `
+<div class="tracking-status">
+<span style="color:${pctColor}">${isUp ? '+' : ''}${aktPct.toFixed(2)}%</span>
+von Ziel <span style="color:var(--accent)">+${p.anstiegProzent?.toFixed(1)}%</span>
+· ${aktPct >= p.anstiegProzent
+? '<span style="color:var(--green)">✓ Ziel erreicht!</span>'
+: 'noch ' + (p.anstiegProzent - aktPct).toFixed(1) + '% fehlen'}
+</div>` : ''}
+</div>`;
+});
+aktiveSection.innerHTML = html;
+} else {
+aktiveSection.innerHTML = '';
+}
+
+// Auswertung
+const ausSection = document.getElementById('auswertungSection');
+if (abgeschlossene.length) {
+const treffer = abgeschlossene.filter(p => {
+const aktuell = p.verlauf.length > 0 ? p.verlauf[p.verlauf.length - 1].price : null;
+return aktuell && p.startkurs && ((aktuell - p.startkurs) / p.startkurs * 100) >= p.anstiegProzent * 0.8;
+}).length;
+
+let html = '<div class="section-label" style="margin-top:16px">Auswertung · Abgeschlossen</div>';
+html += `
+<div class="auswertung-summary">
+<div><div class="aus-value" style="color:var(--green)">${treffer}</div><div class="aus-label">Treffer</div></div>
+<div><div class="aus-value" style="color:var(--red)">${abgeschlossene.length - treffer}</div><div class="aus-label">Verfehlt</div></div>
+<div><div class="aus-value" style="color:var(--accent)">${Math.round(treffer / abgeschlossene.length * 100)}%</div><div class="aus-label">Trefferquote</div></div>
+</div>`;
+
+abgeschlossene.slice(0, 15).forEach(p => {
+const aktuell = p.verlauf.length > 0 ? p.verlauf[p.verlauf.length - 1].price : null;
+const endPct = aktuell && p.startkurs ? ((aktuell - p.startkurs) / p.startkurs * 100) : null;
+const hit = endPct !== null && endPct >= p.anstiegProzent * 0.8;
+const endColor = endPct != null && endPct >= 0 ? 'var(--green)' : 'var(--red)';
+const borderColor = hit ? 'rgba(34,197,94,0.2)' : 'rgba(244,63,94,0.15)';
+html += `
+<div class="aus-card" style="border:1px solid ${borderColor}">
+<div>
+<div class="aus-ticker">${p.ticker}</div>
+<div class="aus-date">${new Date(p.scanDate).toLocaleDateString('de-DE')}</div>
+</div>
+<div>
+<div class="aus-prognose-label">Prognose</div>
+<div class="aus-prognose">+${p.anstiegProzent?.toFixed(1)}%</div>
+</div>
+<div>
+<div class="aus-ergebnis-label">Ergebnis</div>
+<div class="aus-ergebnis" style="color:${endColor}">${endPct != null ? (endPct >= 0 ? '+' : '') + endPct.toFixed(1) + '%' : '–'}</div>
+</div>
+<div class="aus-icon">${hit ? '✓' : '✗'}</div>
+</div>`;
+});
+ausSection.innerHTML = html;
+} else {
+ausSection.innerHTML = '';
+}
+
+if (!aktive.length && !abgeschlossene.length) {
+aktiveSection.innerHTML = '<div class="empty-state">Noch keine Prognosen gespeichert.<br>Starte einen Scan im Tab „Scan".</div>';
+}
+}
+
+function updateTrackingCount() {
+const aktive = prognosen.filter(p => !p.abgeschlossen && daysDiff(p.scanDate) <= 8);
+document.getElementById('trackingCount').textContent = aktive.length > 0 ? `(${aktive.length})` : '';
+}
+
+// ── Status helpers ────────────────────────────────────────
+function setStatus(msg) {
+const el = document.getElementById('statusMsg');
+el.textContent = msg; el.style.display = 'block';
+}
+function hideStatus() { document.getElementById('statusMsg').style.display = 'none'; }
+function showError(msg) {
+const el = document.getElementById('errorBox');
+el.textContent = '⚠ ' + msg; el.style.display = 'block';
+}
+
+// Init
+updateTrackingCount();
 </script>
 
 </body>
