@@ -1,3 +1,5 @@
+GB1.8
+
 <!DOCTYPE html>
 
 <html lang="de">
@@ -511,7 +513,10 @@ verlauf: t.startkurs ? [{ date: scanDate, price: t.startkurs }] : [],
 abgeschlossen: false, insiderSignal: t.insiderSignal || false,
 eurRate: eurRate,
 }));
-savePrognosen([...newPrognosen, ...prognosen].slice(0, 60));
+// Alte nicht-abgeschlossene Prognosen derselben Ticker entfernen
+const neueTicker = new Set(newPrognosen.map(p => p.ticker));
+const bereinigte = prognosen.filter(p => p.abgeschlossen || !neueTicker.has(p.ticker));
+savePrognosen([...newPrognosen, ...bereinigte].slice(0, 60));
 updateTrackingCount();
 
 // Render
