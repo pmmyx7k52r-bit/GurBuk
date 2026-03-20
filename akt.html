@@ -630,13 +630,26 @@ const price = await getPrice(p.ticker);
 if (!price) continue;
 const idx = updated.findIndex(x => x.id === p.id);
 if (idx === -1) continue;
-const isSameDay = updated[idx].verlauf.length > 0 &&
-new Date(updated[idx].verlauf[updated[idx].verlauf.length - 1].date).toDateString() === new Date().toDateString();
+// Startkurs (index 0) immer behalten, nur aktuellen Kurs aktualisieren
+const verlauf = updated[idx].verlauf;
+const starteintrag = verlauf[0]; // niemals überschreiben
+const letzterEintrag = verlauf[verlauf.length - 1];
+const isSameDay = verlauf.length > 1 &&
+new Date(letzterEintrag.date).toDateString() === new Date().toDateString();
+let neuerVerlauf;
+if (verlauf.length <= 1) {
+// Erster Update nach Scan: Startkurs behalten + neuen Eintrag hinzufügen
+neuerVerlauf = [starteintrag, { date: today, price }];
+} else if (isSameDay) {
+// Gleicher Tag: letzten Eintrag aktualisieren, Startkurs bleibt
+neuerVerlauf = [...verlauf.slice(0, -1), { date: today, price }];
+} else {
+// Neuer Tag: Eintrag hinzufügen
+neuerVerlauf = [...verlauf, { date: today, price }];
+}
 updated[idx] = {
 ...updated[idx],
-verlauf: isSameDay
-? [...updated[idx].verlauf.slice(0, -1), { date: today, price }]
-: [...updated[idx].verlauf, { date: today, price }],
+verlauf: neuerVerlauf,
 abgeschlossen: daysDiff(updated[idx].scanDate) >= 7,
 };
 }
