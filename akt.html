@@ -467,14 +467,23 @@ method: 'POST',
 headers: { 'Content-Type': 'application/json' },
 body: JSON.stringify({
 model: 'claude-sonnet-4-20250514',
-max_tokens: 1000,
-messages: [{ role: 'user', content: `Heute: ${today}. Antworte NUR mit JSON, kein Text davor oder danach.
+max_tokens: 2000,
+tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+messages: [{ role: 'user', content: `Heute: ${today}. Du bist ein spekulativer Aktienanalyst.
 
+Recherchiere die aktuelle globale Lage und identifiziere 5 spekulative US-Aktien mit Gewinnpotenzial in den nächsten 7 Tagen.
+
+Analysiere dabei:
+- Geopolitik, Kriege, Rüstung, Sanktionen (aktuelle Nachrichten)
+- Zinsen, Inflation, Fed/EZB-Entscheidungen (aktuell)
+- KI, Chips, Tech-News, Quartalsergebnisse (aktuell)
+- Energie, Rohstoffe, Klimapolitik (aktuell)
+- Aktuelle Trades von Trump/Familie und Nancy Pelosi (capitoltrades.com)
+
+Antworte NUR mit JSON, kein Text davor oder danach:
 {"eurUsdRate":0.92,"kontext":"Marktlage in einem Satz.","tipps":[{"ticker":"TICKER","name":"Firmenname","anstiegProzent":12.0,"these":"Warum steigt diese Aktie in 7 Tagen?","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":""}]}
 
-Fülle 5 spekulative Aktien ein. Gib aktuellen EUR/USD Kurs an.
-Berücksichtige: Geopolitik, Zinsen, KI/Tech, Energie, Trump/Pelosi-Trades.
-Nur US-Ticker (NYSE/NASDAQ). Deutsch. Nur JSON.` }]
+Nur US-Ticker (NYSE/NASDAQ). Alle Texte deutsch. Nur JSON.` }]
 })
 });
 
@@ -627,30 +636,30 @@ document.getElementById('updateBtnIcon').innerHTML = '<div class="spinner-sm"></
 document.getElementById('trackingError').style.display = 'none';
 
 try {
-const aktiv = prognosen.filter(p => !p.abgeschlossen && daysDiff(p.scanDate) <= 8);
+// Frisch aus localStorage laden um sicherzustellen dass wir aktuell sind
+const frisch = loadPrognosen();
+prognosen = frisch;
+
+const aktiv = frisch.filter(p => !p.abgeschlossen && daysDiff(p.scanDate) <= 8);
 if (aktiv.length) {
 const today = new Date().toISOString();
-const updated = [...prognosen];
+const updated = [...frisch];
 for (const p of aktiv) {
 const price = await getPrice(p.ticker);
 if (!price) continue;
 const idx = updated.findIndex(x => x.id === p.id);
 if (idx === -1) continue;
-// Startkurs (index 0) immer behalten, nur aktuellen Kurs aktualisieren
 const verlauf = updated[idx].verlauf;
-const starteintrag = verlauf[0]; // niemals überschreiben
+const starteintrag = verlauf[0];
 const letzterEintrag = verlauf[verlauf.length - 1];
 const isSameDay = verlauf.length > 1 &&
 new Date(letzterEintrag.date).toDateString() === new Date().toDateString();
 let neuerVerlauf;
 if (verlauf.length <= 1) {
-// Erster Update nach Scan: Startkurs behalten + neuen Eintrag hinzufügen
 neuerVerlauf = [starteintrag, { date: today, price }];
 } else if (isSameDay) {
-// Gleicher Tag: letzten Eintrag aktualisieren, Startkurs bleibt
 neuerVerlauf = [...verlauf.slice(0, -1), { date: today, price }];
 } else {
-// Neuer Tag: Eintrag hinzufügen
 neuerVerlauf = [...verlauf, { date: today, price }];
 }
 updated[idx] = {
@@ -830,7 +839,9 @@ renderTracking();
 
 function resetDaten() {
 if (!confirm('Alle gespeicherten Prognosen wirklich loeschen?')) return;
-localStorage.removeItem(STORE_KEY);
+// Alle möglichen alten Keys löschen
+['markttipps_prognosen_v1','markttipps_prognosen_v2','markttipps_prognosen_v3',
+'markttipps_prognosen_v4','markttipps_prognosen_v5', STORE_KEY].forEach(k => localStorage.removeItem(k));
 prognosen = [];
 updateTrackingCount();
 renderTracking();
