@@ -332,6 +332,22 @@ font-size: 10px; color: var(–text3); line-height: 1.8;
 <div class="tabs">
 <button class="tab active" id="tabScan" onclick="switchTab('scan')">📊 Scan</button>
 <button class="tab" id="tabTracking" onclick="switchTab('tracking')">📈 Tracking <span id="trackingCount"></span></button>
+<button class="tab" id="tabPolitiker" onclick="switchTab('politiker')">🏛️ Trades</button>
+</div>
+
+<!-- POLITIKER TAB -->
+
+<div id="politikerTab" style="display:none">
+<div style="background:rgba(251,146,60,0.05);border:1px solid rgba(251,146,60,0.2);border-left:3px solid rgba(251,146,60,0.5);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+<div style="font-size:10px;color:rgba(251,146,60,0.7);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">🏛️ Aktuelle Politiker-Trades</div>
+<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">Letzte bekannte Käufe von Trump/Familie &amp; Nancy Pelosi gemäß STOCK Act</div>
+<button onclick="loadPolitikerTrades()" style="width:100%;background:#0d1e42;border:1px solid var(--border2);border-radius:8px;padding:12px 16px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--text);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+<span id="politikerBtnText">Aktuelle Trades laden</span>
+<span id="politikerBtnIcon">→</span>
+</button>
+<div id="politikerError" class="error-box" style="display:none"></div>
+<div id="politikerContent"></div>
+</div>
 </div>
 
 <!-- SCAN TAB -->
@@ -352,6 +368,7 @@ font-size: 10px; color: var(–text3); line-height: 1.8;
 <div id="errorBox" class="error-box" style="display:none"></div>
 <div id="kontextBox" class="kontext-box" style="display:none"></div>
 
+<div id="scanZeitraum" style="display:none;font-size:10px;color:var(--text3);margin-bottom:8px;padding:6px 12px;background:var(--bg2);border-radius:6px;border:1px solid var(--border);"></div>
 <div id="tippsLabel" class="tipps-label" style="display:none"></div>
 <div id="tippsList" class="tipps-list"></div>
 ```
@@ -426,8 +443,10 @@ function switchTab(tab) {
 currentTab = tab;
 document.getElementById('scanTab').style.display = tab === 'scan' ? 'block' : 'none';
 document.getElementById('trackingTab').style.display = tab === 'tracking' ? 'block' : 'none';
+document.getElementById('politikerTab').style.display = tab === 'politiker' ? 'block' : 'none';
 document.getElementById('tabScan').className = 'tab' + (tab === 'scan' ? ' active' : '');
 document.getElementById('tabTracking').className = 'tab' + (tab === 'tracking' ? ' active' : '');
+document.getElementById('tabPolitiker').className = 'tab' + (tab === 'politiker' ? ' active' : '');
 if (tab === 'tracking') renderTracking();
 }
 
@@ -471,7 +490,7 @@ max_tokens: 2000,
 tools: [{ type: 'web_search_20250305', name: 'web_search' }],
 messages: [{ role: 'user', content: `Heute: ${today}. Du bist ein spekulativer Aktienanalyst.
 
-Recherchiere die aktuelle globale Lage und identifiziere 5 spekulative US-Aktien mit Gewinnpotenzial in den nächsten 7 Tagen.
+Recherchiere die aktuelle globale Lage gründlich und wähle die 3 SICHERSTEN und BESTEN spekulativen US-Aktien mit dem höchsten Gewinnpotenzial in den nächsten 7 Tagen aus. Qualität vor Quantität – nur die drei überzeugendsten Kandidaten.
 
 Analysiere dabei:
 - Geopolitik, Kriege, Rüstung, Sanktionen (aktuelle Nachrichten)
@@ -481,9 +500,9 @@ Analysiere dabei:
 - Aktuelle Trades von Trump/Familie und Nancy Pelosi (capitoltrades.com)
 
 Antworte NUR mit JSON, kein Text davor oder danach:
-{"eurUsdRate":0.92,"kontext":"Marktlage in einem Satz.","tipps":[{"ticker":"TICKER","name":"Firmenname","anstiegProzent":12.0,"these":"Warum steigt diese Aktie in 7 Tagen?","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":""}]}
+{"eurUsdRate":0.92,"kontext":"Marktlage in einem Satz.","scanVon":"${today}","scanBis":"Datum in 7 Tagen","tipps":[{"ticker":"TICKER","name":"Firmenname","anstiegProzent":12.0,"konfidenz":75,"these":"Warum steigt diese Aktie in 7 Tagen?","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":""}]}
 
-Nur US-Ticker (NYSE/NASDAQ). Alle Texte deutsch. Nur JSON.` }]
+Nur US-Ticker (NYSE/NASDAQ). konfidenz = deine Überzeugung in % (50-90). Alle Texte deutsch. Nur JSON.` }]
 })
 });
 
@@ -531,6 +550,14 @@ updateTrackingCount();
 
 // Render
 hideStatus();
+
+// Zeitraum anzeigen
+if (result.scanVon || result.scanBis) {
+const tz = document.getElementById('scanZeitraum');
+tz.textContent = '📅 Prognosezeitraum: ' + (result.scanVon || today) + ' → ' + (result.scanBis || '+ 7 Tage');
+tz.style.display = 'block';
+}
+
 const label = document.getElementById('tippsLabel');
 label.textContent = enriched.length + ' Tipps · nächste 7 Tage · Echtzeit-Kurse · gespeichert';
 label.style.display = 'block';
@@ -622,6 +649,11 @@ ${eurGewinn ? `<div class="kurs-cell-eur">(${eurGewinn})</div>` : ''}
 <div class="pot-track"><div class="pot-fill" style="width:${Math.min(100, pct * 2.5)}%"></div></div>
 <span class="pot-pct" style="color:${accent}">+${pct.toFixed(1)}%</span>
 </div>
+${t.konfidenz ? `<div class="pot-bar" style="margin-top:6px;">
+<span class="pot-label">Konfidenz</span>
+<div class="pot-track"><div style="height:100%;width:${t.konfidenz}%;background:linear-gradient(90deg,var(--green),#86efac);border-radius:2px;"></div></div>
+<span class="pot-pct" style="color:var(--green)">${t.konfidenz}%</span>
+</div>` : ''}
 </div>`;
 
 return card;
@@ -827,6 +859,67 @@ function hideStatus() { document.getElementById('statusMsg').style.display = 'no
 function showError(msg) {
 const el = document.getElementById('errorBox');
 el.textContent = '⚠ ' + msg; el.style.display = 'block';
+}
+
+async function loadPolitikerTrades() {
+const btn = document.getElementById('politikerBtnText');
+const icon = document.getElementById('politikerBtnIcon');
+const err = document.getElementById('politikerError');
+const cont = document.getElementById('politikerContent');
+btn.textContent = 'Trades werden geladen …';
+icon.innerHTML = '<div class="spinner-sm"></div>';
+err.style.display = 'none';
+cont.innerHTML = '';
+
+try {
+const today = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
+const r = await fetch(CLAUDE_API, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+model: 'claude-sonnet-4-20250514',
+max_tokens: 1000,
+tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+messages: [{ role: 'user', content: `Heute: ${today}. Recherchiere die aktuellsten Aktien-Trades von:
+1. Donald Trump und seiner Familie (Eric Trump, Donald Trump Jr.)
+2. Nancy Pelosi und Paul Pelosi
+
+Quellen: capitoltrades.com, quiverquant.com, politico.com
+
+Antworte NUR mit JSON:
+{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firmenname","aktion":"Kauf","betrag":"ca. $X","datum":"Datum","relevanz":"Warum relevant für Anleger?"}]}
+
+Nur JSON, kein Text davor oder danach. Deutsch.` }]
+})
+});
+
+if (!r.ok) throw new Error('API ' + r.status);
+const d = await r.json();
+if (d.error) throw new Error(JSON.stringify(d.error));
+const _c = d.content || [];
+const raw = Array.isArray(_c) ? _c.filter(b => b.type === 'text').map(b => b.text).join('') : '';
+const result = tryParse(raw);
+if (!result?.trades?.length) throw new Error('Keine Trades gefunden');
+
+cont.innerHTML = result.trades.map(t => `
+<div style="background:var(--bg);border:1px solid rgba(251,146,60,0.2);border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+<span style="font-size:15px;font-weight:500;color:var(--accent);">${t.ticker}</span>
+<span style="font-family:var(--serif);font-size:12px;font-style:italic;color:var(--text2);">${t.name || ''}</span>
+<span style="font-size:9px;padding:2px 7px;border-radius:3px;background:${t.aktion === 'Kauf' ? 'rgba(34,197,94,0.1)' : 'rgba(244,63,94,0.1)'};color:${t.aktion === 'Kauf' ? 'var(--green)' : 'var(--red)'};">${t.aktion}</span>
+</div>
+<div style="font-size:11px;color:var(--orange);margin-bottom:4px;">🏛️ ${t.politiker} · ${t.betrag || ''} · ${t.datum || ''}</div>
+<div style="font-size:11px;color:var(--text2);line-height:1.6;">${t.relevanz || ''}</div>
+</div>
+`).join('');
+
+} catch(e) {
+err.textContent = '⚠ ' + e.message;
+err.style.display = 'block';
+}
+
+btn.textContent = 'Trades neu laden';
+icon.textContent = '↻';
 }
 
 function resetDaten() {
