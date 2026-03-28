@@ -332,7 +332,7 @@ font-size: 10px; color: var(–text3); line-height: 1.8;
 <div class="tabs">
 <button class="tab active" id="tabScan" onclick="switchTab('scan')">📊 Scan</button>
 <button class="tab" id="tabTracking" onclick="switchTab('tracking')">📈 Tracking <span id="trackingCount"></span></button>
-<button class="tab" id="tabPolitiker" onclick="switchTab('politiker')">🏛️ Trades</button>
+<button class="tab" id="tabPolitiker" onclick="switchTab('politiker')">🏛️ Trades <span id="politikerBadge" style="display:none;background:var(--red);color:white;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:2px;">NEU</span></button>
 </div>
 
 <!-- POLITIKER TAB -->
@@ -448,6 +448,18 @@ document.getElementById('tabScan').className = 'tab' + (tab === 'scan' ? ' activ
 document.getElementById('tabTracking').className = 'tab' + (tab === 'tracking' ? ' active' : '');
 document.getElementById('tabPolitiker').className = 'tab' + (tab === 'politiker' ? ' active' : '');
 if (tab === 'tracking') renderTracking();
+if (tab === 'politiker') {
+// Badge ausblenden wenn Tab geöffnet
+document.getElementById('politikerBadge').style.display = 'none';
+// Gecachte Trades anzeigen
+var saved = localStorage.getItem('markttipps_politiker_trades');
+if (saved) {
+try {
+var data = JSON.parse(saved);
+if (data.trades) renderPolitikerTrades(data.trades);
+} catch(e) {}
+}
+}
 }
 
 // ── Finnhub via Worker ─────────────────────────────────────
@@ -489,8 +501,8 @@ model: 'claude-haiku-4-5-20251001',
 max_tokens: 1000,
 tools: [{ type: 'web_search_20250305', name: 'web_search' }],
 messages: [{ role: 'user', content: `Heute: ${today}. Spekulativer Aktienanalyst. Recherchiere kurz und wähle die 3 besten US-Aktien für die nächsten 7 Tage. Berücksichtige: Geopolitik, Zinsen, KI/Tech, Energie, Trump/Pelosi-Trades. Nur JSON:
-{"eurUsdRate":0.92,"kontext":"1 Satz Marktlage.","scanVon":"${today}","scanBis":"+7 Tage","tipps":[{"ticker":"X","name":"Y","anstiegProzent":10.0,"konfidenz":70,"these":"Grund in 1 Satz.","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":""}]}
-3 Tipps, US-Ticker, deutsch, nur JSON.` }]
+{"eurUsdRate":0.92,"kontext":"1 Satz Marktlage.","scanVon":"${today}","scanBis":"+7 Tage","tipps":[{"ticker":"X","name":"Y","anstiegProzent":10.0,"konfidenz":70,"these":"Grund in 1 Satz.","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":"","richtung":"long","hebelEmpfehlung":2,"hebelBegruendung":"1 Satz warum dieser Hebel sinnvoll ist","shortMoeglich":false}]}
+3 Tipps, US-Ticker, deutsch, nur JSON. richtung=long|short, hebelEmpfehlung=1-5 (1=kein Hebel), shortMoeglich=true wenn Aktie gut shortbar ist.` }]
 })
 });
 
@@ -641,6 +653,16 @@ ${t.konfidenz ? `<div class="pot-bar" style="margin-top:6px;">
 <span class="pot-label">Konfidenz</span>
 <div class="pot-track"><div style="height:100%;width:${t.konfidenz}%;background:linear-gradient(90deg,var(--green),#86efac);border-radius:2px;"></div></div>
 <span class="pot-pct" style="color:var(--green)">${t.konfidenz}%</span>
+</div>` : ''}
+${(t.richtung || t.hebelEmpfehlung) ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+<div style="padding:4px 12px;border-radius:4px;font-size:11px;font-weight:500;background:${t.richtung === 'short' ? 'rgba(244,63,94,0.15)' : 'rgba(34,197,94,0.12)'};color:${t.richtung === 'short' ? 'var(--red)' : 'var(--green)'};">
+${t.richtung === 'short' ? '↓ SHORT' : '↑ LONG'}
+</div>
+${t.hebelEmpfehlung && t.hebelEmpfehlung > 1 ? `<div style="padding:4px 12px;border-radius:4px;font-size:11px;font-weight:500;background:rgba(240,180,41,0.12);color:var(--gold);">
+⚡ ${t.hebelEmpfehlung}x Hebel
+</div>` : '<div style="padding:4px 12px;border-radius:4px;font-size:11px;background:var(--bg3);color:var(--text3);">Kein Hebel</div>'}
+${t.shortMoeglich && t.richtung !== 'short' ? '<div style="padding:4px 12px;border-radius:4px;font-size:11px;background:rgba(244,63,94,0.08);color:rgba(244,63,94,0.6);">Short möglich</div>' : ''}
+${t.hebelBegruendung ? `<div style="width:100%;font-size:10px;color:var(--text3);margin-top:2px;">${t.hebelBegruendung}</div>` : ''}
 </div>` : ''}
 </div>`;
 
@@ -849,6 +871,24 @@ const el = document.getElementById('errorBox');
 el.textContent = '⚠ ' + msg; el.style.display = 'block';
 }
 
+function renderPolitikerTrades(trades) {
+var cont = document.getElementById('politikerContent');
+if (!cont) return;
+cont.innerHTML = trades.map(function(t) {
+var aktionColor = t.aktion === 'Kauf' ? 'rgba(34,197,94,0.1)' : 'rgba(244,63,94,0.1)';
+var aktionTextColor = t.aktion === 'Kauf' ? 'var(--green)' : 'var(--red)';
+return '<div style="background:var(--bg);border:1px solid rgba(251,146,60,0.2);border-radius:8px;padding:12px 14px;margin-bottom:8px;">' +
+'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">' +
+'<span style="font-size:15px;font-weight:500;color:var(--accent);">' + t.ticker + '</span>' +
+'<span style="font-family:var(--serif);font-size:12px;font-style:italic;color:var(--text2);">' + (t.name || '') + '</span>' +
+'<span style="font-size:9px;padding:2px 7px;border-radius:3px;background:' + aktionColor + ';color:' + aktionTextColor + ';">' + t.aktion + '</span>' +
+'</div>' +
+'<div style="font-size:11px;color:var(--orange);margin-bottom:4px;">🏛️ ' + t.politiker + ' · ' + (t.betrag || '') + ' · ' + (t.datum || '') + '</div>' +
+'<div style="font-size:11px;color:var(--text2);line-height:1.6;">' + (t.relevanz || '') + '</div>' +
+'</div>';
+}).join('');
+}
+
 async function loadPolitikerTrades() {
 const btn = document.getElementById('politikerBtnText');
 const icon = document.getElementById('politikerBtnIcon');
@@ -882,17 +922,8 @@ const raw = Array.isArray(_c) ? _c.filter(b => b.type === 'text').map(b => b.tex
 const result = tryParse(raw);
 if (!result?.trades?.length) throw new Error('Keine Trades gefunden');
 
-cont.innerHTML = result.trades.map(t => `
-<div style="background:var(--bg);border:1px solid rgba(251,146,60,0.2);border-radius:8px;padding:12px 14px;margin-bottom:8px;">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-<span style="font-size:15px;font-weight:500;color:var(--accent);">${t.ticker}</span>
-<span style="font-family:var(--serif);font-size:12px;font-style:italic;color:var(--text2);">${t.name || ''}</span>
-<span style="font-size:9px;padding:2px 7px;border-radius:3px;background:${t.aktion === 'Kauf' ? 'rgba(34,197,94,0.1)' : 'rgba(244,63,94,0.1)'};color:${t.aktion === 'Kauf' ? 'var(--green)' : 'var(--red)'};">${t.aktion}</span>
-</div>
-<div style="font-size:11px;color:var(--orange);margin-bottom:4px;">🏛️ ${t.politiker} · ${t.betrag || ''} · ${t.datum || ''}</div>
-<div style="font-size:11px;color:var(--text2);line-height:1.6;">${t.relevanz || ''}</div>
-</div>
-`).join('');
+renderPolitikerTrades(result.trades);
+localStorage.setItem('markttipps_politiker_trades', JSON.stringify(result));
 
 } catch(e) {
 err.textContent = '⚠ ' + e.message;
@@ -923,6 +954,52 @@ renderTracking();
 
 // Init
 updateTrackingCount();
+autoCheckPolitikerTrades();
+
+async function autoCheckPolitikerTrades() {
+// Prüfen ob heute schon gecheckt wurde
+var lastCheck = localStorage.getItem('markttipps_politiker_check');
+var today = new Date().toDateString();
+if (lastCheck === today) {
+// Bereits heute gecheckt - Badge nur zeigen wenn Trades vorhanden
+var saved = localStorage.getItem('markttipps_politiker_trades');
+if (saved) {
+try {
+var data = JSON.parse(saved);
+if (data.trades && data.trades.length > 0) {
+document.getElementById('politikerBadge').style.display = 'inline';
+}
+} catch(e) {}
+}
+return;
+}
+
+// Neuer Tag - Trades im Hintergrund laden
+try {
+var todayStr = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
+var r = await fetch(CLAUDE_API, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+model: 'claude-haiku-4-5-20251001',
+max_tokens: 800,
+tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+messages: [{ role: 'user', content: 'Heute: ' + todayStr + '. Recherchiere aktuelle Aktien-Trades von Trump/Familie und Nancy/Paul Pelosi (capitoltrades.com). Nur JSON: {"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"Datum","relevanz":"1 Satz warum relevant"}]} Nur JSON, deutsch.' }]
+})
+});
+if (!r.ok) return;
+var d = await r.json();
+if (d.error) return;
+var _c = d.content || [];
+var raw = Array.isArray(_c) ? _c.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('') : '';
+var result = tryParse(raw);
+if (result && result.trades && result.trades.length > 0) {
+localStorage.setItem('markttipps_politiker_trades', JSON.stringify(result));
+localStorage.setItem('markttipps_politiker_check', today);
+document.getElementById('politikerBadge').style.display = 'inline';
+}
+} catch(e) {}
+}
 </script>
 
 </body>
