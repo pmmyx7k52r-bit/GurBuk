@@ -194,6 +194,18 @@ var STORE_POLITICIAN_DATE = 'markttipps_politiker_date';
 var eurRate = null;
 var prognosen = loadPrognosen();
 
+// XSS-Schutz
+function esc(str) {
+if (str == null) return '';
+return String(str).replace(/[&<>"']/g, function(s) {
+return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
+});
+}
+
+// Preis- und Profil-Cache (spart Requests)
+var priceCache = {};
+var profileCache = {};
+
 function loadPrognosen() {
 try { return JSON.parse(localStorage.getItem(STORE_PROGNOSEN) || '[]'); } catch(e) { return []; }
 }
@@ -233,7 +245,24 @@ function showEl(id) { var e = document.getElementById(id); if (e) e.style.displa
 function hideEl(id) { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
 function setText(id, t) { var e = document.getElementById(id); if (e) e.textContent = t; }
 function setHTML(id, t) { var e = document.getElementById(id); if (e) e.innerHTML = t; }
-function showError(id, msg) { var e = document.getElementById(id); if (e) { e.textContent = 'Fehler: ' + msg; e.classList.add('visible'); } }
+function showError(id, msg) {
+var e = document.getElementById(id);
+if (!e) return;
+var text = msg || 'Unbekannter Fehler';
+if (text.includes('rate_limit') || text.includes('rate limit') || text.includes('30,000')) {
+text = 'Rate Limit erreicht – bitte 1 Minute warten und erneut versuchen';
+} else if (text.includes('overloaded') || text.includes('Overloaded')) {
+text = 'Server überlastet – bitte kurz warten und erneut versuchen';
+} else if (text.includes('HTTP 5') || text.includes('HTTP 4')) {
+text = 'API nicht erreichbar ('+msg.slice(0,20)+') – bitte später versuchen';
+} else if (text.includes('fetch') || text.includes('Load failed') || text.includes('NetworkError')) {
+text = 'Netzwerkproblem – Internetverbindung prüfen';
+} else if (text.includes('JSON') || text.includes('parse') || text.includes('Keine Tipps')) {
+text = 'Antwortfehler – bitte erneut versuchen';
+}
+e.textContent = text;
+e.classList.add('visible');
+}
 function clearError(id) { var e = document.getElementById(id); if (e) { e.textContent = ''; e.classList.remove('visible'); } }
 
 function switchTab(tab) {
@@ -255,15 +284,25 @@ try { var d = JSON.parse(saved); if (d.trades) renderPolitikerTrades(d.trades); 
 }
 
 function getPrice(ticker) {
+if (priceCache[ticker] != null) return Promise.resolve(priceCache[ticker]);
 return fetch(WORKER + '?ticker=' + ticker)
 .then(function(r) { return r.json(); })
-.then(function(d) { return (d.c && d.c > 0) ? d.c : null; })
+.then(function(d) {
+var price = (d.c && d.c > 0) ? d.c : null;
+priceCache[ticker] = price;
+return price;
+})
 .catch(function() { return null; });
 }
 function getProfile(ticker) {
+if (profileCache[ticker]) return Promise.resolve(profileCache[ticker]);
 return fetch(WORKER + '?ticker=' + ticker + '&type=profile')
 .then(function(r) { return r.json(); })
-.then(function(d) { return { name: d.name || ticker, currency: d.currency || 'USD' }; })
+.then(function(d) {
+var profile = { name: d.name || ticker, currency: d.currency || 'USD' };
+profileCache[ticker] = profile;
+return profile;
+})
 .catch(function() { return { name: ticker, currency: 'USD' }; });
 }
 
@@ -290,6 +329,9 @@ return content.filter(function(b) { return b.type === 'text'; }).map(function(b)
 }
 
 function startScan() {
+// Cache leeren damit frische Kurse geholt werden
+priceCache = {};
+profileCache = {};
 var btn = document.getElementById('scanBtn');
 btn.disabled = true;
 setText('scanBtnTitle', 'Analysiere ...');
@@ -310,9 +352,9 @@ var result = tryParse(raw);
 if (!result || !result.tipps || !result.tipps.length) throw new Error('Keine Tipps erhalten');
 eurRate = result.eurUsdRate || 0.92;
 if (result.eurUsdRate) setText('rateBadge', '1 USD = ' + eurRate.toFixed(4) + ' EUR');
-if (result.kontext) { setText('kontextBox', result.kontext); showEl('kontextBox'); }
+if (result.kontext) { setText('kontextBox', esc(result.kontext)); showEl('kontextBox'); }
 if (result.scanVon && result.scanBis) {
-setText('zeitraumBox', 'Prognosezeitraum: ' + result.scanVon + ' bis ' + result.scanBis);
+setText('zeitraumBox', 'Prognosezeitraum: ' + esc(result.scanVon) + ' bis ' + esc(result.scanBis));
 showEl('zeitraumBox');
 }
 setText('statusMsg', 'Echtzeit-Kurse werden geladen ...');
@@ -375,7 +417,7 @@ richtungHtml += '<span class="rtag hebel">' + t.hebelEmpfehlung + 'x Hebel</span
 richtungHtml += '<span class="rtag neutral">Kein Hebel</span>';
 }
 if (t.shortMoeglich && !isShort) richtungHtml += '<span class="rtag shortmgl">Short moeglich</span>';
-if (t.hebelBegruendung) richtungHtml += '<span class="hebel-info">' + t.hebelBegruendung + '</span>';
+if (t.hebelBegruendung) richtungHtml += '<span class="hebel-info">' + esc(t.hebelBegruendung) + '</span>';
 richtungHtml += '</div>';
 }
 
@@ -396,9 +438,9 @@ card.innerHTML = '<div class="card-body">' +
 '<span class="ticker-name">'+t.name+'</span>' +
 (insider ? '<span class="insider-badge">Politiker-Trade</span>' : '') +
 '</div>' +
-'<div class="card-these">'+t.these+'</div>' +
-(t.haupttreiber ? '<div class="card-treiber"><span>+</span> '+t.haupttreiber+'</div>' : '') +
-(insider && t.insiderInfo ? '<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+t.insiderInfo+'</div>' : '') +
+'<div class="card-these">'+esc(t.these)+'</div>' +
+(t.haupttreiber ? '<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>' : '') +
+(insider && t.insiderInfo ? '<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>' : '') +
 '</div>' +
 '<div class="card-right"><div class="pct-label">7 Tage</div><div class="pct-value">+'+pct.toFixed(1)+'%</div></div>' +
 '</div>' +
@@ -543,8 +585,8 @@ return '<div class="trade-card">' +
 '<span class="trade-name">'+(t.name||'')+'</span>' +
 '<span class="trade-action '+(isKauf?'kauf':'verk')+'">'+(t.aktion||'?')+'</span>' +
 '</div>' +
-'<div class="trade-meta">'+(t.politiker||'')+' - '+(t.betrag||'')+' - '+(t.datum||'')+'</div>' +
-'<div class="trade-relevanz">'+(t.relevanz||'')+'</div>' +
+'<div class="trade-meta">'+esc(t.politiker||'')+' - '+esc(t.betrag||'')+' - '+esc(t.datum||'')+'</div>' +
+'<div class="trade-relevanz">'+esc(t.relevanz||'')+'</div>' +
 '</div>';
 }).join('');
 }
