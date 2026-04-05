@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps</title>
+<title>MarktTipps V2.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -24,19 +24,19 @@
 body { background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; min-height: 100dvh; overflow-x: hidden; }
 body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(26,37,64,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(26,37,64,0.4) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, black 40%, transparent 100%); pointer-events: none; z-index: 0; }
 .app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 0 16px 80px; }
-header { padding: 24px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
 .logo { font-family: var(--serif); font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
 .logo em { font-style: italic; font-weight: 400; color: var(--accent); }
 .tagline { font-size: 10px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; }
 .header-right { text-align: right; font-size: 10px; color: var(--text3); line-height: 1.8; }
-.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.tab { padding: 7px 14px; border-radius: 6px; font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid transparent; background: none; font-family: var(--mono); color: var(--text3); cursor: pointer; transition: all 0.2s; position: relative; }
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.tab { padding: 6px 12px; border-radius: 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid transparent; background: none; font-family: var(--mono); color: var(--text3); cursor: pointer; transition: all 0.2s; position: relative; }
 .tab.active { background: #0d1e42; border-color: var(--border2); color: var(--accent); }
 .tab:not(.active):hover { color: var(--text2); }
 .badge { display: none; position: absolute; top: -4px; right: -4px; background: var(--red); color: white; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 500; }
 .badge.visible { display: inline-block; }
-.disclaimer { border-left: 3px solid rgba(240,180,41,0.5); padding: 7px 12px; margin-bottom: 16px; font-size: 10px; color: rgba(240,180,41,0.7); line-height: 1.5; }
-.scan-btn { width: 100%; background: #0d1e42; border: 1px solid var(--border2); border-radius: 10px; padding: 16px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.2s; margin-bottom: 16px; text-align: left; font-family: var(--mono); }
+.disclaimer { border-left: 3px solid rgba(240,180,41,0.5); padding: 7px 12px; margin-bottom: 14px; font-size: 10px; color: rgba(240,180,41,0.7); line-height: 1.5; }
+.scan-btn { width: 100%; background: #0d1e42; border: 1px solid var(--border2); border-radius: 10px; padding: 16px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.2s; margin-bottom: 14px; text-align: left; font-family: var(--mono); }
 .scan-btn:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(91,163,255,0.1); }
 .scan-btn:active { transform: scale(0.99); }
 .scan-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
@@ -47,82 +47,102 @@ header { padding: 24px 0 16px; border-bottom: 1px solid var(--border); margin-bo
 .spinner-sm { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.status-msg { font-size: 11px; color: var(--text2); font-style: italic; text-align: center; margin-bottom: 14px; }
-.error-box { background: rgba(244,63,94,0.07); border: 1px solid rgba(244,63,94,0.2); border-radius: 6px; padding: 12px 14px; font-size: 11px; color: var(--red); margin-bottom: 14px; line-height: 1.6; word-break: break-word; display: none; }
+.status-msg { font-size: 11px; color: var(--text2); font-style: italic; text-align: center; margin-bottom: 12px; }
+.error-box { background: rgba(244,63,94,0.07); border: 1px solid rgba(244,63,94,0.2); border-radius: 6px; padding: 12px 14px; font-size: 11px; color: var(--red); margin-bottom: 12px; line-height: 1.6; display: none; }
 .error-box.visible { display: block; }
-.info-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 10px 14px; margin-bottom: 12px; font-size: 11px; color: var(--text2); line-height: 1.7; }
+.info-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 10px 14px; margin-bottom: 10px; font-size: 11px; color: var(--text2); line-height: 1.7; }
 .section-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
-.tipp-card { background: var(--bg2); border-radius: 10px; overflow: hidden; margin-bottom: 10px; animation: fadeUp 0.3s ease both; }
+
+/* Signal Filter Box */
+.filter-box { background: var(–bg2); border: 1px solid var(–border); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+.filter-box-title { font-size: 10px; color: var(–text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.filter-item { background: var(–bg3); border-radius: 5px; padding: 6px 10px; }
+.fi-label { font-size: 9px; color: var(–text3); margin-bottom: 2px; }
+.fi-value { font-size: 11px; font-weight: 500; }
+
+/* Signal Badges */
+.signal-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.sig { font-size: 9px; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.05em; }
+.sig.bullish { background: rgba(34,197,94,0.12); color: var(–green); border: 1px solid rgba(34,197,94,0.2); }
+.sig.bearish { background: rgba(244,63,94,0.1); color: var(–red); border: 1px solid rgba(244,63,94,0.15); }
+.sig.neutral { background: rgba(240,180,41,0.1); color: var(–gold); border: 1px solid rgba(240,180,41,0.15); }
+.sig.volume { background: rgba(167,139,250,0.1); color: var(–purple); border: 1px solid rgba(167,139,250,0.15); }
+
+/* Tipp Card */
+.tipp-card { background: var(–bg2); border-radius: 10px; overflow: hidden; margin-bottom: 10px; animation: fadeUp 0.3s ease both; }
 .card-body { padding: 14px 16px 12px; }
 .ticker-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
 .ticker-sym { font-size: 17px; font-weight: 500; letter-spacing: 0.07em; }
-.ticker-name { font-family: var(--serif); font-size: 12px; font-style: italic; color: var(--text2); }
-.insider-badge { font-size: 9px; padding: 2px 7px; border-radius: 3px; background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.25); color: var(--orange); }
+.ticker-name { font-family: var(–serif); font-size: 12px; font-style: italic; color: var(–text2); }
+.insider-badge { font-size: 9px; padding: 2px 7px; border-radius: 3px; background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.25); color: var(–orange); }
 .card-header { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .card-left { flex: 1; }
 .card-right { flex-shrink: 0; text-align: right; }
-.pct-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
-.pct-value { font-size: 26px; font-weight: 500; color: var(--green); letter-spacing: -1px; line-height: 1; }
+.pct-label { font-size: 9px; color: var(–text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+.pct-value { font-size: 26px; font-weight: 500; color: var(–green); letter-spacing: -1px; line-height: 1; }
 .card-these { font-size: 11px; color: #8aa4c4; line-height: 1.65; margin-bottom: 4px; }
-.card-treiber { font-size: 10px; color: var(--text3); }
-.card-treiber span { color: var(--green); }
-.kurs-block { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: start; gap: 6px; background: var(--bg); border-radius: 7px; padding: 10px 12px; margin-bottom: 10px; }
-.kc-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.card-treiber { font-size: 10px; color: var(–text3); }
+.card-treiber span { color: var(–green); }
+.kurs-block { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: start; gap: 6px; background: var(–bg); border-radius: 7px; padding: 10px 12px; margin-bottom: 10px; }
+.kc-label { font-size: 9px; color: var(–text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
 .kc-value { font-size: 14px; font-weight: 500; }
-.kc-eur { font-size: 10px; color: var(--text3); margin-top: 1px; }
-.kc-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
-.kc-sub.live { color: var(--green); }
+.kc-eur { font-size: 10px; color: var(–text3); margin-top: 1px; }
+.kc-sub { font-size: 9px; color: var(–text3); margin-top: 1px; }
+.kc-sub.live { color: var(–green); }
 .kc-right { text-align: right; }
-.kc-divider { padding-left: 8px; border-left: 1px solid var(--border); text-align: right; }
-.kc-arrow { text-align: center; font-size: 13px; color: var(--green); padding: 12px 4px 0; }
+.kc-divider { padding-left: 8px; border-left: 1px solid var(–border); text-align: right; }
+.kc-arrow { text-align: center; font-size: 13px; color: var(–green); padding: 12px 4px 0; }
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.bar-label { font-size: 9px; color: var(--text3); white-space: nowrap; }
-.bar-track { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.bar-label { font-size: 9px; color: var(–text3); white-space: nowrap; }
+.bar-track { flex: 1; height: 3px; background: var(–bg3); border-radius: 2px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 2px; }
 .bar-val { font-size: 10px; white-space: nowrap; }
-.richtung-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.richtung-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(–border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .rtag { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.rtag.long { background: rgba(34,197,94,0.12); color: var(--green); }
-.rtag.short { background: rgba(244,63,94,0.15); color: var(--red); }
-.rtag.hebel { background: rgba(240,180,41,0.12); color: var(--gold); }
-.rtag.neutral { background: var(--bg3); color: var(--text3); }
+.rtag.long { background: rgba(34,197,94,0.12); color: var(–green); }
+.rtag.short { background: rgba(244,63,94,0.15); color: var(–red); }
+.rtag.hebel { background: rgba(240,180,41,0.12); color: var(–gold); }
+.rtag.neutral { background: var(–bg3); color: var(–text3); }
 .rtag.shortmgl { background: rgba(244,63,94,0.08); color: rgba(244,63,94,0.6); font-size: 10px; }
-.hebel-info { width: 100%; font-size: 10px; color: var(--text3); margin-top: 2px; }
-.update-btn { width: 100%; background: #0d1e42; border: 1px solid var(--border2); border-radius: 8px; padding: 12px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: all 0.2s; font-family: var(--mono); font-size: 11px; color: var(--text); }
-.update-btn:hover { border-color: var(--accent); }
+.hebel-info { width: 100%; font-size: 10px; color: var(–text3); margin-top: 2px; }
+
+/* Technische Metriken Box */
+.metrics-box { background: var(–bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.metric-cell { text-align: center; }
+.metric-label { font-size: 8px; color: var(–text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+.metric-value { font-size: 12px; font-weight: 500; }
+
+/* Tracking */
+.update-btn { width: 100%; background: #0d1e42; border: 1px solid var(–border2); border-radius: 8px; padding: 12px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: all 0.2s; font-family: var(–mono); font-size: 11px; color: var(–text); }
+.update-btn:hover { border-color: var(–accent); }
 .update-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.reset-btn { width: 100%; background: none; border: 1px solid rgba(244,63,94,0.2); border-radius: 8px; padding: 10px 16px; cursor: pointer; font-family: var(--mono); font-size: 11px; color: rgba(244,63,94,0.6); margin-bottom: 16px; text-align: left; }
-.tracking-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; }
+.reset-btn { width: 100%; background: none; border: 1px solid rgba(244,63,94,0.2); border-radius: 8px; padding: 10px 16px; cursor: pointer; font-family: var(–mono); font-size: 11px; color: rgba(244,63,94,0.6); margin-bottom: 14px; text-align: left; }
+.tracking-card { background: var(–bg2); border: 1px solid var(–border); border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; }
 .tracking-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-.tracking-ticker { font-size: 16px; font-weight: 500; color: var(--accent); }
-.tracking-name { font-family: var(--serif); font-size: 11px; font-style: italic; color: var(--text2); }
-.tracking-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
-.kurs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(--bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+.kurs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(–bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
 .progress-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.pb-track { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
-.tracking-status { font-size: 10px; color: var(--text3); }
-.summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
-.aus-card { background: var(--bg2); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
-.trade-card { background: var(--bg); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.pb-track { flex: 1; height: 4px; background: var(–bg3); border-radius: 2px; overflow: hidden; }
+.pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(–accent)); }
+.tracking-status { font-size: 10px; color: var(–text3); }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center; background: var(–bg2); border: 1px solid var(–border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+.aus-card { background: var(–bg2); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.trade-card { background: var(–bg); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
 .trade-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-.trade-ticker { font-size: 15px; font-weight: 500; color: var(--accent); }
-.trade-name { font-family: var(--serif); font-size: 12px; font-style: italic; color: var(--text2); }
 .trade-action { font-size: 9px; padding: 2px 7px; border-radius: 3px; }
-.trade-action.kauf { background: rgba(34,197,94,0.1); color: var(--green); }
-.trade-action.verk { background: rgba(244,63,94,0.1); color: var(--red); }
-.trade-meta { font-size: 11px; color: var(--orange); margin-bottom: 4px; }
-.trade-relevanz { font-size: 11px; color: var(--text2); line-height: 1.6; }
-.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 12px; line-height: 1.8; }
-footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text3); line-height: 1.8; }
+.trade-action.kauf { background: rgba(34,197,94,0.1); color: var(–green); }
+.trade-action.verk { background: rgba(244,63,94,0.1); color: var(–red); }
+.empty-state { text-align: center; padding: 40px 20px; color: var(–text3); font-size: 12px; line-height: 1.8; }
+footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(–border); font-size: 10px; color: var(–text3); line-height: 1.8; }
 </style>
+
 </head>
 <body>
 <div class="app">
 <header>
 <div>
-<div class="logo">Markt<em>Tipps</em></div>
-<div class="tagline">Top 3 · 7 Tage · Echtzeit</div>
+<div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.2</span></div>
+<div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
 </div>
 <div class="header-right">
 <div id="lastScan">Noch kein Scan</div>
@@ -135,17 +155,18 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <button class="tab active" id="tabScan" onclick="switchTab('scan')">Scan</button>
 <button class="tab" id="tabTracking" onclick="switchTab('tracking')">Tracking <span id="trackingCount"></span></button>
 <button class="tab" id="tabPolitiker" onclick="switchTab('politiker')">
-Trades
-<span class="badge" id="politikerBadge">NEU</span>
+Trades <span class="badge" id="politikerBadge">NEU</span>
 </button>
 </div>
 
+<!-- SCAN TAB -->
+
 <div id="scanTab">
-<div class="disclaimer">&#9888; Keine Anlageberatung. KI-generiert &amp; spekulativ. Verluste moeglich.</div>
+<div class="disclaimer">&#9888; Keine Anlageberatung. Signal-System + KI-Analyse. Verluste moeglich.</div>
 <button class="scan-btn" id="scanBtn" onclick="startScan()">
 <div>
-<div class="scan-btn-label">KI + Web Search + Finnhub Echtzeit</div>
-<div class="scan-btn-title" id="scanBtnTitle">Top 3 Tipps abrufen</div>
+<div class="scan-btn-label">Signal-Filter + KI-Analyse + Echtzeit</div>
+<div class="scan-btn-title" id="scanBtnTitle">3-Tage-Signale suchen</div>
 </div>
 <div id="scanBtnIcon" class="scan-btn-arrow">&#8594;</div>
 </button>
@@ -156,6 +177,8 @@ Trades
 <div id="tippsLabel" class="section-label" style="display:none"></div>
 <div id="tippsList"></div>
 </div>
+
+<!-- TRACKING TAB -->
 
 <div id="trackingTab" style="display:none">
 <button class="update-btn" id="updateBtn" onclick="updateKurse()">
@@ -168,10 +191,12 @@ Trades
 <div id="auswertungSection"></div>
 </div>
 
+<!-- POLITIKER TAB -->
+
 <div id="politikerTab" style="display:none">
 <div style="background:rgba(251,146,60,0.05);border:1px solid rgba(251,146,60,0.2);border-left:3px solid rgba(251,146,60,0.5);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
 <div style="font-size:10px;color:rgba(251,146,60,0.7);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Aktuelle Politiker-Trades (letzte 30 Tage)</div>
-<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">Trades von Trump/Familie &amp; Nancy Pelosi gemaess STOCK Act</div>
+<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">Trump/Familie &amp; Nancy Pelosi gemaess STOCK Act</div>
 <button class="update-btn" id="politikerBtn" onclick="loadPolitikerTrades()" style="margin-bottom:12px;">
 <span id="politikerBtnText">Aktuelle Trades laden</span>
 <span id="politikerBtnIcon">&#8594;</span>
@@ -181,9 +206,7 @@ Trades
 </div>
 </div>
 
-<footer>
-Claude Haiku + Web Search &middot; Finnhub Echtzeit &middot; Cloudflare Worker &middot; Keine Gewaehr
-</footer>
+<footer>V2.2 &middot; Signal-Filter (RSI/Volumen/Momentum) &middot; KI-Erklaerung &middot; Finnhub Echtzeit &middot; Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -193,19 +216,16 @@ var STORE_POLITIKER = 'markttipps_politiker_v1';
 var STORE_POLITICIAN_DATE = 'markttipps_politiker_date';
 var eurRate = null;
 var prognosen = loadPrognosen();
+var metricsCache = {};
+var priceCache = {};
 
-// XSS-Schutz
+// ── Helpers ──────────────────────────────────────────────
 function esc(str) {
 if (str == null) return '';
 return String(str).replace(/[&<>"']/g, function(s) {
 return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
 });
 }
-
-// Preis- und Profil-Cache (spart Requests)
-var priceCache = {};
-var profileCache = {};
-
 function loadPrognosen() {
 try { return JSON.parse(localStorage.getItem(STORE_PROGNOSEN) || '[]'); } catch(e) { return []; }
 }
@@ -213,9 +233,7 @@ function savePrognosen(data) {
 prognosen = data;
 try { localStorage.setItem(STORE_PROGNOSEN, JSON.stringify(data)); } catch(e) {}
 }
-function daysDiff(dateStr) {
-return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
-}
+function daysDiff(dateStr) { return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000); }
 function fmt(v, sym) {
 if (v == null || isNaN(v)) return '-';
 return sym + parseFloat(v).toLocaleString('de-DE', {minimumFractionDigits:2,maximumFractionDigits:2});
@@ -228,7 +246,7 @@ function safeDiv(a, b) { return (!b || b === 0) ? 0 : a / b; }
 function tryParse(raw) {
 if (!raw || typeof raw !== 'string') return null;
 var clean = raw.replace(/```json|```/gi, '').trim();
-try { return JSON.parse(clean); } catch(e1) {}
+try { return JSON.parse(clean); } catch(e) {}
 var depth = 0, start = -1;
 for (var i = 0; i < clean.length; i++) {
 if (clean[i] === '{') { if (depth === 0) start = i; depth++; }
@@ -249,278 +267,407 @@ function showError(id, msg) {
 var e = document.getElementById(id);
 if (!e) return;
 var text = msg || 'Unbekannter Fehler';
-if (text.includes('rate_limit') || text.includes('rate limit') || text.includes('30,000')) {
-text = 'Rate Limit erreicht – bitte 1 Minute warten und erneut versuchen';
-} else if (text.includes('overloaded') || text.includes('Overloaded')) {
-text = 'Server überlastet – bitte kurz warten und erneut versuchen';
-} else if (text.includes('HTTP 5') || text.includes('HTTP 4')) {
-text = 'API nicht erreichbar ('+msg.slice(0,20)+') – bitte später versuchen';
-} else if (text.includes('fetch') || text.includes('Load failed') || text.includes('NetworkError')) {
-text = 'Netzwerkproblem – Internetverbindung prüfen';
-} else if (text.includes('JSON') || text.includes('parse') || text.includes('Keine Tipps')) {
-text = 'Antwortfehler – bitte erneut versuchen';
-}
+if (text.includes('rate_limit') || text.includes('30,000')) text = 'Rate Limit - bitte 1 Minute warten';
+else if (text.includes('overloaded') || text.includes('Overloaded')) text = 'Server ueberlastet - bitte kurz warten';
+else if (text.includes('HTTP 5') || text.includes('HTTP 4')) text = 'API nicht erreichbar - bitte spaeter versuchen';
+else if (text.includes('fetch') || text.includes('Load failed')) text = 'Netzwerkproblem - Verbindung pruefen';
+else if (text.includes('Keine') || text.includes('parse')) text = 'Antwortfehler - bitte erneut versuchen';
 e.textContent = text;
 e.classList.add('visible');
 }
 function clearError(id) { var e = document.getElementById(id); if (e) { e.textContent = ''; e.classList.remove('visible'); } }
 
+// ── Tab switching ─────────────────────────────────────────
 function switchTab(tab) {
-var tabs = ['scan', 'tracking', 'politiker'];
-tabs.forEach(function(t) {
-var tabEl = document.getElementById(t + 'Tab');
-var btnEl = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-if (tabEl) tabEl.style.display = (t === tab) ? 'block' : 'none';
-if (btnEl) btnEl.className = 'tab' + (t === tab ? ' active' : '');
+['scan','tracking','politiker'].forEach(function(t) {
+var te = document.getElementById(t+'Tab');
+var be = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
+if (te) te.style.display = t === tab ? 'block' : 'none';
+if (be) be.className = 'tab' + (t === tab ? ' active' : '');
 });
 if (tab === 'tracking') renderTracking();
 if (tab === 'politiker') {
 document.getElementById('politikerBadge').classList.remove('visible');
 var saved = localStorage.getItem(STORE_POLITIKER);
-if (saved) {
-try { var d = JSON.parse(saved); if (d.trades) renderPolitikerTrades(d.trades); } catch(e) {}
+if (saved) { try { var d=JSON.parse(saved); if(d.trades) renderPolitikerTrades(d.trades); } catch(e) {} }
 }
 }
+
+// ── Finnhub API ───────────────────────────────────────────
+function getMetrics(ticker) {
+if (metricsCache[ticker]) return Promise.resolve(metricsCache[ticker]);
+return fetch(WORKER + '?ticker=' + ticker + '&type=metrics')
+.then(function(r) { return r.json(); })
+.then(function(d) { metricsCache[ticker] = d; return d; })
+.catch(function() { return null; });
 }
 
 function getPrice(ticker) {
 if (priceCache[ticker] != null) return Promise.resolve(priceCache[ticker]);
 return fetch(WORKER + '?ticker=' + ticker)
 .then(function(r) { return r.json(); })
-.then(function(d) {
-var price = (d.c && d.c > 0) ? d.c : null;
-priceCache[ticker] = price;
-return price;
-})
+.then(function(d) { var p = (d.c && d.c > 0) ? d.c : null; priceCache[ticker] = p; return p; })
 .catch(function() { return null; });
 }
-function getProfile(ticker) {
-if (profileCache[ticker]) return Promise.resolve(profileCache[ticker]);
-return fetch(WORKER + '?ticker=' + ticker + '&type=profile')
-.then(function(r) { return r.json(); })
-.then(function(d) {
-var profile = { name: d.name || ticker, currency: d.currency || 'USD' };
-profileCache[ticker] = profile;
-return profile;
-})
-.catch(function() { return { name: ticker, currency: 'USD' }; });
+
+// ── Signal Filter ─────────────────────────────────────────
+// Bewertet ob eine Aktie objektive Signale hat
+function scoreSignal(m) {
+if (!m) return { score: 0, signals: [], passed: false };
+var signals = [];
+var score = 0;
+
+// RSI-Signal
+if (m.rsi != null) {
+if (m.rsi < 35) { signals.push({label:'RSI ueberverkauft ('+m.rsi+')', type:'bullish'}); score += 2; }
+else if (m.rsi > 65) { signals.push({label:'RSI ueberkauft ('+m.rsi+')', type:'bearish'}); score += 1; }
+else { signals.push({label:'RSI neutral ('+m.rsi+')', type:'neutral'}); }
 }
 
+// Volumen-Signal
+if (m.volumeRatio != null) {
+if (m.volumeRatio >= 1.5) { signals.push({label:'Volumen +'+Math.round((m.volumeRatio-1)*100)+'%', type:'volume'}); score += 2; }
+else if (m.volumeRatio >= 1.2) { signals.push({label:'Volumen +'+Math.round((m.volumeRatio-1)*100)+'%', type:'volume'}); score += 1; }
+}
+
+// Momentum
+if (m.momentum5d != null) {
+if (m.momentum5d > 3) { signals.push({label:'Momentum +'+m.momentum5d+'% (5T)', type:'bullish'}); score += 2; }
+else if (m.momentum5d < -3) { signals.push({label:'Momentum '+m.momentum5d+'% (5T)', type:'bearish'}); score += 1; }
+}
+
+// Tagesveraenderung
+if (m.change != null) {
+if (Math.abs(m.change) > 2) {
+signals.push({label:'Tages-Move '+m.change.toFixed(1)+'%', type: m.change > 0 ? 'bullish' : 'bearish'});
+score += 1;
+}
+}
+
+return { score: score, signals: signals, passed: score >= 2 };
+}
+
+// Hebel-Regel nach Konfidenz (keine Raterei mehr)
+function calcHebel(konfidenz, rsi) {
+if (!konfidenz || konfidenz < 55) return 1;
+if (konfidenz < 65) return 2;
+if (konfidenz < 75) return 2;
+return 3;
+}
+
+// ── Claude via Worker ─────────────────────────────────────
 function callClaude(prompt, maxTokens) {
 return fetch(WORKER, {
 method: 'POST',
-headers: { 'Content-Type': 'application/json' },
+headers: {'Content-Type':'application/json'},
 body: JSON.stringify({
 model: 'claude-haiku-4-5-20251001',
 max_tokens: maxTokens || 800,
-tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-messages: [{ role: 'user', content: prompt }]
+tools: [{type:'web_search_20250305',name:'web_search'}],
+messages: [{role:'user',content:prompt}]
 })
 })
-.then(function(r) {
-if (!r.ok) throw new Error('HTTP ' + r.status);
-return r.json();
-})
+.then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
 .then(function(d) {
-if (d.error) throw new Error(JSON.stringify(d.error).slice(0, 120));
+if (d.error) throw new Error(JSON.stringify(d.error).slice(0,120));
 var content = Array.isArray(d.content) ? d.content : [];
-return content.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('');
+return content.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
 });
 }
 
+// ── Scan ──────────────────────────────────────────────────
 function startScan() {
-// Cache leeren damit frische Kurse geholt werden
+// Cache leeren
+metricsCache = {};
 priceCache = {};
-profileCache = {};
 var btn = document.getElementById('scanBtn');
 btn.disabled = true;
-setText('scanBtnTitle', 'Analysiere ...');
-setHTML('scanBtnIcon', '<div class="spinner"></div>');
+setText('scanBtnTitle','Analysiere ...');
+setHTML('scanBtnIcon','<div class="spinner"></div>');
 clearError('errorBox');
 hideEl('kontextBox'); hideEl('zeitraumBox'); hideEl('tippsLabel');
-setHTML('tippsList', '');
-showEl('statusMsg'); setText('statusMsg', 'Claude recherchiert aktuelle Marktlage ...');
+setHTML('tippsList','');
+showEl('statusMsg'); setText('statusMsg','Schritt 1/3: Aktuelle Nachrichten werden recherchiert ...');
 
-var today = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
-var in7 = new Date(Date.now() + 7*86400000).toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
+var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+var in3 = new Date(Date.now()+3*86400000).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
 
-var prompt = 'Heute: ' + today + '. Spekulativer Aktienanalyst. Recherchiere aktuelle Nachrichten (letzte 7 Tage) und waehle die 3 besten US-Aktien fuer ' + today + ' bis ' + in7 + '. Faktoren: Geopolitik, Zinsen, KI/Tech, Energie, Trump/Pelosi-Trades der letzten 30 Tage. Antworte NUR mit JSON:\n{"eurUsdRate":0.92,"kontext":"1 Satz.","scanVon":"' + today + '","scanBis":"' + in7 + '","tipps":[{"ticker":"X","name":"Y","anstiegProzent":10.0,"konfidenz":70,"these":"1 Satz Grund.","haupttreiber":"Treiber","insiderSignal":false,"insiderInfo":"","richtung":"long","hebelEmpfehlung":2,"hebelBegruendung":"1 Satz.","shortMoeglich":false}]}\n3 Tipps, US-Ticker, deutsch, nur JSON.';
+// Schritt 1: KI recherchiert Katalysatoren und schlaegt Kandidaten vor
+var promptSchritt1 = 'Heute: '+today+'. Analysiere die aktuellen Nachrichten der letzten 24-48 Stunden.' +
+'\n\nIdentifiziere den staerksten Markt-Katalysator der in den naechsten 3 Tagen (bis '+in3+') wirkt.' +
+'\nSchlage 8-10 konkrete US-Ticker vor (NYSE/NASDAQ) die am direktesten davon profitieren.' +
+'\nBeruecksichtige: Big Player UND Zulieferer UND Mid-Caps. Nicht nur die bekannten Namen.' +
+'\nBerücksichtige auch: Geopolitik, Zinsen/Fed, Earnings diese Woche, Energie, Trump/Pelosi-Trades.' +
+'\n\nAntworte NUR mit JSON:\n{"eurUsdRate":0.92,"katalysator":"Konkreter Ausloeser.","kontext":"1 Satz Marktlage.","kandidaten":["AAPL","NVDA","TICK1","TICK2","TICK3","TICK4","TICK5","TICK6"]}\nNur JSON, deutsch.';
 
-callClaude(prompt, 900)
+callClaude(promptSchritt1, 600)
 .then(function(raw) {
 var result = tryParse(raw);
-if (!result || !result.tipps || !result.tipps.length) throw new Error('Keine Tipps erhalten');
+if (!result || !result.kandidaten || !result.kandidaten.length) throw new Error('Keine Kandidaten erhalten');
+
 eurRate = result.eurUsdRate || 0.92;
-if (result.eurUsdRate) setText('rateBadge', '1 USD = ' + eurRate.toFixed(4) + ' EUR');
-if (result.kontext) { setText('kontextBox', esc(result.kontext)); showEl('kontextBox'); }
-if (result.scanVon && result.scanBis) {
-setText('zeitraumBox', 'Prognosezeitraum: ' + esc(result.scanVon) + ' bis ' + esc(result.scanBis));
-showEl('zeitraumBox');
+if (result.eurUsdRate) setText('rateBadge','1 USD = '+eurRate.toFixed(4)+' EUR');
+
+var katalysator = result.katalysator || '';
+var kontext = result.kontext || '';
+if (kontext) {
+setText('kontextBox', esc(kontext) + (katalysator ? ' Katalysator: ' + esc(katalysator) : ''));
+showEl('kontextBox');
 }
-setText('statusMsg', 'Echtzeit-Kurse werden geladen ...');
-return Promise.all(result.tipps.map(function(t) {
-return Promise.all([getPrice(t.ticker), getProfile(t.ticker)]).then(function(vals) {
-return Object.assign({}, t, { startkurs: vals[0], waehrung: vals[1].currency, name: vals[1].name || t.name });
+
+setText('zeitraumBox','3-Tage-Prognose: '+today+' bis '+in3);
+showEl('zeitraumBox');
+
+setText('statusMsg','Schritt 2/3: Signal-Filter laueft (RSI, Volumen, Momentum) ...');
+
+// Schritt 2: Technische Metriken fuer alle Kandidaten laden
+var kandidaten = result.kandidaten.slice(0, 10);
+return Promise.all(kandidaten.map(function(ticker) {
+return getMetrics(ticker).then(function(m) { return {ticker:ticker, metrics:m, signal:scoreSignal(m)}; });
+})).then(function(results) {
+// Vorfilter: nur Aktien mit score >= 2
+var gefiltert = results.filter(function(r) { return r.signal.passed; });
+
+// Fallback wenn zu wenige durch den Filter kommen
+if (gefiltert.length < 3) {
+gefiltert = results.sort(function(a,b) { return b.signal.score - a.signal.score; }).slice(0,3);
+}
+
+// Top 3 nach Signal-Score
+var top3 = gefiltert.sort(function(a,b) { return b.signal.score - a.signal.score; }).slice(0,3);
+
+setText('statusMsg','Schritt 3/3: KI erklaert die Signal-Aktien ...');
+
+// Schritt 3: KI erklaert nur noch WARUM - entscheidet nicht mehr
+var metricsInfo = top3.map(function(t) {
+var m = t.metrics;
+return t.ticker + ': RSI='+m.rsi+', Volumen='+m.volumeRatio+'x, Momentum='+m.momentum5d+'%, Change='+m.change+'%';
+}).join('\n');
+
+var promptSchritt3 = 'Heute: '+today+'. Katalysator: '+katalysator+
+'\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest:\n'+metricsInfo+
+'\n\nErklaere in 1 Satz pro Aktie WARUM sie vom Katalysator in den naechsten 3 Tagen profitiert.' +
+'\nNur JSON:\n{"tipps":[{"ticker":"X","these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
+
+return callClaude(promptSchritt3, 500).then(function(raw2) {
+var erklaerung = tryParse(raw2);
+var tipMap = {};
+if (erklaerung && erklaerung.tipps) {
+erklaerung.tipps.forEach(function(t) { tipMap[t.ticker] = t; });
+}
+return top3.map(function(item) {
+var erkl = tipMap[item.ticker] || {};
+var m = item.metrics || {};
+var konfidenz = Math.min(85, Math.max(50, 50 + item.signal.score * 8));
+var hebel = calcHebel(konfidenz, m.rsi);
+return {
+ticker: item.ticker,
+name: m.name || item.ticker,
+waehrung: m.currency || 'USD',
+startkurs: m.price,
+anstiegProzent: Math.min(20, Math.max(3, item.signal.score * 2.5)),
+konfidenz: konfidenz,
+these: erkl.these || 'Technisches Signal erkannt.',
+haupttreiber: erkl.haupttreiber || katalysator,
+insiderSignal: erkl.insiderSignal || false,
+insiderInfo: erkl.insiderInfo || '',
+richtung: m.rsi && m.rsi < 50 ? 'long' : 'long',
+hebelEmpfehlung: hebel,
+hebelBegruendung: 'Konfidenz '+konfidenz+'% -> '+hebel+'x gemaess Regelwerk',
+shortMoeglich: m.rsi && m.rsi > 60,
+metrics: m,
+signals: item.signal.signals,
+};
 });
-}));
+});
+});
 })
 .then(function(enriched) {
 hideEl('statusMsg');
 var label = document.getElementById('tippsLabel');
-label.textContent = enriched.length + ' Tipps gespeichert';
+label.textContent = enriched.length + ' Signal-Aktien · ' + today + ' bis ' + in3;
 showEl('tippsLabel');
 var list = document.getElementById('tippsList');
 list.innerHTML = '';
-enriched.forEach(function(t, i) { list.appendChild(buildTippCard(t, i)); });
+enriched.forEach(function(t,i) { list.appendChild(buildTippCard(t,i)); });
+
+// Speichern
 var scanDate = new Date().toISOString();
 var neueTicker = {};
-enriched.forEach(function(t) { neueTicker[t.ticker] = true; });
-var bereinigte = prognosen.filter(function(p) { return p.abgeschlossen || !neueTicker[p.ticker]; });
+enriched.forEach(function(t) { neueTicker[t.ticker]=true; });
+var bereinigte = prognosen.filter(function(p){return p.abgeschlossen||!neueTicker[p.ticker];});
 var newProg = enriched.map(function(t) {
-return { id: t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:t.startkurs, zielkurs:t.startkurs?t.startkurs*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), scanDate:scanDate, verlauf:t.startkurs?[{date:scanDate,price:t.startkurs}]:[], abgeschlossen:false, eurRate:eurRate };
+return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:t.startkurs, zielkurs:t.startkurs?t.startkurs*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), scanDate:scanDate, verlauf:t.startkurs?[{date:scanDate,price:t.startkurs}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
 });
-savePrognosen(newProg.concat(bereinigte).slice(0, 60));
+savePrognosen(newProg.concat(bereinigte).slice(0,60));
 updateTrackingCount();
 var now = new Date();
-setText('lastScan', now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) + ' Uhr');
+setText('lastScan',now.toLocaleDateString('de-DE')+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr');
 })
 .catch(function(err) {
 hideEl('statusMsg');
-showError('errorBox', err.message || 'Unbekannter Fehler');
+showError('errorBox', err.message||'Unbekannter Fehler');
 })
 .finally(function() {
-btn.disabled = false;
-setText('scanBtnTitle', 'Top 3 Tipps abrufen');
-setText('scanBtnIcon', '&#8594;');
+btn.disabled=false;
+setText('scanBtnTitle','3-Tage-Signale suchen');
+setText('scanBtnIcon','&#8594;');
 });
 }
 
+// ── Build Tipp Card ───────────────────────────────────────
 function buildTippCard(t, i) {
-var pct = parseFloat(t.anstiegProzent) || 10;
-var sym = t.waehrung === 'EUR' ? 'EUR ' : t.waehrung === 'GBP' ? 'GBP ' : 'USD ';
+var pct = parseFloat(t.anstiegProzent)||5;
+var sym = t.waehrung==='EUR'?'EUR ':t.waehrung==='GBP'?'GBP ':'USD ';
 var start = t.startkurs;
-var ziel = (start && !isNaN(start)) ? start * (1 + pct/100) : null;
-var gewinn = (start && ziel) ? ziel - start : null;
-var rate = t.waehrung !== 'EUR' ? eurRate : null;
+var ziel = (start&&!isNaN(start)) ? start*(1+pct/100) : null;
+var gewinn = (start&&ziel) ? ziel-start : null;
+var rate = t.waehrung!=='EUR' ? eurRate : null;
 var insider = !!t.insiderSignal;
 var accent = insider ? 'var(--orange)' : 'var(--accent)';
 var borderColor = insider ? 'rgba(251,146,60,0.3)' : 'rgba(91,163,255,0.15)';
-var isShort = t.richtung === 'short';
+var isShort = t.richtung==='short';
+var m = t.metrics || {};
 
-var richtungHtml = '';
-if (t.richtung || t.hebelEmpfehlung) {
-richtungHtml = '<div class="richtung-block">' +
-'<span class="rtag ' + (isShort ? 'short' : 'long') + '">' + (isShort ? 'SHORT' : 'LONG') + '</span>';
-if (t.hebelEmpfehlung && t.hebelEmpfehlung > 1) {
-richtungHtml += '<span class="rtag hebel">' + t.hebelEmpfehlung + 'x Hebel</span>';
+// Signal-Badges
+var signalHtml = '';
+if (t.signals && t.signals.length) {
+signalHtml = '<div class="signal-row">';
+t.signals.forEach(function(s) {
+signalHtml += '<span class="sig '+s.type+'">'+esc(s.label)+'</span>';
+});
+signalHtml += '</div>';
+}
+
+// Technische Metriken
+var metricsHtml = '';
+if (m.rsi || m.volumeRatio || m.momentum5d) {
+var rsiColor = m.rsi<35?'var(--green)':m.rsi>65?'var(--red)':'var(--gold)';
+var volColor = m.volumeRatio>=1.5?'var(--purple)':'var(--text2)';
+var momColor = m.momentum5d>0?'var(--green)':'var(--red)';
+metricsHtml = '<div class="metrics-box">' +
+'<div class="metric-cell"><div class="metric-label">RSI</div><div class="metric-value" style="color:'+rsiColor+'">'+(m.rsi||'-')+'</div></div>' +
+'<div class="metric-cell"><div class="metric-label">Volumen</div><div class="metric-value" style="color:'+volColor+'">'+(m.volumeRatio?m.volumeRatio+'x':'-')+'</div></div>' +
+'<div class="metric-cell"><div class="metric-label">Momentum</div><div class="metric-value" style="color:'+momColor+'">'+(m.momentum5d!=null?m.momentum5d+'%':'-')+'</div></div>' +
+'<div class="metric-cell"><div class="metric-label">Tages+/-</div><div class="metric-value" style="color:'+(m.change>0?'var(--green)':'var(--red)')+'">'+(m.change!=null?m.change.toFixed(1)+'%':'-')+'</div></div>' +
+'</div>';
+}
+
+// Richtung & Hebel
+var richtungHtml = '<div class="richtung-block">' +
+'<span class="rtag '+(isShort?'short':'long')+'">'+(isShort?'SHORT':'LONG')+'</span>';
+if (t.hebelEmpfehlung&&t.hebelEmpfehlung>1) {
+richtungHtml += '<span class="rtag hebel">'+t.hebelEmpfehlung+'x Hebel</span>';
 } else {
 richtungHtml += '<span class="rtag neutral">Kein Hebel</span>';
 }
-if (t.shortMoeglich && !isShort) richtungHtml += '<span class="rtag shortmgl">Short moeglich</span>';
-if (t.hebelBegruendung) richtungHtml += '<span class="hebel-info">' + esc(t.hebelBegruendung) + '</span>';
+if (t.shortMoeglich&&!isShort) richtungHtml += '<span class="rtag shortmgl">Short moeglich</span>';
+if (t.hebelBegruendung) richtungHtml += '<span class="hebel-info">'+esc(t.hebelBegruendung)+'</span>';
 richtungHtml += '</div>';
-}
 
 var card = document.createElement('div');
 card.className = 'tipp-card';
-card.style.border = '1px solid ' + borderColor;
-card.style.animationDelay = (i * 0.08) + 's';
+card.style.border = '1px solid '+borderColor;
+card.style.animationDelay = (i*0.08)+'s';
 
-var eurStart = fmtEur(start, rate, t.waehrung);
-var eurZiel = fmtEur(ziel, rate, t.waehrung);
-var eurGewinn = fmtEur(gewinn, rate, t.waehrung);
+var eurStart = fmtEur(start,rate,t.waehrung);
+var eurZiel = fmtEur(ziel,rate,t.waehrung);
+var eurGewinn = fmtEur(gewinn,rate,t.waehrung);
 
 card.innerHTML = '<div class="card-body">' +
+signalHtml +
 '<div class="card-header">' +
 '<div class="card-left">' +
 '<div class="ticker-row">' +
-'<span class="ticker-sym" style="color:'+accent+'">'+t.ticker+'</span>' +
-'<span class="ticker-name">'+t.name+'</span>' +
-(insider ? '<span class="insider-badge">Politiker-Trade</span>' : '') +
+'<span class="ticker-sym" style="color:'+accent+'">'+esc(t.ticker)+'</span>' +
+'<span class="ticker-name">'+esc(t.name)+'</span>' +
+(insider?'<span class="insider-badge">Politiker-Trade</span>':'') +
 '</div>' +
 '<div class="card-these">'+esc(t.these)+'</div>' +
-(t.haupttreiber ? '<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>' : '') +
-(insider && t.insiderInfo ? '<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>' : '') +
+(t.haupttreiber?'<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>':'') +
+(insider&&t.insiderInfo?'<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>':'') +
 '</div>' +
-'<div class="card-right"><div class="pct-label">7 Tage</div><div class="pct-value">+'+pct.toFixed(1)+'%</div></div>' +
+'<div class="card-right"><div class="pct-label">3 Tage</div><div class="pct-value">+'+pct.toFixed(1)+'%</div></div>' +
 '</div>' +
+metricsHtml +
 '<div class="kurs-block">' +
 '<div><div class="kc-label">Startkurs</div><div class="kc-value" style="color:var(--text)">'+fmt(start,sym)+'</div>'+(eurStart?'<div class="kc-eur">('+eurStart+')</div>':'')+'<div class="kc-sub live">Echtzeit</div></div>' +
 '<div class="kc-arrow">&#8594;</div>' +
-'<div class="kc-right"><div class="kc-label">Zielkurs</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub">in 7 Tagen</div></div>' +
+'<div class="kc-right"><div class="kc-label">Zielkurs</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub">in 3 Tagen</div></div>' +
 '<div class="kc-divider"><div class="kc-label">+/Aktie</div><div class="kc-value" style="color:var(--green)">'+fmt(gewinn,sym)+'</div>'+(eurGewinn?'<div class="kc-eur">('+eurGewinn+')</div>':'')+'<div class="kc-sub">Gewinn</div></div>' +
 '</div>' +
-'<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*2.5)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
-(t.konfidenz ? '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' : '') +
+'<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
+'<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
 richtungHtml +
 '</div>';
 return card;
 }
 
+// ── Update Kurse ──────────────────────────────────────────
 function updateKurse() {
 var btn = document.getElementById('updateBtn');
-btn.disabled = true;
-setText('updateBtnText', 'Aktualisiere ...');
-setHTML('updateBtnIcon', '<div class="spinner-sm"></div>');
+btn.disabled=true;
+setText('updateBtnText','Aktualisiere ...');
+setHTML('updateBtnIcon','<div class="spinner-sm"></div>');
 clearError('trackingError');
 var frisch = loadPrognosen();
-var aktiv = frisch.filter(function(p) { return !p.abgeschlossen && daysDiff(p.scanDate) <= 8; });
+var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
 if (!aktiv.length) {
-btn.disabled = false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','&#8635;');
-return;
+btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','&#8635;'); return;
 }
-Promise.all(aktiv.map(function(p) { return getPrice(p.ticker).then(function(price) { return {id:p.id,price:price}; }); }))
+Promise.all(aktiv.map(function(p){return getPrice(p.ticker).then(function(price){return{id:p.id,price:price};});}))
 .then(function(results) {
 var today = new Date().toISOString();
 var updated = frisch.map(function(p) {
-if (p.abgeschlossen || daysDiff(p.scanDate) > 8) return p;
-var res = results.find(function(r) { return r.id === p.id; });
-if (!res || !res.price) return p;
+if (p.abgeschlossen||daysDiff(p.scanDate)>4) return p;
+var res = results.find(function(r){return r.id===p.id;});
+if (!res||!res.price) return p;
 var verlauf = p.verlauf.slice();
-var lastEntry = verlauf[verlauf.length - 1];
-var isSameDay = verlauf.length > 1 && lastEntry && new Date(lastEntry.date).toDateString() === new Date().toDateString();
-if (verlauf.length <= 1) { verlauf.push({date:today,price:res.price}); }
-else if (isSameDay) { verlauf[verlauf.length-1] = {date:today,price:res.price}; }
-else { verlauf.push({date:today,price:res.price}); }
-return Object.assign({}, p, { verlauf:verlauf, abgeschlossen: daysDiff(p.scanDate) >= 7 });
+var last = verlauf[verlauf.length-1];
+var sameDay = verlauf.length>1&&last&&new Date(last.date).toDateString()===new Date().toDateString();
+if (verlauf.length<=1) verlauf.push({date:today,price:res.price});
+else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price};
+else verlauf.push({date:today,price:res.price});
+return Object.assign({},p,{verlauf:verlauf,abgeschlossen:daysDiff(p.scanDate)>=3});
 });
-savePrognosen(updated);
-renderTracking();
+savePrognosen(updated); renderTracking();
 })
-.catch(function(err) { showError('trackingError', err.message); })
-.finally(function() { btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','&#8635;'); });
+.catch(function(err){showError('trackingError',err.message);})
+.finally(function(){btn.disabled=false;setText('updateBtnText','Kurse jetzt aktualisieren');setText('updateBtnIcon','&#8635;');});
 }
 
+// ── Render Tracking ───────────────────────────────────────
 function renderTracking() {
 var fresh = loadPrognosen();
-var aktive = fresh.filter(function(p) { return !p.abgeschlossen && daysDiff(p.scanDate) <= 8; });
-var abgeschlossene = fresh.filter(function(p) { return p.abgeschlossen; });
+var aktive = fresh.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+var abgeschlossene = fresh.filter(function(p){return p.abgeschlossen;});
 updateTrackingCount();
 var aktiveSection = document.getElementById('aktiveSection');
 if (aktive.length) {
-var html = '<div class="section-label">Laufende Prognosen</div>';
+var html = '<div class="section-label">Laufende Signal-Prognosen</div>';
 aktive.forEach(function(p) {
-var sym = p.currency === 'EUR' ? 'EUR ' : 'USD ';
-var rate = p.currency !== 'EUR' ? (p.eurRate || eurRate) : null;
-var aktuell = p.verlauf.length > 0 ? p.verlauf[p.verlauf.length-1].price : null;
-var aktPct = (aktuell && p.startkurs) ? ((aktuell - p.startkurs) / p.startkurs * 100) : null;
-var tageNoch = Math.max(0, 7 - daysDiff(p.scanDate));
-var fortschritt = Math.min(100, (daysDiff(p.scanDate)/7)*100);
-var isUp = aktPct !== null && aktPct >= 0;
-var pctColor = isUp ? 'var(--green)' : 'var(--red)';
+var sym = p.currency==='EUR'?'EUR ':'USD ';
+var rate = p.currency!=='EUR'?(p.eurRate||eurRate):null;
+var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
+var aktPct = (aktuell&&p.startkurs)?((aktuell-p.startkurs)/p.startkurs*100):null;
+var tageNoch = Math.max(0,3-daysDiff(p.scanDate));
+var fortschritt = Math.min(100,(daysDiff(p.scanDate)/3)*100);
+var isUp = aktPct!==null&&aktPct>=0;
+var pctColor = isUp?'var(--green)':'var(--red)';
 html += '<div class="tracking-card">' +
 '<div class="tracking-header">' +
-'<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span class="tracking-ticker">'+p.ticker+'</span><span class="tracking-name">'+p.name+'</span></div><div class="tracking-date">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
+'<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span></div>' +
+'<div style="font-size:10px;color:var(--text3)">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
 '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
 '</div>' +
 '<div class="kurs-grid">' +
-kgCell('Start', fmt(p.startkurs,sym), fmtEur(p.startkurs,rate,p.currency), 'var(--text)') +
-kgCell('Aktuell', fmt(aktuell,sym), fmtEur(aktuell,rate,p.currency), pctColor) +
-kgCell('Ziel', fmt(p.zielkurs,sym), fmtEur(p.zielkurs,rate,p.currency), 'var(--accent)') +
-kgCell('Prognose', '+'+p.anstiegProzent.toFixed(1)+'%', null, 'var(--accent)') +
+kgCell('Start',fmt(p.startkurs,sym),fmtEur(p.startkurs,rate,p.currency),'var(--text)') +
+kgCell('Aktuell',fmt(aktuell,sym),fmtEur(aktuell,rate,p.currency),pctColor) +
+kgCell('Ziel',fmt(p.zielkurs,sym),fmtEur(p.zielkurs,rate,p.currency),'var(--accent)') +
+kgCell('Prognose','+'+(p.anstiegProzent||0).toFixed(1)+'%',null,'var(--accent)') +
 '</div>' +
-'<div class="progress-bar"><span style="font-size:9px;color:var(--text3);white-space:nowrap">7 Tage</span><div class="pb-track"><div class="pb-fill" style="width:'+fortschritt+'%"></div></div><span style="font-size:9px;color:var(--text3)">Tag '+Math.min(7,daysDiff(p.scanDate))+'</span></div>' +
-(aktPct!==null?'<div class="tracking-status"><span style="color:'+pctColor+'">'+(isUp?'+':'')+aktPct.toFixed(2)+'%</span> von Ziel <span style="color:var(--accent)">+'+p.anstiegProzent.toFixed(1)+'%</span> - '+(aktPct>=p.anstiegProzent?'<span style="color:var(--green)">Ziel erreicht!</span>':'noch '+(p.anstiegProzent-aktPct).toFixed(1)+'% fehlen')+'</div>':'') +
+'<div class="progress-bar"><span style="font-size:9px;color:var(--text3);white-space:nowrap">3 Tage</span><div class="pb-track"><div class="pb-fill" style="width:'+fortschritt+'%"></div></div><span style="font-size:9px;color:var(--text3)">Tag '+Math.min(3,daysDiff(p.scanDate))+'</span></div>' +
+(aktPct!==null?'<div class="tracking-status"><span style="color:'+pctColor+'">'+(isUp?'+':'')+aktPct.toFixed(2)+'%</span> von Ziel <span style="color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</span> - '+(aktPct>=(p.anstiegProzent||0)?'<span style="color:var(--green)">Ziel erreicht!</span>':'noch '+((p.anstiegProzent||0)-aktPct).toFixed(1)+'% fehlen')+'</div>':'') +
 '</div>';
 });
 aktiveSection.innerHTML = html;
@@ -529,8 +676,8 @@ aktiveSection.innerHTML = html;
 var ausSection = document.getElementById('auswertungSection');
 if (abgeschlossene.length) {
 var treffer = abgeschlossene.filter(function(p) {
-var aktuell = p.verlauf.length > 0 ? p.verlauf[p.verlauf.length-1].price : null;
-return aktuell && p.startkurs && ((aktuell-p.startkurs)/p.startkurs*100) >= p.anstiegProzent*0.8;
+var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
+return aktuell&&p.startkurs&&((aktuell-p.startkurs)/p.startkurs*100)>=(p.anstiegProzent||0)*0.8;
 }).length;
 var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung</div>' +
 '<div class="summary-grid">' +
@@ -539,99 +686,101 @@ var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung</di
 '<div><div style="font-size:24px;font-weight:500;color:var(--accent)">'+Math.round(safeDiv(treffer,abgeschlossene.length)*100)+'%</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Trefferquote</div></div>' +
 '</div>';
 abgeschlossene.slice(0,15).forEach(function(p) {
-var aktuell = p.verlauf.length > 0 ? p.verlauf[p.verlauf.length-1].price : null;
-var endPct = (aktuell && p.startkurs) ? ((aktuell-p.startkurs)/p.startkurs*100) : null;
-var hit = endPct !== null && endPct >= p.anstiegProzent*0.8;
+var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
+var endPct = (aktuell&&p.startkurs)?((aktuell-p.startkurs)/p.startkurs*100):null;
+var hit = endPct!==null&&endPct>=(p.anstiegProzent||0)*0.8;
 var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
 ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
 '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
-'<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+p.anstiegProzent.toFixed(1)+'%</div></div>' +
+'<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div></div>' +
 '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Ergebnis</div><div style="font-size:16px;font-weight:500;color:'+endColor+'">'+(endPct!=null?(endPct>=0?'+':'')+endPct.toFixed(1)+'%':'--')+'</div></div>' +
-'<div style="font-size:18px">'+(hit?'OK':'--')+'</div></div>';
+'<div style="font-size:16px">'+(hit?'OK':'--')+'</div></div>';
 });
 ausSection.innerHTML = ausHtml;
 } else { ausSection.innerHTML = ''; }
 
-if (!aktive.length && !abgeschlossene.length) {
-aktiveSection.innerHTML = '<div class="empty-state">Noch keine Prognosen.<br>Starte einen Scan.</div>';
+if (!aktive.length&&!abgeschlossene.length) {
+aktiveSection.innerHTML='<div class="empty-state">Noch keine Prognosen.<br>Starte einen Scan.</div>';
 }
 }
 
-function kgCell(label, value, eur, color) {
+function kgCell(label,value,eur,color) {
 return '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">'+label+'</div><div style="font-size:11px;font-weight:500;color:'+color+'">'+value+'</div>'+(eur?'<div style="font-size:9px;color:var(--text3)">('+eur+')</div>':'')+'</div>';
 }
 
 function updateTrackingCount() {
-var aktive = loadPrognosen().filter(function(p) { return !p.abgeschlossen && daysDiff(p.scanDate) <= 8; });
-setText('trackingCount', aktive.length > 0 ? '('+aktive.length+')' : '');
+var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+setText('trackingCount',aktive.length>0?'('+aktive.length+')':'');
 }
 
 function resetDaten() {
 if (!confirm('Alle gespeicherten Prognosen wirklich loeschen?')) return;
-['markttipps_prognosen_v1','markttipps_prognosen_v2','markttipps_prognosen_v3','markttipps_prognosen_v4',STORE_PROGNOSEN].forEach(function(k) { localStorage.removeItem(k); });
+['markttipps_prognosen_v1','markttipps_prognosen_v2','markttipps_prognosen_v3','markttipps_prognosen_v4',STORE_PROGNOSEN].forEach(function(k){localStorage.removeItem(k);});
 savePrognosen([]);
 updateTrackingCount();
 renderTracking();
 }
 
+// ── Politiker Trades ──────────────────────────────────────
 function renderPolitikerTrades(trades) {
 var cont = document.getElementById('politikerContent');
-if (!cont || !trades) return;
+if (!cont||!trades) return;
 cont.innerHTML = trades.map(function(t) {
-var isKauf = t.aktion === 'Kauf';
+var isKauf = t.aktion==='Kauf';
 return '<div class="trade-card">' +
 '<div class="trade-header">' +
-'<span class="trade-ticker">'+(t.ticker||'?')+'</span>' +
-'<span class="trade-name">'+(t.name||'')+'</span>' +
-'<span class="trade-action '+(isKauf?'kauf':'verk')+'">'+(t.aktion||'?')+'</span>' +
+'<span style="font-size:15px;font-weight:500;color:var(--accent)">'+esc(t.ticker||'?')+'</span>' +
+'<span style="font-family:var(--serif);font-size:12px;font-style:italic;color:var(--text2)">'+esc(t.name||'')+'</span>' +
+'<span class="trade-action '+(isKauf?'kauf':'verk')+'">'+esc(t.aktion||'?')+'</span>' +
 '</div>' +
-'<div class="trade-meta">'+esc(t.politiker||'')+' - '+esc(t.betrag||'')+' - '+esc(t.datum||'')+'</div>' +
-'<div class="trade-relevanz">'+esc(t.relevanz||'')+'</div>' +
+'<div style="font-size:11px;color:var(--orange);margin-bottom:4px">'+esc(t.politiker||'')+' - '+esc(t.betrag||'')+' - '+esc(t.datum||'')+'</div>' +
+'<div style="font-size:11px;color:var(--text2);line-height:1.6">'+esc(t.relevanz||'')+'</div>' +
 '</div>';
 }).join('');
 }
 
 function loadPolitikerTrades() {
 var btn = document.getElementById('politikerBtn');
-btn.disabled = true;
-setText('politikerBtnText', 'Trades werden geladen ...');
-setHTML('politikerBtnIcon', '<div class="spinner-sm"></div>');
+btn.disabled=true;
+setText('politikerBtnText','Trades werden geladen ...');
+setHTML('politikerBtnIcon','<div class="spinner-sm"></div>');
 clearError('politikerError');
-var today = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
-var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades der letzten 30 Tage von Trump/Familie und Nancy/Paul Pelosi auf capitoltrades.com oder quiverquant.com. Nur Trades aus den letzten 30 Tagen. Nur JSON:\n{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","relevanz":"1 Satz warum relevant"}]}\nNur JSON, deutsch.';
-callClaude(prompt, 800)
+var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades der letzten 30 Tage von Trump/Familie und Nancy/Paul Pelosi auf capitoltrades.com oder quiverquant.com. Nur Trades der letzten 30 Tage. Nur JSON:\n{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","relevanz":"1 Satz warum relevant"}]}\nNur JSON, deutsch.';
+callClaude(prompt,800)
 .then(function(raw) {
 var result = tryParse(raw);
-if (!result || !result.trades || !result.trades.length) throw new Error('Keine Trades gefunden');
-localStorage.setItem(STORE_POLITIKER, JSON.stringify(result));
-localStorage.setItem(STORE_POLITICIAN_DATE, new Date().toDateString());
+if (!result||!result.trades||!result.trades.length) throw new Error('Keine Trades gefunden');
+localStorage.setItem(STORE_POLITIKER,JSON.stringify(result));
+localStorage.setItem(STORE_POLITICIAN_DATE,new Date().toDateString());
 renderPolitikerTrades(result.trades);
 })
-.catch(function(err) { showError('politikerError', err.message); })
-.finally(function() { btn.disabled=false; setText('politikerBtnText','Trades neu laden'); setText('politikerBtnIcon','&#8635;'); });
+.catch(function(err){showError('politikerError',err.message);})
+.finally(function(){btn.disabled=false;setText('politikerBtnText','Trades neu laden');setText('politikerBtnIcon','&#8635;');});
 }
 
 function autoCheckPolitiker() {
 var lastDate = localStorage.getItem(STORE_POLITICIAN_DATE);
-if (lastDate === new Date().toDateString()) {
+if (lastDate===new Date().toDateString()) {
 var saved = localStorage.getItem(STORE_POLITIKER);
 if (saved) { try { var d=JSON.parse(saved); if(d.trades&&d.trades.length) document.getElementById('politikerBadge').classList.add('visible'); } catch(e) {} }
 return;
 }
-var today = new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'});
+var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
 var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades der letzten 30 Tage von Trump/Familie und Pelosi. Nur JSON: {"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","relevanz":"Warum relevant"}]} Nur JSON, deutsch.';
-callClaude(prompt, 800)
+callClaude(prompt,800)
 .then(function(raw) {
 var result = tryParse(raw);
-if (result && result.trades && result.trades.length) {
-localStorage.setItem(STORE_POLITIKER, JSON.stringify(result));
-localStorage.setItem(STORE_POLITICIAN_DATE, new Date().toDateString());
+if (result&&result.trades&&result.trades.length) {
+localStorage.setItem(STORE_POLITIKER,JSON.stringify(result));
+localStorage.setItem(STORE_POLITICIAN_DATE,new Date().toDateString());
 document.getElementById('politikerBadge').classList.add('visible');
 }
 })
-.catch(function(e) {});
+.catch(function(e){});
 }
 
+// ── Init ──────────────────────────────────────────────────
 updateTrackingCount();
 autoCheckPolitiker();
 </script>
