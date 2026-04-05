@@ -344,7 +344,7 @@ score += 1;
 }
 }
 
-return { score: score, signals: signals, passed: score >= 2 };
+return { score: score, signals: signals, passed: score >= 3 };
 }
 
 // Hebel-Regel nach Konfidenz (keine Raterei mehr)
@@ -471,7 +471,7 @@ these: erkl.these || 'Technisches Signal erkannt.',
 haupttreiber: erkl.haupttreiber || katalysator,
 insiderSignal: erkl.insiderSignal || false,
 insiderInfo: erkl.insiderInfo || '',
-richtung: m.rsi && m.rsi < 50 ? 'long' : 'long',
+richtung: m.rsi && m.rsi > 65 ? 'short' : 'long',
 hebelEmpfehlung: hebel,
 hebelBegruendung: 'Konfidenz '+konfidenz+'% -> '+hebel+'x gemaess Regelwerk',
 shortMoeglich: m.rsi && m.rsi > 60,
