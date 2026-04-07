@@ -350,9 +350,10 @@ return { score: score, signals: signals, passed: score >= 3 };
 // Hebel-Regel nach Konfidenz (keine Raterei mehr)
 function calcHebel(konfidenz, rsi) {
 if (!konfidenz || konfidenz < 55) return 1;
-if (konfidenz < 65) return 2;
-if (konfidenz < 75) return 2;
-return 3;
+if (konfidenz < 60) return 2;
+if (konfidenz < 68) return 3;
+if (konfidenz < 76) return 4;
+return 5;
 }
 
 // ── Claude via Worker ─────────────────────────────────────
@@ -425,7 +426,16 @@ setText('statusMsg','Schritt 2/3: Signal-Filter laueft (RSI, Volumen, Momentum) 
 // Schritt 2: Technische Metriken fuer alle Kandidaten laden
 var kandidaten = result.kandidaten.slice(0, 10);
 return Promise.all(kandidaten.map(function(ticker) {
-return getMetrics(ticker).then(function(m) { return {ticker:ticker, metrics:m, signal:scoreSignal(m)}; });
+return getMetrics(ticker).then(function(m) {
+// Fallback: wenn metrics kein Preis hat, Quote direkt holen
+if (m && !m.price) {
+return getPrice(ticker).then(function(price) {
+if (price) m.price = price;
+return {ticker:ticker, metrics:m, signal:scoreSignal(m)};
+});
+}
+return {ticker:ticker, metrics:m, signal:scoreSignal(m)};
+});
 })).then(function(results) {
 // Vorfilter: nur Aktien mit score >= 2
 var gefiltert = results.filter(function(r) { return r.signal.passed; });
