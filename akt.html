@@ -146,7 +146,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(–borde
 </div>
 <div class="header-right">
 <div id="lastScan">Noch kein Scan</div>
-<div style="color:var(--green)">&#9679; Finnhub aktiv</div>
+<div style="color:var(--green)">● Finnhub aktiv</div>
 <div id="rateBadge"></div>
 </div>
 </header>
@@ -162,13 +162,13 @@ Trades <span class="badge" id="politikerBadge">NEU</span>
 <!-- SCAN TAB -->
 
 <div id="scanTab">
-<div class="disclaimer">&#9888; Keine Anlageberatung. Signal-System + KI-Analyse. Verluste moeglich.</div>
+<div class="disclaimer">⚠ Keine Anlageberatung. Signal-System + KI-Analyse. Verluste moeglich.</div>
 <button class="scan-btn" id="scanBtn" onclick="startScan()">
 <div>
 <div class="scan-btn-label">Signal-Filter + KI-Analyse + Echtzeit</div>
 <div class="scan-btn-title" id="scanBtnTitle">3-Tage-Signale suchen</div>
 </div>
-<div id="scanBtnIcon" class="scan-btn-arrow">&#8594;</div>
+<div id="scanBtnIcon" class="scan-btn-arrow">→</div>
 </button>
 <div id="statusMsg" class="status-msg" style="display:none"></div>
 <div id="errorBox" class="error-box"></div>
@@ -183,7 +183,7 @@ Trades <span class="badge" id="politikerBadge">NEU</span>
 <div id="trackingTab" style="display:none">
 <button class="update-btn" id="updateBtn" onclick="updateKurse()">
 <span id="updateBtnText">Kurse jetzt aktualisieren</span>
-<span id="updateBtnIcon">&#8635;</span>
+<span id="updateBtnIcon">↻</span>
 </button>
 <button class="reset-btn" onclick="resetDaten()">Alle gespeicherten Prognosen loeschen</button>
 <div id="trackingError" class="error-box"></div>
@@ -199,14 +199,14 @@ Trades <span class="badge" id="politikerBadge">NEU</span>
 <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">Trump/Familie &amp; Nancy Pelosi gemaess STOCK Act</div>
 <button class="update-btn" id="politikerBtn" onclick="loadPolitikerTrades()" style="margin-bottom:12px;">
 <span id="politikerBtnText">Aktuelle Trades laden</span>
-<span id="politikerBtnIcon">&#8594;</span>
+<span id="politikerBtnIcon">→</span>
 </button>
 <div id="politikerError" class="error-box"></div>
 <div id="politikerContent"></div>
 </div>
 </div>
 
-<footer>V2.2 &middot; Signal-Filter (RSI/Volumen/Momentum) &middot; KI-Erklaerung &middot; Finnhub Echtzeit &middot; Keine Gewaehr</footer>
+<footer>V2.2 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -393,17 +393,19 @@ var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',ye
 var in3 = new Date(Date.now()+3*86400000).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
 
 // Schritt 1: KI recherchiert Katalysatoren und schlaegt Kandidaten vor
-var promptSchritt1 = 'Heute: '+today+'. Analysiere die aktuellen Nachrichten der letzten 24-48 Stunden.' +
-'\n\nIdentifiziere den staerksten Markt-Katalysator der in den naechsten 3 Tagen (bis '+in3+') wirkt.' +
-'\nSchlage 8-10 konkrete US-Ticker vor (NYSE/NASDAQ) die am direktesten davon profitieren.' +
-'\nBeruecksichtige: Big Player UND Zulieferer UND Mid-Caps. Nicht nur die bekannten Namen.' +
-'\nBerücksichtige auch: Geopolitik, Zinsen/Fed, Earnings diese Woche, Energie, Trump/Pelosi-Trades.' +
-'\n\nAntworte NUR mit JSON:\n{"eurUsdRate":0.92,"katalysator":"Konkreter Ausloeser.","kontext":"1 Satz Marktlage.","kandidaten":["AAPL","NVDA","TICK1","TICK2","TICK3","TICK4","TICK5","TICK6"]}\nNur JSON, deutsch.';
+var promptSchritt1 = 'Heute: '+today+'. Aktienanalyst. Recherchiere Nachrichten der letzten 48 Stunden.' +
+' Identifiziere den staerksten Katalysator bis '+in3+'.' +
+' Schlage 8 US-Ticker vor die direkt profitieren (Big Player + Zulieferer + Mid-Caps).' +
+' Geopolitik, Zinsen, Earnings, Energie, Trump/Pelosi-Trades beruecksichtigen.' +
+' Antworte NUR mit diesem JSON-Format (keine anderen Zeichen):\n' +
+'{"eurUsdRate":0.92,"katalysator":"Treiber in 1 Satz","kontext":"Marktlage in 1 Satz","kandidaten":["TICK1","TICK2","TICK3","TICK4","TICK5","TICK6","TICK7","TICK8"]}\n' +
+'Ersetze TICK1-TICK8 mit echten NYSE/NASDAQ Tickern. Nur JSON, deutsch.';
 
 callClaude(promptSchritt1, 600)
 .then(function(raw) {
 var result = tryParse(raw);
-if (!result || !result.kandidaten || !result.kandidaten.length) throw new Error('Keine Kandidaten erhalten');
+if (!result) throw new Error('JSON Parse fehlgeschlagen: ' + raw.slice(0, 80));
+if (!result.kandidaten || !result.kandidaten.length) throw new Error('Keine Kandidaten: ' + JSON.stringify(result).slice(0, 80));
 
 eurRate = result.eurUsdRate || 0.92;
 if (result.eurUsdRate) setText('rateBadge','1 USD = '+eurRate.toFixed(4)+' EUR');
@@ -511,7 +513,7 @@ showError('errorBox', err.message||'Unbekannter Fehler');
 .finally(function() {
 btn.disabled=false;
 setText('scanBtnTitle','3-Tage-Signale suchen');
-setText('scanBtnIcon','&#8594;');
+setText('scanBtnIcon','→');
 });
 }
 
@@ -592,7 +594,7 @@ signalHtml +
 metricsHtml +
 '<div class="kurs-block">' +
 '<div><div class="kc-label">Startkurs</div><div class="kc-value" style="color:var(--text)">'+fmt(start,sym)+'</div>'+(eurStart?'<div class="kc-eur">('+eurStart+')</div>':'')+'<div class="kc-sub live">Echtzeit</div></div>' +
-'<div class="kc-arrow">&#8594;</div>' +
+'<div class="kc-arrow">→</div>' +
 '<div class="kc-right"><div class="kc-label">Zielkurs</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub">in 3 Tagen</div></div>' +
 '<div class="kc-divider"><div class="kc-label">+/Aktie</div><div class="kc-value" style="color:var(--green)">'+fmt(gewinn,sym)+'</div>'+(eurGewinn?'<div class="kc-eur">('+eurGewinn+')</div>':'')+'<div class="kc-sub">Gewinn</div></div>' +
 '</div>' +
@@ -613,7 +615,7 @@ clearError('trackingError');
 var frisch = loadPrognosen();
 var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
 if (!aktiv.length) {
-btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','&#8635;'); return;
+btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','↻'); return;
 }
 Promise.all(aktiv.map(function(p){return getPrice(p.ticker).then(function(price){return{id:p.id,price:price};});}))
 .then(function(results) {
@@ -633,7 +635,7 @@ return Object.assign({},p,{verlauf:verlauf,abgeschlossen:daysDiff(p.scanDate)>=3
 savePrognosen(updated); renderTracking();
 })
 .catch(function(err){showError('trackingError',err.message);})
-.finally(function(){btn.disabled=false;setText('updateBtnText','Kurse jetzt aktualisieren');setText('updateBtnIcon','&#8635;');});
+.finally(function(){btn.disabled=false;setText('updateBtnText','Kurse jetzt aktualisieren');setText('updateBtnIcon','↻');});
 }
 
 // ── Render Tracking ───────────────────────────────────────
@@ -756,7 +758,7 @@ localStorage.setItem(STORE_POLITICIAN_DATE,new Date().toDateString());
 renderPolitikerTrades(result.trades);
 })
 .catch(function(err){showError('politikerError',err.message);})
-.finally(function(){btn.disabled=false;setText('politikerBtnText','Trades neu laden');setText('politikerBtnIcon','&#8635;');});
+.finally(function(){btn.disabled=false;setText('politikerBtnText','Trades neu laden');setText('politikerBtnIcon','↻');});
 }
 
 function autoCheckPolitiker() {
