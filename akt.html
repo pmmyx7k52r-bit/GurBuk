@@ -217,6 +217,8 @@ var STORE_POLITICIAN_DATE = 'markttipps_politiker_date';
 var eurRate = null;
 var prognosen = loadPrognosen();
 var metricsCache = {};
+var gToday = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+var gIn3 = new Date(Date.now()+3*86400000).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
 var priceCache = {};
 
 // ── Helpers ──────────────────────────────────────────────
@@ -397,7 +399,7 @@ var in3 = new Date(Date.now()+3*86400000).toLocaleDateString('de-DE',{day:'2-dig
 var promptSchritt1 = 'Heute: '+today+'. Aktienanalyst. Recherchiere Nachrichten der letzten 48 Stunden.' +
 ' Identifiziere den staerksten Katalysator bis '+in3+'.' +
 ' Schlage 8 US-Ticker vor die direkt profitieren (Big Player + Zulieferer + Mid-Caps).' +
-' Geopolitik, Zinsen, Earnings, Energie, Trump/Pelosi-Trades beruecksichtigen.' +
+' Geopolitik, Zinsen, Earnings, Energie, Trump/Pelosi-Trades beruecksichtigen. WICHTIG: Waehle Aktien aus VERSCHIEDENEN Sektoren (nicht 2x Energie, nicht 2x Tech etc.). Jeder Tipp muss einen anderen Hauptsektor haben.' +
 ' Antworte NUR mit diesem JSON-Format (keine anderen Zeichen):\n' +
 '{"eurUsdRate":0.92,"katalysator":"Treiber in 1 Satz","kontext":"Marktlage in 1 Satz","kandidaten":["TICK1","TICK2","TICK3","TICK4","TICK5","TICK6","TICK7","TICK8"]}\n' +
 'Ersetze TICK1-TICK8 mit echten NYSE/NASDAQ Tickern. Nur JSON, deutsch.';
@@ -609,9 +611,9 @@ signalHtml +
 '</div>' +
 metricsHtml +
 '<div class="kurs-block">' +
-'<div><div class="kc-label">Startkurs</div><div class="kc-value" style="color:var(--text)">'+fmt(start,sym)+'</div>'+(eurStart?'<div class="kc-eur">('+eurStart+')</div>':'')+'<div class="kc-sub live">Echtzeit</div></div>' +
+'<div><div class="kc-label">Startkurs</div><div class="kc-value" style="color:var(--text)">'+fmt(start,sym)+'</div>'+(eurStart?'<div class="kc-eur">('+eurStart+')</div>':'')+'<div class="kc-sub live">Kaufen bis: '+gToday+'</div></div>' +
 '<div class="kc-arrow">→</div>' +
-'<div class="kc-right"><div class="kc-label">Zielkurs</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub">in 3 Tagen</div></div>' +
+'<div class="kc-right"><div class="kc-label">Zielkurs</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub" style="color:var(--red)">Verkaufen bis '+gIn3+'</div></div>' +
 '<div class="kc-divider"><div class="kc-label">+/Aktie</div><div class="kc-value" style="color:var(--green)">'+fmt(gewinn,sym)+'</div>'+(eurGewinn?'<div class="kc-eur">('+eurGewinn+')</div>':'')+'<div class="kc-sub">Gewinn</div></div>' +
 '</div>' +
 '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
@@ -712,7 +714,14 @@ ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94
 '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
 '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div></div>' +
 '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Ergebnis</div><div style="font-size:16px;font-weight:500;color:'+endColor+'">'+(endPct!=null?(endPct>=0?'+':'')+endPct.toFixed(1)+'%':'--')+'</div></div>' +
-'<div style="font-size:16px">'+(hit?'OK':'--')+'</div></div>';
+'<div style="font-size:16px;color:'+(hit?'var(--green)':'var(--red)')+'">'+(hit?'✓':'✗')+'</div>' +
+'</div>' +
+'<div style="font-size:10px;color:var(--text3);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:6px;">' +
+'Start: '+fmt(p.startkurs, (p.currency==='EUR'?'€':'$'))+' → ' +
+'Aktuell: <span style="color:'+(endColor)+'">'+(aktuell?fmt(aktuell,(p.currency==='EUR'?'€':'$')):'--')+'</span>' +
+(endPct!==null?' ('+( endPct>=0?'+':'')+endPct.toFixed(2)+'%)':'') +
+' · Ziel war: +' + (p.anstiegProzent||0).toFixed(1)+'%' +
+'</div>';
 });
 ausSection.innerHTML = ausHtml;
 } else { ausSection.innerHTML = ''; }
