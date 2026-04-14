@@ -479,7 +479,7 @@ ticker: item.ticker,
 name: m.name || item.ticker,
 waehrung: m.currency || 'USD',
 startkurs: m.price,
-anstiegProzent: Math.min(20, Math.max(3, item.signal.score * 2.5)),
+anstiegProzent: Math.min(20, Math.max(4, item.signal.score * 3.0)),
 konfidenz: konfidenz,
 these: erkl.these || 'Technisches Signal erkannt.',
 haupttreiber: erkl.haupttreiber || katalysator,
@@ -499,6 +499,16 @@ signals: item.signal.signals,
 });
 })
 .then(function(enriched) {
+// Nur Tipps mit mindestens 4% Potenzial anzeigen
+enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4; });
+if (!enriched.length) {
+hideEl('statusMsg');
+showError('errorBox', 'Keine Aktien mit mindestens 4% Potenzial gefunden. Bitte erneut scannen.');
+document.getElementById('scanBtn').disabled = false;
+setText('scanBtnTitle', 'Erneut scannen');
+setText('scanBtnIcon', '→');
+return;
+}
 hideEl('statusMsg');
 var label = document.getElementById('tippsLabel');
 label.textContent = enriched.length + ' Signal-Aktien · ' + today + ' bis ' + in3;
