@@ -460,8 +460,10 @@ return t.ticker + ': RSI='+m.rsi+', Volumen='+m.volumeRatio+'x, Momentum='+m.mom
 
 var promptSchritt3 = 'Heute: '+today+'. Katalysator: '+katalysator+
 '\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest:\n'+metricsInfo+
-'\n\nErklaere pro Aktie in 1 Satz WARUM sie vom Katalysator profitiert. Gib ausserdem WKN und ISIN an.' +
-'\nNur JSON:\n{"tipps":[{"ticker":"X","these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
+'\n\nErklaere pro Aktie in 1 Satz WARUM sie vom Katalysator profitiert.' +
+'\nSchaetze realistisch wie viel Prozent Kursanstieg in 3 Tagen moeglich ist (anstiegProzent: zwischen 4 und 25, basierend auf Momentum, Volumen und Katalysator-Staerke).' +
+'\nGib auch WKN und ISIN an.' +
+'\nNur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":8.5,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
 
 return callClaude(promptSchritt3, 500).then(function(raw2) {
 var erklaerung = tryParse(raw2);
@@ -479,7 +481,7 @@ ticker: item.ticker,
 name: m.name || item.ticker,
 waehrung: m.currency || 'USD',
 startkurs: m.price,
-anstiegProzent: Math.min(20, Math.max(4, item.signal.score * 3.0)),
+anstiegProzent: Math.min(25, Math.max(4, erkl.anstiegProzent || (item.signal.score * 4.0))),
 konfidenz: konfidenz,
 these: erkl.these || 'Technisches Signal erkannt.',
 haupttreiber: erkl.haupttreiber || katalysator,
