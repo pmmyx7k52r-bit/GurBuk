@@ -216,6 +216,19 @@ var gToday = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit
 var gIn3 = new Date(Date.now()+3*86400000).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
 var priceCache = {};
 
+// ── Global Error Handler ─────────────────────────────────
+window.onerror = function(msg, src, line) {
+  var box = document.getElementById('errorBox');
+  if (box) { box.textContent = 'JS Fehler: ' + msg + ' (Z.' + line + ')'; box.classList.add('visible'); }
+  var btn = document.getElementById('scanBtn');
+  if (btn) btn.disabled = false;
+  var st = document.getElementById('scanBtnTitle');
+  if (st) st.textContent = '3-Tage-Signale suchen';
+  var ic = document.getElementById('scanBtnIcon');
+  if (ic) ic.textContent = '→';
+  return false;
+};
+
 // ── Helpers ──────────────────────────────────────────────
 function esc(str) {
   if (str == null) return '';
@@ -355,7 +368,11 @@ function calcHebel(konfidenz, rsi) {
 
 // ── Claude via Worker ─────────────────────────────────────
 function callClaude(prompt, maxTokens) {
+  // 90 Sekunden Timeout
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 90000);
   return fetch(WORKER, {
+    signal: controller.signal,
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
@@ -365,7 +382,7 @@ function callClaude(prompt, maxTokens) {
       messages: [{role:'user',content:prompt}]
     })
   })
-  .then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(function(r) { clearTimeout(timeoutId); if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(function(d) {
     if (d.error) throw new Error(JSON.stringify(d.error).slice(0,120));
     var content = Array.isArray(d.content) ? d.content : [];
@@ -616,6 +633,17 @@ function buildTippCard(t, i) {
   var eurZiel = fmtEur(ziel,rate,t.waehrung);
   var eurGewinn = fmtEur(gewinn,rate,t.waehrung);
 
+  // Brief/Geld Berechnungen (vor innerHTML)
+  var briefAufschlag = t.briefAufschlagProzent || 0.2;
+  var briefPreis = start ? start * (1 + briefAufschlag/100) : null;
+  var eurBrief = fmtEur(briefPreis, rate, t.waehrung);
+  var nettoRendite = ziel && briefPreis ? ((ziel - briefPreis) / briefPreis * 100) : pct;
+  var nettoGewinn = ziel && briefPreis ? ziel - briefPreis : gewinn;
+  var eurNettoGewinn = fmtEur(nettoGewinn, rate, t.waehrung);
+  var kaufBisDatum = new Date(Date.now() + ((t.kaufFensterTage||1)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  var verkaufBisDatum = new Date(Date.now() + ((t.verkaufNachTagen||3)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  var kaufHinweis = t.kaufFensterTage === 1 ? 'Heute kaufen!' : 'Kaufen bis '+kaufBisDatum;
+
   card.innerHTML = '<div class="card-body">' +
     signalHtml +
     '<div class="card-header">' +
@@ -637,19 +665,6 @@ function buildTippCard(t, i) {
     '</div>' +
     metricsHtml +
     '<div class="kurs-block">' +
-      // Brief-Preis (Kaufkurs inkl. Spread)
-      var briefAufschlag = t.briefAufschlagProzent || 0.2;
-      var briefPreis = start ? start * (1 + briefAufschlag/100) : null;
-      var eurBrief = fmtEur(briefPreis, rate, t.waehrung);
-      // Netto-Rendite nach Spread
-      var nettoRendite = ziel && briefPreis ? ((ziel - briefPreis) / briefPreis * 100) : pct;
-      var nettoGewinn = ziel && briefPreis ? ziel - briefPreis : gewinn;
-      var eurNettoGewinn = fmtEur(nettoGewinn, rate, t.waehrung);
-      // Dynamisches Kaufdatum
-      var kaufBisDatum = new Date(Date.now() + ((t.kaufFensterTage||1)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-      var verkaufBisDatum = new Date(Date.now() + ((t.verkaufNachTagen||3)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-      var kaufHinweis = t.kaufFensterTage === 1 ? 'Heute kaufen!' : 'Kaufen bis '+kaufBisDatum;
-
       '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value" style="color:var(--text)">'+fmt(briefPreis,sym)+'</div>'+(eurBrief?'<div class="kc-eur">('+eurBrief+')</div>':'')+'<div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
       '<div class="kc-arrow">→</div>' +
       '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
