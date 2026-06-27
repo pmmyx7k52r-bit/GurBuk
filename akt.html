@@ -470,7 +470,7 @@ function callClaude(prompt, maxTokens) {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: maxTokens || 800,
       tools: [{type:'web_search_20250305',name:'web_search'}],
       messages: [{role:'user',content:prompt}]
