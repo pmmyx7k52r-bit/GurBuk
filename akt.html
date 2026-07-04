@@ -453,11 +453,11 @@ function scoreSignal(m) {
 
 // Hebel-Regel nach Konfidenz - Minimum 3x
 function calcHebel(konfidenz, rsi) {
-  if (!konfidenz || konfidenz < 50) return 3;  // Minimum 3x
-  if (konfidenz < 60) return 3;
-  if (konfidenz < 68) return 4;
-  if (konfidenz < 76) return 5;
-  return 7;  // Hohe Konfidenz -> hoher Hebel
+  if (!konfidenz || konfidenz < 52) return 3;
+  if (konfidenz < 58) return 4;
+  if (konfidenz < 65) return 5;
+  if (konfidenz < 75) return 7;
+  return 10;
 }
 
 // ── Claude via Worker ─────────────────────────────────────
@@ -617,7 +617,7 @@ function startScan() {
           return top3.map(function(item) {
             var erkl = tipMap[item.ticker] || {};
             var m = item.metrics || {};
-            var konfidenz = Math.min(85, Math.max(50, 50 + item.signal.score * 8));
+            var konfidenz = Math.min(90, Math.max(50, 45 + item.signal.score * 12));
             var hebel = calcHebel(konfidenz, m.rsi);
             return {
               ticker: item.ticker,
