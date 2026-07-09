@@ -308,7 +308,13 @@ function getMetrics(ticker) {
   if (metricsCache[ticker]) return Promise.resolve(metricsCache[ticker]);
   return fetch(WORKER + '?ticker=' + ticker + '&type=metrics')
     .then(function(r) { return r.json(); })
-    .then(function(d) { metricsCache[ticker] = d; return d; })
+    .then(function(d) {
+      // Worker gibt c (current price) zurueck - in price mappen
+      if (d && d.c && d.c > 0) d.price = d.c;
+      if (d && d.change == null && d.c && d.pc) d.change = ((d.c - d.pc) / d.pc * 100);
+      metricsCache[ticker] = d;
+      return d;
+    })
     .catch(function() { return null; });
 }
 
