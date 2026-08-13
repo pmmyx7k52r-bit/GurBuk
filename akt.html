@@ -93,6 +93,9 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .hkb-label { font-size: 10px; color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
 .hkb-value { font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; }
 .hkb-eur { font-size: 14px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+.hkb-sublabel { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.hkb-arrow { font-size: 16px; color: var(--gold); align-self: center; }
+.hkb-gewinn { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(240,180,41,0.15); }
 .kv-satz { background: var(--bg3); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin-top: 10px; font-size: 13px; color: var(--text); line-height: 1.6; font-weight: 500; }
 .kc-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
 .kc-sub.live { color: var(--green); }
@@ -789,10 +792,16 @@ function buildTippCard(t, i) {
   // Gehebelter Verkaufskurs (Hebel-Produkt: Kursbewegung x Hebel)
   var hebel = t.hebelEmpfehlung || 3;
   var hebelBewegungProzent = pct * hebel;
-  var hebelZielpreis = briefPreis ? briefPreis * (1 + hebelBewegungProzent/100) : null;
+  // Simulierter Hebelprodukt-Preis (Knock-Out/Faktor-Zertifikat):
+  // Bezugsverhaeltnis ca. 1/hebel des Basiswerts als Naeherung fuer den Produktpreis
+  var hebelProduktEinstieg = briefPreis ? briefPreis / hebel : null;
+  var hebelZielpreis = hebelProduktEinstieg ? hebelProduktEinstieg * (1 + hebelBewegungProzent/100) : null;
+  var eurHebelEinstieg = fmtEur(hebelProduktEinstieg, rate, t.waehrung);
+  var hebelGewinnProSchein = hebelZielpreis && hebelProduktEinstieg ? hebelZielpreis - hebelProduktEinstieg : null;
+  var eurHebelGewinn = fmtEur(hebelGewinnProSchein, rate, t.waehrung);
   var eurHebelZiel = fmtEur(hebelZielpreis, rate, t.waehrung);
-  var kaufVerkaufSatz = (briefPreis && hebelZielpreis)
-    ? 'Kauf ' + hebel + 'x-Hebel mit ' + fmt(briefPreis, sym) + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + fmt(hebelZielpreis, sym)
+  var kaufVerkaufSatz = (hebelProduktEinstieg && hebelZielpreis)
+    ? 'Kauf ' + hebel + 'x-Hebel mit ' + fmt(hebelProduktEinstieg, sym) + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + fmt(hebelZielpreis, sym)
     : '';
 
   card.innerHTML = '<div class="card-body">' +
@@ -822,9 +831,21 @@ function buildTippCard(t, i) {
       '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmt(nettoGewinn,sym)+'</div>'+(eurNettoGewinn?'<div class="kc-eur-big">('+eurNettoGewinn+')</div>':'')+'<div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
     '</div>' +
     (hebelZielpreis ? '<div class="hebel-kurs-block">' +
-      '<div class="hkb-label">'+hebel+'x-HEBEL VERKAUFSKURS (bei +'+hebelBewegungProzent.toFixed(1)+'% Basiswert-Bewegung)</div>' +
-      '<div class="hkb-value">'+fmt(hebelZielpreis,sym)+'</div>' +
-      (eurHebelZiel?'<div class="hkb-eur">('+eurHebelZiel+')</div>':'') +
+      '<div class="hkb-label">'+hebel+'x-HEBELPRODUKT (bei +'+hebelBewegungProzent.toFixed(1)+'% Hebel-Bewegung)</div>' +
+      '<div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">' +
+        '<div>' +
+          '<div class="hkb-sublabel">Einstieg (Schein)</div>' +
+          '<div class="hkb-value">'+fmt(hebelProduktEinstieg,sym)+'</div>' +
+          (eurHebelEinstieg?'<div class="hkb-eur">('+eurHebelEinstieg+')</div>':'') +
+        '</div>' +
+        '<div class="hkb-arrow">→</div>' +
+        '<div>' +
+          '<div class="hkb-sublabel">Verkauf (Schein)</div>' +
+          '<div class="hkb-value" style="color:var(--green)">'+fmt(hebelZielpreis,sym)+'</div>' +
+          (eurHebelZiel?'<div class="hkb-eur">('+eurHebelZiel+')</div>':'') +
+        '</div>' +
+      '</div>' +
+      (hebelGewinnProSchein?'<div class="hkb-gewinn">Gewinn/Schein: +'+fmt(hebelGewinnProSchein,sym)+(eurHebelGewinn?' ('+eurHebelGewinn+')':'')+'</div>':'') +
     '</div>' : '') +
     (kaufVerkaufSatz ? '<div class="kv-satz">'+esc(kaufVerkaufSatz)+'</div>' : '') +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
