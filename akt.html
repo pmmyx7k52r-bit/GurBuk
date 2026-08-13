@@ -87,6 +87,13 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .kc-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
 .kc-value { font-size: 14px; font-weight: 500; }
 .kc-eur { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.kc-value-big { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+.kc-eur-big { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+.hebel-kurs-block { background: rgba(240,180,41,0.06); border: 1px solid rgba(240,180,41,0.25); border-radius: 8px; padding: 12px 14px; margin-top: 10px; text-align: center; }
+.hkb-label { font-size: 10px; color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.hkb-value { font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; }
+.hkb-eur { font-size: 14px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+.kv-satz { background: var(--bg3); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin-top: 10px; font-size: 13px; color: var(--text); line-height: 1.6; font-weight: 500; }
 .kc-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
 .kc-sub.live { color: var(--green); }
 .kc-right { text-align: right; }
@@ -457,10 +464,9 @@ function scoreSignal(m) {
   return { score: score, signals: signals, passed: score >= 3 };
 }
 
-// Hebel-Regel nach Konfidenz - Minimum 3x
+// Hebel-Regel nach Konfidenz - nur Smartbroker-kompatible Hebel (3, 5, 7, 10)
 function calcHebel(konfidenz, rsi) {
-  if (!konfidenz || konfidenz < 52) return 3;
-  if (konfidenz < 58) return 4;
+  if (!konfidenz || konfidenz < 55) return 3;
   if (konfidenz < 65) return 5;
   if (konfidenz < 75) return 7;
   return 10;
@@ -780,6 +786,15 @@ function buildTippCard(t, i) {
   var verkaufBisDatum = new Date(Date.now() + ((t.verkaufNachTagen||3)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   var kaufHinweis = t.kaufFensterTage === 1 ? 'Heute kaufen!' : 'Kaufen bis '+kaufBisDatum;
 
+  // Gehebelter Verkaufskurs (Hebel-Produkt: Kursbewegung x Hebel)
+  var hebel = t.hebelEmpfehlung || 3;
+  var hebelBewegungProzent = pct * hebel;
+  var hebelZielpreis = briefPreis ? briefPreis * (1 + hebelBewegungProzent/100) : null;
+  var eurHebelZiel = fmtEur(hebelZielpreis, rate, t.waehrung);
+  var kaufVerkaufSatz = (briefPreis && hebelZielpreis)
+    ? 'Kauf ' + hebel + 'x-Hebel mit ' + fmt(briefPreis, sym) + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + fmt(hebelZielpreis, sym)
+    : '';
+
   card.innerHTML = '<div class="card-body">' +
     signalHtml +
     '<div class="card-header">' +
@@ -801,11 +816,17 @@ function buildTippCard(t, i) {
     '</div>' +
     metricsHtml +
     '<div class="kurs-block">' +
-      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value" style="color:var(--text)">'+fmt(briefPreis,sym)+'</div>'+(eurBrief?'<div class="kc-eur">('+eurBrief+')</div>':'')+'<div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
+      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value-big" style="color:var(--text)">'+fmt(briefPreis,sym)+'</div>'+(eurBrief?'<div class="kc-eur-big">('+eurBrief+')</div>':'')+'<div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
       '<div class="kc-arrow">→</div>' +
-      '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
-      '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value" style="color:var(--green)">'+fmt(nettoGewinn,sym)+'</div>'+(eurNettoGewinn?'<div class="kc-eur">('+eurNettoGewinn+')</div>':'')+'<div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
+      '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value-big" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur-big">('+eurZiel+')</div>':'')+'<div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
+      '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmt(nettoGewinn,sym)+'</div>'+(eurNettoGewinn?'<div class="kc-eur-big">('+eurNettoGewinn+')</div>':'')+'<div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
     '</div>' +
+    (hebelZielpreis ? '<div class="hebel-kurs-block">' +
+      '<div class="hkb-label">'+hebel+'x-HEBEL VERKAUFSKURS (bei +'+hebelBewegungProzent.toFixed(1)+'% Basiswert-Bewegung)</div>' +
+      '<div class="hkb-value">'+fmt(hebelZielpreis,sym)+'</div>' +
+      (eurHebelZiel?'<div class="hkb-eur">('+eurHebelZiel+')</div>':'') +
+    '</div>' : '') +
+    (kaufVerkaufSatz ? '<div class="kv-satz">'+esc(kaufVerkaufSatz)+'</div>' : '') +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
     '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
     richtungHtml +
