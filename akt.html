@@ -89,6 +89,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .kc-eur { font-size: 10px; color: var(--text3); margin-top: 1px; }
 .kc-value-big { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
 .kc-eur-big { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+.kc-usd-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-weight: 400; }
 .hebel-kurs-block { background: rgba(240,180,41,0.06); border: 1px solid rgba(240,180,41,0.25); border-radius: 8px; padding: 12px 14px; margin-top: 10px; text-align: center; }
 .hkb-label { font-size: 10px; color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
 .hkb-value { font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; }
@@ -261,6 +262,17 @@ function fmt(v, sym) {
 function fmtEur(v, rate, currency) {
   if (v == null || !rate || currency === 'EUR') return null;
   return 'EUR ' + (parseFloat(v) * rate).toLocaleString('de-DE', {minimumFractionDigits:2,maximumFractionDigits:2});
+}
+// Zeigt EUR primaer (gross), USD als Zusatz (klein). Falls kein EUR-Wert vorhanden (waehrung=EUR), nur den Hauptwert.
+function fmtP(v, eurStr, sym, withPlus) {
+  if (v == null || isNaN(v)) return '-';
+  var prefix = withPlus ? '+' : '';
+  if (eurStr) {
+    // eurStr Format: "EUR 123,45" -> nur Zahl extrahieren
+    var eurNum = eurStr.replace('EUR ', '');
+    return prefix + '€' + eurNum + '<div class="kc-usd-sub">' + prefix + fmt(v, sym) + '</div>';
+  }
+  return prefix + fmt(v, sym);
 }
 function safeDiv(a, b) { return (!b || b === 0) ? 0 : a / b; }
 function tryParse(raw) {
@@ -666,7 +678,7 @@ function startScan() {
     })
     .then(function(enriched) {
       // Nur Tipps mit mindestens 4% Potenzial anzeigen
-      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3; });
+      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3 && t.startkurs != null && t.startkurs > 0; });
       if (!enriched.length) {
         hideEl('statusMsg');
         showError('errorBox', 'Keine Aktien mit mindestens 4% Potenzial gefunden. Bitte erneut scannen.');
@@ -803,6 +815,9 @@ function buildTippCard(t, i) {
   var kaufVerkaufSatz = (hebelProduktEinstieg && hebelZielpreis)
     ? 'Kauf ' + hebel + 'x-Hebel mit ' + fmt(hebelProduktEinstieg, sym) + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + fmt(hebelZielpreis, sym)
     : '';
+  var kaufVerkaufSatzEur = (eurHebelEinstieg && eurHebelZiel)
+    ? 'Kauf ' + hebel + 'x-Hebel mit ' + eurHebelEinstieg.replace('EUR ','€') + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + eurHebelZiel.replace('EUR ','€')
+    : '';
 
   card.innerHTML = '<div class="card-body">' +
     signalHtml +
@@ -825,29 +840,27 @@ function buildTippCard(t, i) {
     '</div>' +
     metricsHtml +
     '<div class="kurs-block">' +
-      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value-big" style="color:var(--text)">'+fmt(briefPreis,sym)+'</div>'+(eurBrief?'<div class="kc-eur-big">('+eurBrief+')</div>':'')+'<div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
+      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value-big" style="color:var(--text)">'+fmtP(briefPreis,eurBrief,sym)+'</div><div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
       '<div class="kc-arrow">→</div>' +
-      '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value-big" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur-big">('+eurZiel+')</div>':'')+'<div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
-      '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmt(nettoGewinn,sym)+'</div>'+(eurNettoGewinn?'<div class="kc-eur-big">('+eurNettoGewinn+')</div>':'')+'<div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
+      '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(ziel,eurZiel,sym)+'</div><div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
+      '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(nettoGewinn,eurNettoGewinn,sym)+'</div><div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
     '</div>' +
     (hebelZielpreis ? '<div class="hebel-kurs-block">' +
       '<div class="hkb-label">'+hebel+'x-HEBELPRODUKT (bei +'+hebelBewegungProzent.toFixed(1)+'% Hebel-Bewegung)</div>' +
       '<div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">' +
         '<div>' +
           '<div class="hkb-sublabel">Einstieg (Schein)</div>' +
-          '<div class="hkb-value">'+fmt(hebelProduktEinstieg,sym)+'</div>' +
-          (eurHebelEinstieg?'<div class="hkb-eur">('+eurHebelEinstieg+')</div>':'') +
+          '<div class="hkb-value">'+fmtP(hebelProduktEinstieg,eurHebelEinstieg,sym)+'</div>' +
         '</div>' +
         '<div class="hkb-arrow">→</div>' +
         '<div>' +
           '<div class="hkb-sublabel">Verkauf (Schein)</div>' +
-          '<div class="hkb-value" style="color:var(--green)">'+fmt(hebelZielpreis,sym)+'</div>' +
-          (eurHebelZiel?'<div class="hkb-eur">('+eurHebelZiel+')</div>':'') +
+          '<div class="hkb-value" style="color:var(--green)">'+fmtP(hebelZielpreis,eurHebelZiel,sym)+'</div>' +
         '</div>' +
       '</div>' +
-      (hebelGewinnProSchein?'<div class="hkb-gewinn">Gewinn/Schein: +'+fmt(hebelGewinnProSchein,sym)+(eurHebelGewinn?' ('+eurHebelGewinn+')':'')+'</div>':'') +
+      (hebelGewinnProSchein?'<div class="hkb-gewinn">Gewinn/Schein: '+fmtP(hebelGewinnProSchein,eurHebelGewinn,sym,true)+'</div>':'') +
     '</div>' : '') +
-    (kaufVerkaufSatz ? '<div class="kv-satz">'+esc(kaufVerkaufSatz)+'</div>' : '') +
+    (kaufVerkaufSatzEur ? '<div class="kv-satz">'+esc(kaufVerkaufSatzEur)+'</div>' : (kaufVerkaufSatz ? '<div class="kv-satz">'+esc(kaufVerkaufSatz)+'</div>' : '')) +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
     '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
     richtungHtml +
