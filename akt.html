@@ -898,8 +898,24 @@ function updateKurse() {
   if (!aktiv.length) {
     btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','↻'); return;
   }
-  Promise.all(aktiv.map(function(p){return getFreshPrice(p.ticker).then(function(price){return{id:p.id,price:price};});}))
-    .then(function(results) {
+  // Sequentiell statt parallel abfragen - vermeidet Finnhub Rate-Limit (60/min)
+  var results = [];
+  var idx = 0;
+  function nextFetch() {
+    if (idx >= aktiv.length) return Promise.resolve();
+    var p = aktiv[idx];
+    idx++;
+    return getFreshPrice(p.ticker).then(function(price) {
+      results.push({id:p.id, ticker:p.ticker, price:price});
+      return new Promise(function(r){ setTimeout(r, 150); }); // kleine Pause zwischen Calls
+    }).then(nextFetch);
+  }
+  nextFetch()
+    .then(function() {
+      var failed = results.filter(function(r){ return !r.price; }).map(function(r){ return r.ticker; });
+      if (failed.length) {
+        showError('trackingError', 'Kein frischer Kurs fuer: ' + failed.join(', ') + ' (Rate-Limit oder Ticker-Problem). Andere Werte wurden aktualisiert.');
+      }
       var today = new Date().toISOString();
       var updated = frisch.map(function(p) {
         if (p.abgeschlossen||daysDiff(p.scanDate)>4) return p;
