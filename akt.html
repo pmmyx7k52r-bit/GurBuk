@@ -347,6 +347,17 @@ function getPrice(ticker) {
     .then(function(d) { var p = (d.c && d.c > 0) ? d.c : null; priceCache[ticker] = p; return p; })
     .catch(function() { return null; });
 }
+// Ungecachte Version fuer Tracking-Updates - IMMER frischer Kurs vom Server
+function getFreshPrice(ticker) {
+  return fetch(WORKER + '?ticker=' + ticker + '&_ts=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var p = (d && d.c && d.c > 0) ? d.c : null;
+      if (p) priceCache[ticker] = p; // Cache trotzdem aktualisieren fuer Konsistenz
+      return p;
+    })
+    .catch(function() { return null; });
+}
 
 // ── Earnings & Short Interest ────────────────────────────
 function getEarnings(ticker) {
@@ -880,7 +891,7 @@ function updateKurse() {
   if (!aktiv.length) {
     btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','↻'); return;
   }
-  Promise.all(aktiv.map(function(p){return getPrice(p.ticker).then(function(price){return{id:p.id,price:price};});}))
+  Promise.all(aktiv.map(function(p){return getFreshPrice(p.ticker).then(function(price){return{id:p.id,price:price};});}))
     .then(function(results) {
       var today = new Date().toISOString();
       var updated = frisch.map(function(p) {
