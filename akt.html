@@ -263,6 +263,30 @@ function savePrognosen(data) {
   try { localStorage.setItem(STORE_PROGNOSEN, JSON.stringify(data)); } catch(e) {}
 }
 function daysDiff(dateStr) { return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000); }
+// Addiert Handelstage (ueberspringt Samstag/Sonntag) - fuer Kauf/Verkauf-Fristen
+function addTradingDays(fromDate, tradingDays) {
+  var d = new Date(fromDate);
+  var added = 0;
+  while (added < tradingDays) {
+    d.setDate(d.getDate() + 1);
+    var dow = d.getDay(); // 0=So, 6=Sa
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return d;
+}
+// Zaehlt vergangene Handelstage seit einem Datum (ueberspringt Wochenenden)
+function tradingDaysSince(dateStr) {
+  var start = new Date(dateStr);
+  var now = new Date();
+  var count = 0;
+  var d = new Date(start);
+  while (d < now) {
+    d.setDate(d.getDate() + 1);
+    var dow = d.getDay();
+    if (dow !== 0 && dow !== 6 && d <= now) count++;
+  }
+  return count;
+}
 function fmt(v, sym) {
   if (v == null || isNaN(v)) return '-';
   return sym + parseFloat(v).toLocaleString('de-DE', {minimumFractionDigits:2,maximumFractionDigits:2});
@@ -706,7 +730,7 @@ function startScan() {
         // Briefkurs (mit Spread-Aufschlag) als Startkurs verwenden - konsistent mit Kartenanzeige "Kaufkurs"
         var briefAufschlag = t.briefAufschlagProzent || 0.2;
         var briefStart = t.startkurs ? t.startkurs * (1 + briefAufschlag/100) : null;
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:briefStart, zielkurs:briefStart?briefStart*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), stopLossProzent:t.stopLossProzent, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:briefStart, zielkurs:briefStart?briefStart*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), stopLossProzent:t.stopLossProzent, verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
@@ -804,8 +828,8 @@ function buildTippCard(t, i) {
   var nettoRendite = ziel && briefPreis ? ((ziel - briefPreis) / briefPreis * 100) : pct;
   var nettoGewinn = ziel && briefPreis ? ziel - briefPreis : gewinn;
   var eurNettoGewinn = fmtEur(nettoGewinn, rate, t.waehrung);
-  var kaufBisDatum = new Date(Date.now() + ((t.kaufFensterTage||1)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-  var verkaufBisDatum = new Date(Date.now() + ((t.verkaufNachTagen||3)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  var kaufBisDatum = addTradingDays(new Date(), t.kaufFensterTage||1).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  var verkaufBisDatum = addTradingDays(new Date(), t.verkaufNachTagen||3).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   var kaufHinweis = t.kaufFensterTage === 1 ? 'Heute kaufen!' : 'Kaufen bis '+kaufBisDatum;
 
   // Gehebelter Verkaufskurs (Hebel-Produkt: Kursbewegung x Hebel)
@@ -895,7 +919,7 @@ function buildTippCard(t, i) {
 // Kernlogik ohne UI-Abhaengigkeit - fuer manuellen Button UND Auto-Update nutzbar
 function fetchAndApplyKurse(silent) {
   var frisch = loadPrognosen();
-  var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+  var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
   if (!aktiv.length) return Promise.resolve({updated:0,failed:[]});
 
   var results = [];
@@ -914,7 +938,7 @@ function fetchAndApplyKurse(silent) {
     var failed = results.filter(function(r){ return !r.price; }).map(function(r){ return r.ticker; });
     var today = new Date().toISOString();
     var updated = frisch.map(function(p) {
-      if (p.abgeschlossen||daysDiff(p.scanDate)>4) return p;
+      if (p.abgeschlossen||daysDiff(p.scanDate)>6) return p;
       var res = results.find(function(r){return r.id===p.id;});
       if (!res||!res.price) return p;
       var verlauf = p.verlauf.slice();
@@ -923,7 +947,7 @@ function fetchAndApplyKurse(silent) {
       if (verlauf.length<=1) verlauf.push({date:today,price:res.price});
       else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price};
       else verlauf.push({date:today,price:res.price});
-      return Object.assign({},p,{verlauf:verlauf,abgeschlossen:daysDiff(p.scanDate)>=3});
+      return Object.assign({},p,{verlauf:verlauf,abgeschlossen:tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -952,7 +976,7 @@ function updateKurse() {
 var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 function maybeAutoUpdate() {
   var last = parseInt(localStorage.getItem(STORE_LAST_UPDATE) || '0', 10);
-  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
   if (!aktive.length) return;
   if (Date.now() - last < AUTO_UPDATE_INTERVAL_MS) return;
   var indicator = document.getElementById('autoUpdateIndicator');
@@ -970,7 +994,7 @@ function maybeAutoUpdate() {
 // ── Render Tracking ───────────────────────────────────────
 function renderTracking() {
   var fresh = loadPrognosen();
-  var aktive = fresh.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+  var aktive = fresh.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
   var abgeschlossene = fresh.filter(function(p){return p.abgeschlossen;});
   updateTrackingCount();
   var aktiveSection = document.getElementById('aktiveSection');
@@ -1050,7 +1074,7 @@ function kgCell(label,value,eur,color) {
 }
 
 function updateTrackingCount() {
-  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
   setText('trackingCount',aktive.length>0?'('+aktive.length+')':'');
 }
 
