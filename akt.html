@@ -892,22 +892,7 @@ function buildTippCard(t, i) {
       '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(ziel,eurZiel,sym)+'</div><div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
       '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(nettoGewinn,eurNettoGewinn,sym)+'</div><div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
     '</div>' +
-    (hebelZielpreis ? '<div class="hebel-kurs-block">' +
-      '<div class="hkb-label">'+hebel+'x-HEBELPRODUKT (bei +'+hebelBewegungProzent.toFixed(1)+'% Hebel-Bewegung)</div>' +
-      '<div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">' +
-        '<div>' +
-          '<div class="hkb-sublabel">Einstieg (Schein)</div>' +
-          '<div class="hkb-value">'+fmtP(hebelProduktEinstieg,eurHebelEinstieg,sym)+'</div>' +
-        '</div>' +
-        '<div class="hkb-arrow">→</div>' +
-        '<div>' +
-          '<div class="hkb-sublabel">Verkauf (Schein)</div>' +
-          '<div class="hkb-value" style="color:var(--green)">'+fmtP(hebelZielpreis,eurHebelZiel,sym)+'</div>' +
-        '</div>' +
-      '</div>' +
-      (hebelGewinnProSchein?'<div class="hkb-gewinn">Gewinn/Schein: '+fmtP(hebelGewinnProSchein,eurHebelGewinn,sym,true)+'</div>':'') +
-    '</div>' : '') +
-    (kaufVerkaufSatzEur ? '<div class="kv-satz">'+esc(kaufVerkaufSatzEur)+'</div>' : (kaufVerkaufSatz ? '<div class="kv-satz">'+esc(kaufVerkaufSatz)+'</div>' : '')) +
+    '<div class="kv-satz">Bei '+hebel+'x-Hebelprodukten: passendes Zertifikat im Broker suchen (Basispreis nahe '+fmt(briefPreis,sym)+'), Kursziel des Basiswerts oben massgeblich fuer Verkaufsentscheidung.</div>' +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
     '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
     richtungHtml +
