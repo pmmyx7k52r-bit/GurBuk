@@ -79,7 +79,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .card-left { flex: 1; }
 .card-right { flex-shrink: 0; text-align: right; }
 .pct-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
-.pct-value { font-size: 26px; font-weight: 500; color: var(--green); letter-spacing: -1px; line-height: 1; }
+.pct-value { font-size: 22px; font-weight: 600; color: var(--green); letter-spacing: -0.5px; line-height: 1.25; text-align: right; max-width: 140px; }
 .card-these { font-size: 11px; color: #8aa4c4; line-height: 1.65; margin-bottom: 4px; }
 .card-treiber { font-size: 10px; color: var(--text3); }
 .card-treiber span { color: var(--green); }
@@ -650,15 +650,15 @@ function startScan() {
           '\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest (inkl. Elliott-Wave-Analyse):\n'+metricsInfo+
           '\n\nFuer jede Aktie:\n' +
           '1. Erklaere in 1 Satz WARUM sie vom Katalysator profitiert.\n' +
-          '2. Schaetze realistisch den Kursanstieg in Prozent (anstiegProzent: 4-25%). ' +
+          '2. Schaetze eine realistische MINDEST-Rendite (anstiegProzent: konservativ, mind. 4%) UND eine realistische MAXIMAL-Rendite (anstiegProzentMax: optimistisch, falls der Katalysator voll durchschlaegt, bis zu 30% moeglich). ' +
              'WICHTIG: Berechne vom BRIEF-PREIS (Ask/Kaufkurs = Kurs + 0.1-0.3% Spread). ' +
-             'Die Nettorendite nach Spread muss mindestens 3% betragen. ' +
-             'Falls noetig, erhoehe anstiegProzent entsprechend oder empfehle Hebel.\n' +
+             'Die Nettorendite nach Spread muss beim Minimalwert mindestens 3% betragen. ' +
+             'anstiegProzentMax muss groesser als anstiegProzent sein, sonst identisch setzen falls keine Spannbreite plausibel ist.\n' +
           '3. Schaetze das optimale Zeitfenster in Tagen (kaufFensterTage: 1, 2 oder 3 - wie lange ist die Einstiegschance noch offen?).\n' +
           '4. Schaetze das optimale Verkaufsdatum in Tagen ab heute (verkaufNachTagen: 1-5 Tage).\n' +
           '5. Schaetze einen realistischen Stop-Loss in Prozent (stopLossProzent: 2-6%, wie viel Verlust vom Basiswert bevor die These widerlegt ist - z.B. Unterschreitung wichtiger Unterstuetzung).\n' +
           '6. Gib WKN und ISIN an.\n' +
-          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":8.5,"stopLossProzent":3.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
+          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":4.0,"anstiegProzentMax":12.0,"stopLossProzent":3.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
 
         return callClaude(promptSchritt3, 500).then(function(raw2) {
           var erklaerung = tryParse(raw2);
@@ -680,6 +680,7 @@ function startScan() {
               waehrung: m.currency || 'USD',
               startkurs: m.price,
               anstiegProzent: Math.min(25, Math.max(4, erkl.anstiegProzent || (item.signal.score * 4.0))),
+              anstiegProzentMax: Math.min(50, Math.max(erkl.anstiegProzentMax || 0, erkl.anstiegProzent || (item.signal.score * 4.0))),
               stopLossProzent: Math.min(6, Math.max(2, erkl.stopLossProzent || 3.0)),
               kaufFensterTage: erkl.kaufFensterTage || 2,
               verkaufNachTagen: erkl.verkaufNachTagen || 3,
@@ -751,6 +752,8 @@ function startScan() {
 // ── Build Tipp Card ───────────────────────────────────────
 function buildTippCard(t, i) {
   var pct = parseFloat(t.anstiegProzent)||5;
+  var pctMax = parseFloat(t.anstiegProzentMax)||pct;
+  var hatSpanne = pctMax > pct + 0.3;
   var sym = t.waehrung==='EUR'?'EUR ':t.waehrung==='GBP'?'GBP ':'USD ';
   var start = t.startkurs;
   var ziel = (start&&!isNaN(start)) ? start*(1+pct/100) : null;
@@ -883,7 +886,7 @@ function buildTippCard(t, i) {
         (t.haupttreiber?'<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>':'') +
         (insider&&t.insiderInfo?'<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>':'') +
       '</div>' +
-      '<div class="card-right"><div class="pct-label">3 Tage</div><div class="pct-value">+'+pct.toFixed(1)+'%</div></div>' +
+      '<div class="card-right"><div class="pct-label">3 Tage</div><div class="pct-value">'+(hatSpanne?('+'+pct.toFixed(1)+'% bis +'+pctMax.toFixed(1)+'%'):('+'+pct.toFixed(1)+'%'))+'</div></div>' +
     '</div>' +
     metricsHtml +
     '<div class="kurs-block">' +
