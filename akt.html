@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.5</title>
+<title>MarktTipps V2.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -156,7 +156,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.5</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.6</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -219,7 +219,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.5 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.6 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -947,7 +947,12 @@ function fetchAndApplyKurse(silent) {
       if (verlauf.length<=1) verlauf.push({date:today,price:res.price});
       else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price};
       else verlauf.push({date:today,price:res.price});
-      return Object.assign({},p,{verlauf:verlauf,abgeschlossen:tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
+      // Hoechstkurs seit Scan-Start fortschreiben (unabhaengig vom letzten Snapshot).
+      // Grund: Ohne das geht ein zwischenzeitlich erreichtes Kursziel verloren, wenn der
+      // Kurs bis zum naechsten manuellen/automatischen Update wieder gefallen ist.
+      var peakPrice = Math.max(p.peakPrice || p.startkurs || 0, res.price);
+      var peakDate = (p.peakPrice==null || res.price>=p.peakPrice) ? today : p.peakDate;
+      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abgeschlossen:tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -1009,7 +1014,19 @@ function renderTracking() {
       var fortschritt = Math.min(100,(daysDiff(p.scanDate)/3)*100);
       var isUp = aktPct!==null&&aktPct>=0;
       var pctColor = isUp?'var(--green)':'var(--red)';
-      html += '<div class="tracking-card">' +
+
+      // Hoechstkurs seit Scan-Start - bleibt sichtbar, auch wenn der Kurs seither wieder gefallen ist.
+      // p.peakPrice fehlt bei aelteren, vor diesem Update gespeicherten Prognosen -> dann einfach
+      // keine Peak-Zeile anzeigen (kein Fehler, fuellt sich beim naechsten Kurs-Update selbst auf).
+      var peakPct = (p.peakPrice&&p.startkurs)?((p.peakPrice-p.startkurs)/p.startkurs*100):null;
+      var peakZielErreicht = peakPct!==null&&peakPct>=(p.anstiegProzent||0);
+      var zeigtPeakHinweis = peakPct!==null&&aktPct!==null&&Math.abs(peakPct-aktPct)>0.15;
+
+      // Stop-Loss-Check: aktueller Kurs auf/unter dem beim Scan berechneten Stop-Loss-Niveau
+      var stopLossKurs = (p.startkurs&&p.stopLossProzent)?p.startkurs*(1-p.stopLossProzent/100):null;
+      var stopLossVerletzt = stopLossKurs!=null&&aktuell!=null&&aktuell<=stopLossKurs;
+
+      html += '<div class="tracking-card" style="'+(stopLossVerletzt?'border:1px solid rgba(244,63,94,0.4);':'')+'">' +
         '<div class="tracking-header">' +
           '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span></div>' +
           '<div style="font-size:10px;color:var(--text3)">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
@@ -1026,6 +1043,8 @@ function renderTracking() {
         '</div>' +
         '<div class="progress-bar"><span style="font-size:9px;color:var(--text3);white-space:nowrap">3 Tage</span><div class="pb-track"><div class="pb-fill" style="width:'+fortschritt+'%"></div></div><span style="font-size:9px;color:var(--text3)">Tag '+Math.min(3,daysDiff(p.scanDate))+'</span></div>' +
         (aktPct!==null?'<div class="tracking-status"><span style="color:'+pctColor+'">'+(isUp?'+':'')+aktPct.toFixed(2)+'%</span> von Ziel <span style="color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</span> - '+(aktPct>=(p.anstiegProzent||0)?'<span style="color:var(--green)">Ziel erreicht!</span>':'noch '+((p.anstiegProzent||0)-aktPct).toFixed(1)+'% fehlen')+'</div>':'') +
+        (zeigtPeakHinweis?'<div style="font-size:10px;color:var(--text3);margin-top:4px;">Hoechstkurs seit Start: <span style="color:'+(peakZielErreicht?'var(--green)':'var(--text2)')+'">'+(peakPct>=0?'+':'')+peakPct.toFixed(1)+'%</span>'+(p.peakDate?' am '+new Date(p.peakDate).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'')+(peakZielErreicht?' - Ziel wurde zwischenzeitlich erreicht':'')+'</div>':'') +
+        (stopLossVerletzt?'<div style="font-size:10px;color:var(--red);margin-top:6px;padding:6px 10px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.25);border-radius:5px;">⚠ Stop-Loss-Niveau erreicht ('+fmt(stopLossKurs,sym)+') - These moeglicherweise widerlegt</div>':'') +
       '</div>';
     });
     aktiveSection.innerHTML = html;
@@ -1033,11 +1052,15 @@ function renderTracking() {
 
   var ausSection = document.getElementById('auswertungSection');
   if (abgeschlossene.length) {
+    // Treffer-Wertung nutzt den Hoechstkurs seit Scan-Start (peakPrice), nicht nur den letzten
+    // Snapshot - sonst zaehlt ein zwischenzeitlich erreichtes Ziel faelschlich als "Verfehlt",
+    // wenn der Kurs bis zum Abschluss der Position wieder gefallen ist. Bei aelteren Prognosen
+    // ohne peakPrice faellt die Wertung automatisch auf den letzten bekannten Kurs zurueck.
     var treffer = abgeschlossene.filter(function(p) {
-      var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
-      return aktuell&&p.startkurs&&((aktuell-p.startkurs)/p.startkurs*100)>=(p.anstiegProzent||0)*0.8;
+      var bestpreis = (p.peakPrice!=null) ? p.peakPrice : (p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null);
+      return bestpreis&&p.startkurs&&((bestpreis-p.startkurs)/p.startkurs*100)>=(p.anstiegProzent||0)*0.8;
     }).length;
-    var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung (Treffer = min. 80% des Kursziels erreicht)</div>' +
+    var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung (Treffer = min. 80% des Kursziels je zwischenzeitlich erreicht)</div>' +
       '<div class="summary-grid">' +
         '<div><div style="font-size:24px;font-weight:500;color:var(--green)">'+treffer+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Treffer</div></div>' +
         '<div><div style="font-size:24px;font-weight:500;color:var(--red)">'+(abgeschlossene.length-treffer)+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Verfehlt</div></div>' +
@@ -1046,8 +1069,11 @@ function renderTracking() {
     abgeschlossene.slice(0,15).forEach(function(p) {
       var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
       var endPct = (aktuell&&p.startkurs)?((aktuell-p.startkurs)/p.startkurs*100):null;
-      var hit = endPct!==null&&endPct>=(p.anstiegProzent||0)*0.8;
+      var peakPct = (p.peakPrice&&p.startkurs)?((p.peakPrice-p.startkurs)/p.startkurs*100):null;
+      var bestPct = peakPct!=null?peakPct:endPct;
+      var hit = bestPct!==null&&bestPct>=(p.anstiegProzent||0)*0.8;
       var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
+      var zeigtPeakZeile = peakPct!=null&&endPct!=null&&Math.abs(peakPct-endPct)>0.15;
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
         '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
         '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div></div>' +
@@ -1059,7 +1085,8 @@ function renderTracking() {
           'Aktuell: <span style="color:'+(endColor)+'">'+(aktuell?fmt(aktuell,(p.currency==='EUR'?'€':'$')):'--')+'</span>' +
           (endPct!==null?' ('+( endPct>=0?'+':'')+endPct.toFixed(2)+'%)':'') +
           ' · Ziel war: +' + (p.anstiegProzent||0).toFixed(1)+'%' +
-        '</div>';
+        '</div>' +
+        (zeigtPeakZeile?'<div style="font-size:10px;color:var(--text3);padding:2px 0;">Hoechstkurs zwischenzeitlich: <span style="color:'+(peakPct>=(p.anstiegProzent||0)?'var(--green)':'var(--text2)')+'">'+(peakPct>=0?'+':'')+peakPct.toFixed(1)+'%</span></div>':'');
     });
     ausSection.innerHTML = ausHtml;
   } else { ausSection.innerHTML = ''; }
