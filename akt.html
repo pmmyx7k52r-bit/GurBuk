@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.2</title>
+<title>MarktTipps V2.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -79,7 +79,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .card-left { flex: 1; }
 .card-right { flex-shrink: 0; text-align: right; }
 .pct-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
-.pct-value { font-size: 26px; font-weight: 500; color: var(--green); letter-spacing: -1px; line-height: 1; }
+.pct-value { font-size: 22px; font-weight: 600; color: var(--green); letter-spacing: -0.5px; line-height: 1.25; text-align: right; max-width: 140px; }
 .card-these { font-size: 11px; color: #8aa4c4; line-height: 1.65; margin-bottom: 4px; }
 .card-treiber { font-size: 10px; color: var(--text3); }
 .card-treiber span { color: var(--green); }
@@ -87,6 +87,23 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .kc-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
 .kc-value { font-size: 14px; font-weight: 500; }
 .kc-eur { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.kc-value-big { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+.kc-eur-big { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+.kc-usd-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-weight: 400; }
+.hebel-kurs-block { background: rgba(240,180,41,0.06); border: 1px solid rgba(240,180,41,0.25); border-radius: 8px; padding: 12px 14px; margin-top: 10px; text-align: center; }
+.hkb-label { font-size: 10px; color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.hkb-value { font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; }
+.hkb-eur { font-size: 14px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+.hkb-sublabel { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.hkb-arrow { font-size: 16px; color: var(--gold); align-self: center; }
+.hkb-gewinn { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(240,180,41,0.15); }
+.kv-satz { background: var(--bg3); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin-top: 10px; font-size: 13px; color: var(--text); line-height: 1.6; font-weight: 500; }
+.stoploss-block { background: rgba(244,63,94,0.05); border: 1px solid rgba(244,63,94,0.2); border-radius: 7px; padding: 10px 14px; margin-top: 10px; }
+.sl-label { font-size: 9px; color: var(--red); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.sl-row { display: flex; gap: 20px; }
+.sl-sub { font-size: 9px; color: var(--text3); margin-bottom: 2px; }
+.sl-value { font-size: 15px; font-weight: 600; color: var(--red); }
+.sl-hint { font-size: 10px; color: var(--text3); margin-top: 6px; }
 .kc-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
 .kc-sub.live { color: var(--green); }
 .kc-right { text-align: right; }
@@ -139,13 +156,14 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.2</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.5</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
       <div id="lastScan">Noch kein Scan</div>
-      <div style="color:var(--green)">● Finnhub aktiv</div>
+      <div id="finnhubStatus" style="color:var(--text3)">● Finnhub Status unbekannt</div>
       <div id="rateBadge"></div>
+      <div id="autoUpdateIndicator" style="display:none;color:var(--accent);font-style:italic;">Auto-Update laeuft ...</div>
     </div>
   </header>
 
@@ -201,12 +219,13 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.2 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.5 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 var STORE_PROGNOSEN = 'markttipps_prognosen_v5';
+var STORE_LAST_UPDATE = 'markttipps_last_auto_update';
 var STORE_POLITIKER = 'markttipps_politiker_v1';
 var STORE_POLITICIAN_DATE = 'markttipps_politiker_date';
 var eurRate = null;
@@ -244,6 +263,30 @@ function savePrognosen(data) {
   try { localStorage.setItem(STORE_PROGNOSEN, JSON.stringify(data)); } catch(e) {}
 }
 function daysDiff(dateStr) { return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000); }
+// Addiert Handelstage (ueberspringt Samstag/Sonntag) - fuer Kauf/Verkauf-Fristen
+function addTradingDays(fromDate, tradingDays) {
+  var d = new Date(fromDate);
+  var added = 0;
+  while (added < tradingDays) {
+    d.setDate(d.getDate() + 1);
+    var dow = d.getDay(); // 0=So, 6=Sa
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return d;
+}
+// Zaehlt vergangene Handelstage seit einem Datum (ueberspringt Wochenenden)
+function tradingDaysSince(dateStr) {
+  var start = new Date(dateStr);
+  var now = new Date();
+  var count = 0;
+  var d = new Date(start);
+  while (d < now) {
+    d.setDate(d.getDate() + 1);
+    var dow = d.getDay();
+    if (dow !== 0 && dow !== 6 && d <= now) count++;
+  }
+  return count;
+}
 function fmt(v, sym) {
   if (v == null || isNaN(v)) return '-';
   return sym + parseFloat(v).toLocaleString('de-DE', {minimumFractionDigits:2,maximumFractionDigits:2});
@@ -251,6 +294,17 @@ function fmt(v, sym) {
 function fmtEur(v, rate, currency) {
   if (v == null || !rate || currency === 'EUR') return null;
   return 'EUR ' + (parseFloat(v) * rate).toLocaleString('de-DE', {minimumFractionDigits:2,maximumFractionDigits:2});
+}
+// Zeigt EUR primaer (gross), USD als Zusatz (klein). Falls kein EUR-Wert vorhanden (waehrung=EUR), nur den Hauptwert.
+function fmtP(v, eurStr, sym, withPlus) {
+  if (v == null || isNaN(v)) return '-';
+  var prefix = withPlus ? '+' : '';
+  if (eurStr) {
+    // eurStr Format: "EUR 123,45" -> nur Zahl extrahieren
+    var eurNum = eurStr.replace('EUR ', '');
+    return prefix + '€' + eurNum + '<div class="kc-usd-sub">' + prefix + fmt(v, sym) + '</div>';
+  }
+  return prefix + fmt(v, sym);
 }
 function safeDiv(a, b) { return (!b || b === 0) ? 0 : a / b; }
 function tryParse(raw) {
@@ -295,7 +349,7 @@ function switchTab(tab) {
     if (te) te.style.display = t === tab ? 'block' : 'none';
     if (be) be.className = 'tab' + (t === tab ? ' active' : '');
   });
-  if (tab === 'tracking') renderTracking();
+  if (tab === 'tracking') { maybeAutoUpdate(); renderTracking(); }
   if (tab === 'politiker') {
     document.getElementById('politikerBadge').classList.remove('visible');
     var saved = localStorage.getItem(STORE_POLITIKER);
@@ -304,18 +358,26 @@ function switchTab(tab) {
 }
 
 // ── Finnhub API ───────────────────────────────────────────
+function setFinnhubStatus(ok) {
+  var el = document.getElementById('finnhubStatus');
+  if (!el) return;
+  if (ok) { el.style.color = 'var(--green)'; el.textContent = '● Finnhub aktiv'; }
+  else { el.style.color = 'var(--red)'; el.textContent = '● Finnhub nicht erreichbar'; }
+}
+
 function getMetrics(ticker) {
   if (metricsCache[ticker]) return Promise.resolve(metricsCache[ticker]);
   return fetch(WORKER + '?ticker=' + ticker + '&type=metrics')
     .then(function(r) { return r.json(); })
     .then(function(d) {
       // Worker gibt c (current price) zurueck - in price mappen
-      if (d && d.c && d.c > 0) d.price = d.c;
+      if (d && d.c && d.c > 0) { d.price = d.c; setFinnhubStatus(true); }
+      else { setFinnhubStatus(false); }
       if (d && d.change == null && d.c && d.pc) d.change = ((d.c - d.pc) / d.pc * 100);
       metricsCache[ticker] = d;
       return d;
     })
-    .catch(function() { return null; });
+    .catch(function() { setFinnhubStatus(false); return null; });
 }
 
 function getPrice(ticker) {
@@ -325,18 +387,23 @@ function getPrice(ticker) {
     .then(function(d) { var p = (d.c && d.c > 0) ? d.c : null; priceCache[ticker] = p; return p; })
     .catch(function() { return null; });
 }
-
-// ── Earnings & Short Interest ────────────────────────────
-function getEarnings(ticker) {
-  return fetch(WORKER + '?ticker=' + ticker + '&type=earnings')
-    .then(function(r) { return r.json(); })
-    .catch(function() { return null; });
-}
-
-function getShortInterest(ticker) {
-  return fetch(WORKER + '?ticker=' + ticker + '&type=short')
-    .then(function(r) { return r.json(); })
-    .catch(function() { return null; });
+// Ungecachte Version fuer Tracking-Updates - IMMER frischer Kurs vom Server
+function getFreshPrice(ticker) {
+  return fetch(WORKER + '?ticker=' + encodeURIComponent(ticker) + '&_ts=' + Date.now(), {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(d) {
+      if (!d || d.error) return null;
+      var p = (d.c != null && d.c > 0) ? d.c : null;
+      if (p) priceCache[ticker] = p;
+      return p;
+    })
+    .catch(function(e) { return null; });
 }
 
 // ── Earnings & Short Interest ────────────────────────────
@@ -414,27 +481,6 @@ function scoreSignal(m) {
     }
   }
 
-  // MACD-Signal
-  if (m.macd != null) {
-    if (m.macd > 0 && m.macdSignal != null && m.macd > m.macdSignal) {
-      signals.push({label:'MACD bullisch ('+m.macd.toFixed(2)+')', type:'bullish'}); score += 2;
-    } else if (m.macd < 0 && m.macdSignal != null && m.macd < m.macdSignal) {
-      signals.push({label:'MACD baerisch', type:'bearish'}); score += 1;
-    } else if (m.macd > 0) {
-      signals.push({label:'MACD positiv', type:'bullish'}); score += 1;
-    }
-  }
-  // Short-Interest
-  if (m.shortRatio != null) {
-    if (m.shortRatio > 5) { signals.push({label:'Short-Ratio hoch ('+m.shortRatio+'d) - Squeeze moeglich', type:'bullish'}); score += 2; }
-    else if (m.shortRatio > 3) { signals.push({label:'Short-Ratio mittel ('+m.shortRatio+'d)', type:'neutral'}); score += 1; }
-  }
-  // Earnings
-  if (m.earningsDays != null) {
-    if (m.earningsDays >= 0 && m.earningsDays <= 3) { signals.push({label:'Earnings in '+m.earningsDays+' Tag(en)!', type:'bullish'}); score += 3; }
-    else if (m.earningsDays >= 0 && m.earningsDays <= 7) { signals.push({label:'Earnings in '+m.earningsDays+' Tagen', type:'bullish'}); score += 1; }
-  }
-
   // Elliott-Wave Schaetzung aus Preis-Daten
   // Impuls-Welle (3 oder 5): Momentum stark positiv + RSI 45-65 (noch nicht ueberkauft)
   if (m.momentum5d != null && m.rsi != null) {
@@ -457,10 +503,9 @@ function scoreSignal(m) {
   return { score: score, signals: signals, passed: score >= 3 };
 }
 
-// Hebel-Regel nach Konfidenz - Minimum 3x
+// Hebel-Regel nach Konfidenz - nur Smartbroker-kompatible Hebel (3, 5, 7, 10)
 function calcHebel(konfidenz, rsi) {
-  if (!konfidenz || konfidenz < 52) return 3;
-  if (konfidenz < 58) return 4;
+  if (!konfidenz || konfidenz < 55) return 3;
   if (konfidenz < 65) return 5;
   if (konfidenz < 75) return 7;
   return 10;
@@ -476,7 +521,7 @@ function callClaude(prompt, maxTokens) {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-5',
       max_tokens: maxTokens || 800,
       tools: [{type:'web_search_20250305',name:'web_search'}],
       messages: [{role:'user',content:prompt}]
@@ -550,11 +595,22 @@ function startScan() {
       // Schritt 2: Technische Metriken fuer alle Kandidaten laden
       var kandidaten = result.kandidaten.slice(0, 10);
       setText('statusMsg','Schritt 2/3: Technische Daten + Earnings + Short-Interest werden geladen ...');
-      return Promise.all(kandidaten.map(function(ticker) {
+      // Anfragen pro Ticker zeitlich entzerrt starten (250ms Versatz), NICHT alle gleichzeitig.
+      // Grund: Finnhub Free-Plan erlaubt nur 60 Calls/Min (~30/Sek Burst-Cap). Bei 8 Kandidaten x
+      // bis zu 6 Finnhub-Calls waeren das ~48 Calls quasi zeitgleich - reisst die Burst-Grenze und
+      // fuehrt zu "Finnhub nicht erreichbar" mitten im Scan. Mit Versatz verteilt sich die Last auf
+      // ca. 2 Sekunden statt < 1 Sekunde.
+      return Promise.all(kandidaten.map(function(ticker, idx) {
+        return new Promise(function(resolveStagger) { setTimeout(resolveStagger, idx * 250); }).then(function() {
         return getMetrics(ticker).then(function(m) {
+          // FIX v2.3: getMetrics() liefert bei Fetch-/Parse-Fehler null zurueck.
+          // Ohne diesen Fallback wirft der Zugriff auf m.earningsDays / m.shortRatio / m.macd
+          // weiter unten eine Exception, die durch das aeussere Promise.all durchschlaegt
+          // und den GESAMTEN Scan abbricht - nicht nur den betroffenen Ticker.
+          if (!m) m = {};
           // Fallback: wenn metrics kein Preis hat, Quote direkt holen
           return Promise.all([
-            m && !m.price ? getPrice(ticker) : Promise.resolve(null),
+            !m.price ? getPrice(ticker) : Promise.resolve(null),
             getEarnings(ticker),
             getShortInterest(ticker)
           ]).then(function(extras) {
@@ -575,6 +631,7 @@ function startScan() {
             }
             return {ticker:ticker, metrics:m, signal:scoreSignal(m)};
           });
+        });
         });
       })).then(function(results) {
         // Vorfilter: nur Aktien mit score >= 2
@@ -605,14 +662,15 @@ function startScan() {
           '\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest (inkl. Elliott-Wave-Analyse):\n'+metricsInfo+
           '\n\nFuer jede Aktie:\n' +
           '1. Erklaere in 1 Satz WARUM sie vom Katalysator profitiert.\n' +
-          '2. Schaetze realistisch den Kursanstieg in Prozent (anstiegProzent: 4-25%). ' +
+          '2. Schaetze eine realistische MINDEST-Rendite (anstiegProzent: konservativ, mind. 4%) UND eine realistische MAXIMAL-Rendite (anstiegProzentMax: optimistisch, falls der Katalysator voll durchschlaegt, bis zu 30% moeglich). ' +
              'WICHTIG: Berechne vom BRIEF-PREIS (Ask/Kaufkurs = Kurs + 0.1-0.3% Spread). ' +
-             'Die Nettorendite nach Spread muss mindestens 3% betragen. ' +
-             'Falls noetig, erhoehe anstiegProzent entsprechend oder empfehle Hebel.\n' +
+             'Die Nettorendite nach Spread muss beim Minimalwert mindestens 3% betragen. ' +
+             'anstiegProzentMax muss groesser als anstiegProzent sein, sonst identisch setzen falls keine Spannbreite plausibel ist.\n' +
           '3. Schaetze das optimale Zeitfenster in Tagen (kaufFensterTage: 1, 2 oder 3 - wie lange ist die Einstiegschance noch offen?).\n' +
           '4. Schaetze das optimale Verkaufsdatum in Tagen ab heute (verkaufNachTagen: 1-5 Tage).\n' +
-          '5. Gib WKN und ISIN an.\n' +
-          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":8.5,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
+          '5. Schaetze einen realistischen Stop-Loss in Prozent (stopLossProzent: 2-6%, wie viel Verlust vom Basiswert bevor die These widerlegt ist - z.B. Unterschreitung wichtiger Unterstuetzung).\n' +
+          '6. Gib WKN und ISIN an.\n' +
+          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":4.0,"anstiegProzentMax":12.0,"stopLossProzent":3.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
 
         return callClaude(promptSchritt3, 500).then(function(raw2) {
           var erklaerung = tryParse(raw2);
@@ -634,6 +692,8 @@ function startScan() {
               waehrung: m.currency || 'USD',
               startkurs: m.price,
               anstiegProzent: Math.min(25, Math.max(4, erkl.anstiegProzent || (item.signal.score * 4.0))),
+              anstiegProzentMax: Math.min(50, Math.max(erkl.anstiegProzentMax || 0, erkl.anstiegProzent || (item.signal.score * 4.0))),
+              stopLossProzent: Math.min(6, Math.max(2, erkl.stopLossProzent || 3.0)),
               kaufFensterTage: erkl.kaufFensterTage || 2,
               verkaufNachTagen: erkl.verkaufNachTagen || 3,
               briefAufschlagProzent: erkl.briefAufschlagProzent || 0.2,
@@ -657,7 +717,7 @@ function startScan() {
     })
     .then(function(enriched) {
       // Nur Tipps mit mindestens 4% Potenzial anzeigen
-      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3; });
+      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3 && t.startkurs != null && t.startkurs > 0; });
       if (!enriched.length) {
         hideEl('statusMsg');
         showError('errorBox', 'Keine Aktien mit mindestens 4% Potenzial gefunden. Bitte erneut scannen.');
@@ -680,7 +740,10 @@ function startScan() {
       enriched.forEach(function(t) { neueTicker[t.ticker]=true; });
       var bereinigte = prognosen.filter(function(p){return p.abgeschlossen||!neueTicker[p.ticker];});
       var newProg = enriched.map(function(t) {
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:t.startkurs, zielkurs:t.startkurs?t.startkurs*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), scanDate:scanDate, verlauf:t.startkurs?[{date:scanDate,price:t.startkurs}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
+        // Briefkurs (mit Spread-Aufschlag) als Startkurs verwenden - konsistent mit Kartenanzeige "Kaufkurs"
+        var briefAufschlag = t.briefAufschlagProzent || 0.2;
+        var briefStart = t.startkurs ? t.startkurs * (1 + briefAufschlag/100) : null;
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:briefStart, zielkurs:briefStart?briefStart*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), stopLossProzent:t.stopLossProzent, verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
@@ -701,6 +764,8 @@ function startScan() {
 // ── Build Tipp Card ───────────────────────────────────────
 function buildTippCard(t, i) {
   var pct = parseFloat(t.anstiegProzent)||5;
+  var pctMax = parseFloat(t.anstiegProzentMax)||pct;
+  var hatSpanne = pctMax > pct + 0.3;
   var sym = t.waehrung==='EUR'?'EUR ':t.waehrung==='GBP'?'GBP ':'USD ';
   var start = t.startkurs;
   var ziel = (start&&!isNaN(start)) ? start*(1+pct/100) : null;
@@ -748,6 +813,8 @@ function buildTippCard(t, i) {
     extraBadges += '<span class="rtag" style="background:rgba(34,197,94,0.1);color:var(--green);">MACD +</span>';
   }
 
+  var stopLossPct = t.stopLossProzent || 3.0;
+
   // Richtung & Hebel
   var richtungHtml = '<div class="richtung-block">' +
     '<span class="rtag '+(isShort?'short':'long')+'">'+(isShort?'SHORT':'LONG')+'</span>';
@@ -776,9 +843,43 @@ function buildTippCard(t, i) {
   var nettoRendite = ziel && briefPreis ? ((ziel - briefPreis) / briefPreis * 100) : pct;
   var nettoGewinn = ziel && briefPreis ? ziel - briefPreis : gewinn;
   var eurNettoGewinn = fmtEur(nettoGewinn, rate, t.waehrung);
-  var kaufBisDatum = new Date(Date.now() + ((t.kaufFensterTage||1)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-  var verkaufBisDatum = new Date(Date.now() + ((t.verkaufNachTagen||3)*86400000)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  var kaufBisDatum = addTradingDays(new Date(), t.kaufFensterTage||1).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  var verkaufBisDatum = addTradingDays(new Date(), t.verkaufNachTagen||3).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   var kaufHinweis = t.kaufFensterTage === 1 ? 'Heute kaufen!' : 'Kaufen bis '+kaufBisDatum;
+
+  // Gehebelter Verkaufskurs (Hebel-Produkt: Kursbewegung x Hebel)
+  var hebel = t.hebelEmpfehlung || 3;
+  var hebelBewegungProzent = pct * hebel;
+  // Simulierter Hebelprodukt-Preis (Knock-Out/Faktor-Zertifikat):
+  // Bezugsverhaeltnis ca. 1/hebel des Basiswerts als Naeherung fuer den Produktpreis
+  var hebelProduktEinstieg = briefPreis ? briefPreis / hebel : null;
+  var hebelZielpreis = hebelProduktEinstieg ? hebelProduktEinstieg * (1 + hebelBewegungProzent/100) : null;
+  var eurHebelEinstieg = fmtEur(hebelProduktEinstieg, rate, t.waehrung);
+  var hebelGewinnProSchein = hebelZielpreis && hebelProduktEinstieg ? hebelZielpreis - hebelProduktEinstieg : null;
+  var eurHebelGewinn = fmtEur(hebelGewinnProSchein, rate, t.waehrung);
+  var eurHebelZiel = fmtEur(hebelZielpreis, rate, t.waehrung);
+  var kaufVerkaufSatz = (hebelProduktEinstieg && hebelZielpreis)
+    ? 'Kauf ' + hebel + 'x-Hebel mit ' + fmt(hebelProduktEinstieg, sym) + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + fmt(hebelZielpreis, sym)
+    : '';
+  var kaufVerkaufSatzEur = (eurHebelEinstieg && eurHebelZiel)
+    ? 'Kauf ' + hebel + 'x-Hebel mit ' + eurHebelEinstieg.replace('EUR ','€') + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + eurHebelZiel.replace('EUR ','€')
+    : '';
+
+  // Stop-Loss Berechnung
+  var stopLossPct = t.stopLossProzent || 3.0;
+  var stopLossPreis = briefPreis ? briefPreis * (1 - stopLossPct/100) : null;
+  var eurStopLoss = fmtEur(stopLossPreis, rate, t.waehrung);
+  var stopLossHebelPreis = hebelProduktEinstieg ? hebelProduktEinstieg * (1 - (stopLossPct*hebel)/100) : null;
+  var eurStopLossHebel = fmtEur(stopLossHebelPreis, rate, t.waehrung);
+  var stopLossHtml = stopLossPreis ? '<div class="stoploss-block">' +
+    '<div class="sl-label">STOP-LOSS (Basiswert bei -'+stopLossPct.toFixed(1)+'%)</div>' +
+    '<div class="sl-row">' +
+      '<div><div class="sl-sub">Basiswert</div><div class="sl-value">'+fmtP(stopLossPreis,eurStopLoss,sym)+'</div></div>' +
+      (stopLossHebelPreis ? '<div><div class="sl-sub">'+hebel+'x-Schein</div><div class="sl-value">'+fmtP(Math.max(0,stopLossHebelPreis),eurStopLossHebel,sym)+'</div></div>' : '') +
+    '</div>' +
+    '<div class="sl-hint">Bei Unterschreitung: These widerlegt, Position schliessen</div>' +
+  '</div>' : '';
+  richtungHtml += stopLossHtml;
 
   card.innerHTML = '<div class="card-body">' +
     signalHtml +
@@ -797,15 +898,16 @@ function buildTippCard(t, i) {
         (t.haupttreiber?'<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>':'') +
         (insider&&t.insiderInfo?'<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>':'') +
       '</div>' +
-      '<div class="card-right"><div class="pct-label">3 Tage</div><div class="pct-value">+'+pct.toFixed(1)+'%</div></div>' +
+      '<div class="card-right"><div class="pct-label">3 Tage</div><div class="pct-value">'+(hatSpanne?('+'+pct.toFixed(1)+'% bis +'+pctMax.toFixed(1)+'%'):('+'+pct.toFixed(1)+'%'))+'</div></div>' +
     '</div>' +
     metricsHtml +
     '<div class="kurs-block">' +
-      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value" style="color:var(--text)">'+fmt(briefPreis,sym)+'</div>'+(eurBrief?'<div class="kc-eur">('+eurBrief+')</div>':'')+'<div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
+      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value-big" style="color:var(--text)">'+fmtP(briefPreis,eurBrief,sym)+'</div><div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
       '<div class="kc-arrow">→</div>' +
-      '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value" style="color:var(--green)">'+fmt(ziel,sym)+'</div>'+(eurZiel?'<div class="kc-eur">('+eurZiel+')</div>':'')+'<div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
-      '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value" style="color:var(--green)">'+fmt(nettoGewinn,sym)+'</div>'+(eurNettoGewinn?'<div class="kc-eur">('+eurNettoGewinn+')</div>':'')+'<div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
+      '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(ziel,eurZiel,sym)+'</div><div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
+      '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(nettoGewinn,eurNettoGewinn,sym)+'</div><div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
     '</div>' +
+    '<div class="kv-satz">Bei '+hebel+'x-Hebelprodukten: passendes Zertifikat im Broker suchen (Basispreis nahe '+fmt(briefPreis,sym)+'), Kursziel des Basiswerts oben massgeblich fuer Verkaufsentscheidung.</div>' +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
     '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
     richtungHtml +
@@ -814,42 +916,85 @@ function buildTippCard(t, i) {
 }
 
 // ── Update Kurse ──────────────────────────────────────────
+// Kernlogik ohne UI-Abhaengigkeit - fuer manuellen Button UND Auto-Update nutzbar
+function fetchAndApplyKurse(silent) {
+  var frisch = loadPrognosen();
+  var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
+  if (!aktiv.length) return Promise.resolve({updated:0,failed:[]});
+
+  var results = [];
+  var idx = 0;
+  function nextFetch() {
+    if (idx >= aktiv.length) return Promise.resolve();
+    var p = aktiv[idx];
+    idx++;
+    return getFreshPrice(p.ticker).then(function(price) {
+      results.push({id:p.id, ticker:p.ticker, price:price});
+      return new Promise(function(r){ setTimeout(r, 150); });
+    }).then(nextFetch);
+  }
+
+  return nextFetch().then(function() {
+    var failed = results.filter(function(r){ return !r.price; }).map(function(r){ return r.ticker; });
+    var today = new Date().toISOString();
+    var updated = frisch.map(function(p) {
+      if (p.abgeschlossen||daysDiff(p.scanDate)>6) return p;
+      var res = results.find(function(r){return r.id===p.id;});
+      if (!res||!res.price) return p;
+      var verlauf = p.verlauf.slice();
+      var last = verlauf[verlauf.length-1];
+      var sameDay = verlauf.length>1&&last&&new Date(last.date).toDateString()===new Date().toDateString();
+      if (verlauf.length<=1) verlauf.push({date:today,price:res.price});
+      else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price};
+      else verlauf.push({date:today,price:res.price});
+      return Object.assign({},p,{verlauf:verlauf,abgeschlossen:tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
+    });
+    savePrognosen(updated);
+    if (!silent) renderTracking();
+    localStorage.setItem(STORE_LAST_UPDATE, Date.now().toString());
+    return {updated:results.length-failed.length, failed:failed};
+  });
+}
+
 function updateKurse() {
   var btn = document.getElementById('updateBtn');
   btn.disabled=true;
   setText('updateBtnText','Aktualisiere ...');
   setHTML('updateBtnIcon','<div class="spinner-sm"></div>');
   clearError('trackingError');
-  var frisch = loadPrognosen();
-  var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
-  if (!aktiv.length) {
-    btn.disabled=false; setText('updateBtnText','Kurse jetzt aktualisieren'); setText('updateBtnIcon','↻'); return;
-  }
-  Promise.all(aktiv.map(function(p){return getPrice(p.ticker).then(function(price){return{id:p.id,price:price};});}))
-    .then(function(results) {
-      var today = new Date().toISOString();
-      var updated = frisch.map(function(p) {
-        if (p.abgeschlossen||daysDiff(p.scanDate)>4) return p;
-        var res = results.find(function(r){return r.id===p.id;});
-        if (!res||!res.price) return p;
-        var verlauf = p.verlauf.slice();
-        var last = verlauf[verlauf.length-1];
-        var sameDay = verlauf.length>1&&last&&new Date(last.date).toDateString()===new Date().toDateString();
-        if (verlauf.length<=1) verlauf.push({date:today,price:res.price});
-        else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price};
-        else verlauf.push({date:today,price:res.price});
-        return Object.assign({},p,{verlauf:verlauf,abgeschlossen:daysDiff(p.scanDate)>=3});
-      });
-      savePrognosen(updated); renderTracking();
+  fetchAndApplyKurse(false)
+    .then(function(res) {
+      if (res.failed.length) {
+        showError('trackingError', 'Kein frischer Kurs fuer: ' + res.failed.join(', ') + ' (Rate-Limit oder Ticker-Problem). Andere Werte wurden aktualisiert.');
+      }
     })
     .catch(function(err){showError('trackingError',err.message);})
     .finally(function(){btn.disabled=false;setText('updateBtnText','Kurse jetzt aktualisieren');setText('updateBtnIcon','↻');});
 }
 
+// Auto-Update: prueft beim App-Start/Tab-Wechsel ob Update faellig ist (alle 6 Stunden)
+var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+function maybeAutoUpdate() {
+  var last = parseInt(localStorage.getItem(STORE_LAST_UPDATE) || '0', 10);
+  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
+  if (!aktive.length) return;
+  if (Date.now() - last < AUTO_UPDATE_INTERVAL_MS) return;
+  var indicator = document.getElementById('autoUpdateIndicator');
+  if (indicator) indicator.style.display = 'inline';
+  fetchAndApplyKurse(true).then(function() {
+    if (indicator) indicator.style.display = 'none';
+    if (document.getElementById('trackingTab') && document.getElementById('trackingTab').style.display !== 'none') {
+      renderTracking();
+    }
+  }).catch(function() {
+    if (indicator) indicator.style.display = 'none';
+  });
+}
+
 // ── Render Tracking ───────────────────────────────────────
 function renderTracking() {
   var fresh = loadPrognosen();
-  var aktive = fresh.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+  var aktive = fresh.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
   var abgeschlossene = fresh.filter(function(p){return p.abgeschlossen;});
   updateTrackingCount();
   var aktiveSection = document.getElementById('aktiveSection');
@@ -868,7 +1013,10 @@ function renderTracking() {
         '<div class="tracking-header">' +
           '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span></div>' +
           '<div style="font-size:10px;color:var(--text3)">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
-          '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
+          '<div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
+            '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
+            '<button onclick="deleteProgose(\''+p.id+'\')" style="background:none;border:1px solid rgba(244,63,94,0.3);border-radius:5px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;font-family:var(--mono);">Entfernen</button>' +
+          '</div>' +
         '</div>' +
         '<div class="kurs-grid">' +
           kgCell('Start',fmt(p.startkurs,sym),fmtEur(p.startkurs,rate,p.currency),'var(--text)') +
@@ -889,7 +1037,7 @@ function renderTracking() {
       var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
       return aktuell&&p.startkurs&&((aktuell-p.startkurs)/p.startkurs*100)>=(p.anstiegProzent||0)*0.8;
     }).length;
-    var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung</div>' +
+    var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung (Treffer = min. 80% des Kursziels erreicht)</div>' +
       '<div class="summary-grid">' +
         '<div><div style="font-size:24px;font-weight:500;color:var(--green)">'+treffer+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Treffer</div></div>' +
         '<div><div style="font-size:24px;font-weight:500;color:var(--red)">'+(abgeschlossene.length-treffer)+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Verfehlt</div></div>' +
@@ -926,8 +1074,16 @@ function kgCell(label,value,eur,color) {
 }
 
 function updateTrackingCount() {
-  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=4;});
+  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
   setText('trackingCount',aktive.length>0?'('+aktive.length+')':'');
+}
+
+function deleteProgose(id) {
+  if (!confirm('Diese Prognose aus dem Tracking entfernen?')) return;
+  var fresh = loadPrognosen();
+  var updated = fresh.filter(function(p) { return p.id !== id; });
+  savePrognosen(updated);
+  renderTracking();
 }
 
 function resetDaten() {
@@ -1000,6 +1156,7 @@ function autoCheckPolitiker() {
 // ── Init ──────────────────────────────────────────────────
 updateTrackingCount();
 autoCheckPolitiker();
+maybeAutoUpdate();
 </script>
 </body>
 </html>
