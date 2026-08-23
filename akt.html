@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.7</title>
+<title>MarktTipps V2.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -156,7 +156,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.7</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.10</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -199,6 +199,13 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
       <span id="updateBtnText">Kurse jetzt aktualisieren</span>
       <span id="updateBtnIcon">↻</span>
     </button>
+    <button class="update-btn" onclick="exportDaten()" style="margin-bottom:8px;">
+      <span>Backup exportieren (JSON)</span><span>↓</span>
+    </button>
+    <button class="update-btn" onclick="document.getElementById('importFile').click()" style="margin-bottom:8px;">
+      <span>Backup importieren</span><span>↑</span>
+    </button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importDaten(event)">
     <button class="reset-btn" onclick="resetDaten()">Alle gespeicherten Prognosen loeschen</button>
     <div id="trackingError" class="error-box"></div>
     <div id="aktiveSection"></div>
@@ -209,7 +216,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
   <div id="politikerTab" style="display:none">
     <div style="background:rgba(251,146,60,0.05);border:1px solid rgba(251,146,60,0.2);border-left:3px solid rgba(251,146,60,0.5);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
       <div style="font-size:10px;color:rgba(251,146,60,0.7);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Aktuelle Politiker-Trades (letzte 30 Tage)</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">Trump/Familie &amp; Nancy Pelosi gemaess STOCK Act</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">Trump/Familie &amp; Nancy Pelosi gemaess STOCK Act. Hinweis: Meldung kann bis zu 45 Tage nach dem tatsaechlichen Trade erfolgen.</div>
       <button class="update-btn" id="politikerBtn" onclick="loadPolitikerTrades()" style="margin-bottom:12px;">
         <span id="politikerBtnText">Aktuelle Trades laden</span>
         <span id="politikerBtnIcon">→</span>
@@ -219,11 +226,23 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.7 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.10 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
+// Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
+// Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
+// Anthropic-/Finnhub-Guthaben verbraucht. Ist kein perfekter Schutz (steht im Seitenquelltext),
+// aber verhindert zufaellig gefundene/gescannte Worker-URLs von automatisiertem Missbrauch.
+var APP_SECRET = 'c5eafb59df235df1caa1da97d33964dbf5ea63935132c48b';
+// Zentraler Fetch-Wrapper fuer alle Worker-Aufrufe: haengt das Secret als Header an,
+// ohne dass jede einzelne fetch()-Stelle das selbst tun muss (Risiko, eine Stelle zu vergessen).
+function workerFetch(url, options) {
+  options = options || {};
+  options.headers = Object.assign({}, options.headers || {}, { 'X-App-Secret': APP_SECRET });
+  return fetch(url, options);
+}
 var STORE_PROGNOSEN = 'markttipps_prognosen_v5';
 var STORE_LAST_UPDATE = 'markttipps_last_auto_update';
 var STORE_POLITIKER = 'markttipps_politiker_v1';
@@ -263,18 +282,52 @@ function savePrognosen(data) {
   try { localStorage.setItem(STORE_PROGNOSEN, JSON.stringify(data)); } catch(e) {}
 }
 function daysDiff(dateStr) { return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000); }
-// Addiert Handelstage (ueberspringt Samstag/Sonntag) - fuer Kauf/Verkauf-Fristen
+
+// ── US-Boersenfeiertage (NYSE/NASDAQ geschlossen) ──────────────────────────
+// Statische Liste, deckt 2026/2027 ab (inkl. beobachteter Verschiebung, wenn ein Feiertag
+// auf ein Wochenende faellt - z.B. 4. Juli 2026 = Samstag -> beobachtet am 3. Juli).
+// MUSS JAEHRLICH GEPFLEGT WERDEN. Ohne diese Liste wurden Handelstage-Berechnungen
+// (Kaufen bis/Verkaufen bis, Tag-Zaehler) an Feiertagen bisher stillschweigend um 1 Tag verschoben.
+var US_MARKT_FEIERTAGE = [
+  '2026-01-01', '2026-01-19', '2026-02-16', '2026-04-03', '2026-05-25',
+  '2026-06-19', '2026-07-03', '2026-09-07', '2026-11-26', '2026-12-25',
+  '2027-01-01', '2027-01-18', '2027-02-15', '2027-03-26', '2027-05-31',
+  '2027-06-18', '2027-07-05', '2027-09-06', '2027-11-25', '2027-12-24'
+];
+function formatDatumLokal(d) {
+  var pad = function(n) { return n < 10 ? '0'+n : ''+n; };
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function istUSFeiertag(d) {
+  return US_MARKT_FEIERTAGE.indexOf(formatDatumLokal(d)) >= 0;
+}
+// Prueft ob die US-Boerse gerade offen ist (9:30-16:00 US-Ostkueste, Mo-Fr, ohne Feiertage).
+// Intl.DateTimeFormat mit explizitem America/New_York erledigt die Zeitzonenumrechnung
+// zuverlaessig, auch ueber Sommer-/Winterzeit-Wechsel hinweg - ohne externe Bibliothek.
+function istUSMarktOffen() {
+  var now = new Date();
+  var parts = {};
+  new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', hour12:false, weekday:'short', hour:'2-digit', minute:'2-digit' })
+    .formatToParts(now).forEach(function(p){ parts[p.type] = p.value; });
+  if (parts.weekday === 'Sat' || parts.weekday === 'Sun') return false;
+  var minuten = parseInt(parts.hour,10)*60 + parseInt(parts.minute,10);
+  if (minuten < 9*60+30 || minuten >= 16*60) return false;
+  var nyDatum = new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York' }).format(now); // YYYY-MM-DD
+  if (US_MARKT_FEIERTAGE.indexOf(nyDatum) >= 0) return false;
+  return true;
+}
+// Addiert Handelstage (ueberspringt Samstag/Sonntag UND US-Boersenfeiertage) - fuer Kauf/Verkauf-Fristen
 function addTradingDays(fromDate, tradingDays) {
   var d = new Date(fromDate);
   var added = 0;
   while (added < tradingDays) {
     d.setDate(d.getDate() + 1);
     var dow = d.getDay(); // 0=So, 6=Sa
-    if (dow !== 0 && dow !== 6) added++;
+    if (dow !== 0 && dow !== 6 && !istUSFeiertag(d)) added++;
   }
   return d;
 }
-// Zaehlt vergangene Handelstage seit einem Datum (ueberspringt Wochenenden)
+// Zaehlt vergangene Handelstage seit einem Datum (ueberspringt Wochenenden UND Feiertage)
 function tradingDaysSince(dateStr) {
   var start = new Date(dateStr);
   var now = new Date();
@@ -283,7 +336,7 @@ function tradingDaysSince(dateStr) {
   while (d < now) {
     d.setDate(d.getDate() + 1);
     var dow = d.getDay();
-    if (dow !== 0 && dow !== 6 && d <= now) count++;
+    if (dow !== 0 && dow !== 6 && d <= now && !istUSFeiertag(d)) count++;
   }
   return count;
 }
@@ -307,6 +360,74 @@ function fmtP(v, eurStr, sym, withPlus) {
   return prefix + fmt(v, sym);
 }
 function safeDiv(a, b) { return (!b || b === 0) ? 0 : a / b; }
+
+// ── Richtungsabhaengige Tracking-Berechnungen (LONG vs. SHORT) ────────────
+// Vorher wurde ueberall einheitlich "Gewinn = Kurs steigt" angenommen, auch wenn ein
+// Tipp als SHORT markiert war. Bei SHORT ist es genau umgekehrt: Gewinn = Kurs faellt.
+// richtung fehlt bei alten, vor diesem Fix gespeicherten Prognosen -> Default 'long'
+// erhaelt das bisherige Verhalten fuer bereits laufende Positionen.
+function pctGewinn(startkurs, preis, richtung) {
+  if (startkurs == null || preis == null) return null;
+  return (richtung === 'short') ? ((startkurs - preis) / startkurs * 100) : ((preis - startkurs) / startkurs * 100);
+}
+// Bester (gewinn-guenstigster) Kurs seit Start: bei LONG das Maximum, bei SHORT das Minimum.
+function bestPreis(vorherigerBest, neuerPreis, startkurs, richtung) {
+  var basis = (vorherigerBest != null) ? vorherigerBest : startkurs;
+  if (basis == null) return neuerPreis;
+  return (richtung === 'short') ? Math.min(basis, neuerPreis) : Math.max(basis, neuerPreis);
+}
+// Stop-Loss-Schwelle: bei LONG unterhalb des Startkurses, bei SHORT oberhalb (Verlust bei Kursanstieg).
+function stopLossSchwelle(startkurs, stopLossProzent, richtung) {
+  if (startkurs == null || !stopLossProzent) return null;
+  return (richtung === 'short') ? startkurs * (1 + stopLossProzent / 100) : startkurs * (1 - stopLossProzent / 100);
+}
+function stopLossIstVerletzt(schwelle, preis, richtung) {
+  if (schwelle == null || preis == null) return false;
+  return (richtung === 'short') ? (preis >= schwelle) : (preis <= schwelle);
+}
+// Haelt der Trend in die fuer die Position guenstige Richtung weiter an? (fuer vorzeitigen Abschluss)
+function trendGuenstig(letzterPreis, neuerPreis, richtung) {
+  if (letzterPreis == null || neuerPreis == null) return null;
+  return (richtung === 'short') ? (neuerPreis < letzterPreis) : (neuerPreis > letzterPreis);
+}
+
+// ── WKN/ISIN-Plausibilitaetspruefung ───────────────────────────────────────
+// WKN und ISIN kommen direkt von der KI (Schritt 3), ohne unabhaengige Quelle. Eine
+// halluzinierte, aber plausibel aussehende Kennung im Broker einzugeben waere ein
+// teurer Fehler. ISIN hat eine echte Pruefziffer (ISO 6166) - die kann verifiziert werden.
+// WKN hat keine Pruefsumme, nur ein festes Format (6 alphanumerische Zeichen) - das faengt
+// nur grobe Fehler ab, keine falschen-aber-formal-gueltigen WKNs.
+function isinGueltig(isin) {
+  if (!isin || typeof isin !== 'string') return false;
+  isin = isin.toUpperCase().replace(/\s/g, '');
+  if (!/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin)) return false;
+  var expanded = '';
+  for (var i = 0; i < isin.length; i++) {
+    var code = isin.charCodeAt(i);
+    expanded += (code >= 65 && code <= 90) ? (code - 55) : isin[i];
+  }
+  var sum = 0;
+  var alternate = false; // Pruefziffer (rechtes Ende) wird NICHT verdoppelt
+  for (var j = expanded.length - 1; j >= 0; j--) {
+    var d = parseInt(expanded[j], 10);
+    if (alternate) { d *= 2; if (d > 9) d -= 9; }
+    sum += d;
+    alternate = !alternate;
+  }
+  return sum % 10 === 0;
+}
+function wknFormatGueltig(wkn) {
+  if (!wkn || typeof wkn !== 'string') return false;
+  return /^[A-Z0-9]{6}$/.test(wkn.toUpperCase());
+}
+// Nur anerkannte US-Boersen akzeptieren - die KI wird zwar auf NYSE/NASDAQ instruiert,
+// aber ohne diese Pruefung wuerde ein abweichender/fehlender Finnhub-Exchange-Wert
+// unbemerkt durchrutschen.
+function istUSBoerse(exchange) {
+  if (!exchange) return false;
+  var e = exchange.toUpperCase();
+  return e.indexOf('NASDAQ')>=0 || e.indexOf('NEW YORK STOCK')>=0 || e.indexOf('NYSE')>=0 || e.indexOf('CBOE')>=0 || e.indexOf('BATS')>=0 || e.indexOf('ARCA')>=0;
+}
 function tryParse(raw) {
   if (!raw || typeof raw !== 'string') return null;
   var clean = raw.replace(/```json|```/gi, '').trim();
@@ -367,7 +488,7 @@ function setFinnhubStatus(ok) {
 
 function getMetrics(ticker) {
   if (metricsCache[ticker]) return Promise.resolve(metricsCache[ticker]);
-  return fetch(WORKER + '?ticker=' + ticker + '&type=metrics')
+  return workerFetch(WORKER + '?ticker=' + ticker + '&type=metrics')
     .then(function(r) { return r.json(); })
     .then(function(d) {
       // Worker gibt c (current price) zurueck - in price mappen
@@ -382,14 +503,14 @@ function getMetrics(ticker) {
 
 function getPrice(ticker) {
   if (priceCache[ticker] != null) return Promise.resolve(priceCache[ticker]);
-  return fetch(WORKER + '?ticker=' + ticker)
+  return workerFetch(WORKER + '?ticker=' + ticker)
     .then(function(r) { return r.json(); })
     .then(function(d) { var p = (d.c && d.c > 0) ? d.c : null; priceCache[ticker] = p; return p; })
     .catch(function() { return null; });
 }
 // Ungecachte Version fuer Tracking-Updates - IMMER frischer Kurs vom Server
 function getFreshPrice(ticker) {
-  return fetch(WORKER + '?ticker=' + encodeURIComponent(ticker) + '&_ts=' + Date.now(), {
+  return workerFetch(WORKER + '?ticker=' + encodeURIComponent(ticker) + '&_ts=' + Date.now(), {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' }
     })
@@ -408,12 +529,12 @@ function getFreshPrice(ticker) {
 
 // ── Earnings & Short Interest ────────────────────────────
 function getEarnings(ticker) {
-  return fetch(WORKER + '?ticker=' + ticker + '&type=earnings')
+  return workerFetch(WORKER + '?ticker=' + ticker + '&type=earnings')
     .then(function(r) { return r.json(); })
     .catch(function() { return null; });
 }
 function getShortInterest(ticker) {
-  return fetch(WORKER + '?ticker=' + ticker + '&type=short')
+  return workerFetch(WORKER + '?ticker=' + ticker + '&type=short')
     .then(function(r) { return r.json(); })
     .catch(function() { return null; });
 }
@@ -481,21 +602,20 @@ function scoreSignal(m) {
     }
   }
 
-  // Elliott-Wave Schaetzung aus Preis-Daten
-  // Impuls-Welle (3 oder 5): Momentum stark positiv + RSI 45-65 (noch nicht ueberkauft)
+  // Momentum-Muster aus RSI+Momentum-Schwellenwerten (KEINE echte Elliott-Wellenanalyse -
+  // die wuerde tatsaechliches Wellen-Zaehlen ueber historische Kursverlaeufe erfordern; das
+  // hier ist eine simple Heuristik, die deshalb bewusst nicht "Elliott" im Label traegt)
   if (m.momentum5d != null && m.rsi != null) {
     if (m.momentum5d > 2 && m.rsi > 40 && m.rsi < 65) {
-      signals.push({label:'Elliott: Impuls-Welle (3 oder 5)', type:'bullish'});
+      signals.push({label:'Momentum-Muster: Aufwaertsbewegung noch nicht ueberkauft', type:'bullish'});
       score += 2;
     }
-    // Korrektur-Welle (2 oder 4): RSI ueberverkauft, danach Erholung moeglich
     else if (m.rsi < 38 && m.momentum5d > -1) {
-      signals.push({label:'Elliott: Ende Korrektur-Welle -> Bounce', type:'bullish'});
+      signals.push({label:'Momentum-Muster: ueberverkauft, Erholung moeglich', type:'bullish'});
       score += 2;
     }
-    // Welle-5 abgeschlossen (RSI Divergenz-Indikator): RSI > 70 + Momentum schwaecher
     else if (m.rsi > 70 && m.momentum5d < 2) {
-      signals.push({label:'Elliott: Welle-5-Ende -> Vorsicht', type:'bearish'});
+      signals.push({label:'Momentum-Muster: ueberkauft, Vorsicht', type:'bearish'});
       score -= 1;
     }
   }
@@ -516,7 +636,7 @@ function callClaude(prompt, maxTokens) {
   // 90 Sekunden Timeout
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 90000);
-  return fetch(WORKER, {
+  return workerFetch(WORKER, {
     signal: controller.signal,
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -634,12 +754,17 @@ function startScan() {
         });
         });
       })).then(function(results) {
+        // Boersenplausibilitaet: nur Ticker mit von Finnhub bestaetigter US-Boerse (NASDAQ/NYSE/etc.)
+        // akzeptieren. Die KI wird zwar explizit auf NYSE/NASDAQ instruiert, aber ohne diese Pruefung
+        // wuerde ein fehlender oder abweichender Finnhub-Exchange-Wert unbemerkt durchrutschen.
+        // Gilt auch fuer den Score-Fallback unten, damit kein unplausibler Ticker als Fuellwerk landet.
+        var boersenOk = results.filter(function(r) { return istUSBoerse(r.metrics && r.metrics.exchange); });
         // Vorfilter: nur Aktien mit score >= 2
-        var gefiltert = results.filter(function(r) { return r.signal.passed; });
+        var gefiltert = boersenOk.filter(function(r) { return r.signal.passed; });
 
         // Fallback wenn zu wenige durch den Filter kommen
         if (gefiltert.length < 3) {
-          gefiltert = results.sort(function(a,b) { return b.signal.score - a.signal.score; }).slice(0,3);
+          gefiltert = boersenOk.sort(function(a,b) { return b.signal.score - a.signal.score; }).slice(0,3);
         }
 
         // Top 3 nach Signal-Score
@@ -650,16 +775,16 @@ function startScan() {
         // Schritt 3: KI erklaert nur noch WARUM - entscheidet nicht mehr
         var metricsInfo = top3.map(function(t) {
           var m = t.metrics || {};
-          var elliottSigs = t.signal.signals.filter(function(s){ return s.label.indexOf('Elliott')>=0; });
-          var elliottStr = elliottSigs.length > 0 ? ' | '+elliottSigs[0].label : '';
+          var musterSigs = t.signal.signals.filter(function(s){ return s.label.indexOf('Momentum-Muster')>=0; });
+          var musterStr = musterSigs.length > 0 ? ' | '+musterSigs[0].label : '';
           var earningsStr = m.earningsDays != null ? ' | Earnings in '+m.earningsDays+'T' : '';
           var shortStr = m.shortRatio != null ? ' | Short-Ratio '+m.shortRatio+'d' : '';
           var macdStr = m.macd != null ? ' | MACD '+(m.macd>0?'+':'')+m.macd.toFixed(2) : '';
-          return t.ticker + ': RSI='+m.rsi+', Momentum='+m.momentum5d+'%, Volumen='+m.volumeRatio+'x'+macdStr+shortStr+earningsStr+elliottStr;
+          return t.ticker + ': RSI='+m.rsi+', Momentum='+m.momentum5d+'%, Volumen='+m.volumeRatio+'x'+macdStr+shortStr+earningsStr+musterStr;
         }).join('\n');
 
         var promptSchritt3 = 'Heute: '+today+'. Katalysator: '+katalysator+
-          '\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest (inkl. Elliott-Wave-Analyse):\n'+metricsInfo+
+          '\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest (RSI/Momentum/Volumen-basiert):\n'+metricsInfo+
           '\n\nFuer jede Aktie:\n' +
           '1. Erklaere in 1 Satz WARUM sie vom Katalysator profitiert.\n' +
           '2. Schaetze eine realistische MINDEST-Rendite (anstiegProzent: konservativ, mind. 4%) UND eine realistische MAXIMAL-Rendite (anstiegProzentMax: optimistisch, falls der Katalysator voll durchschlaegt, bis zu 30% moeglich). ' +
@@ -743,7 +868,11 @@ function startScan() {
         // Briefkurs (mit Spread-Aufschlag) als Startkurs verwenden - konsistent mit Kartenanzeige "Kaufkurs"
         var briefAufschlag = t.briefAufschlagProzent || 0.2;
         var briefStart = t.startkurs ? t.startkurs * (1 + briefAufschlag/100) : null;
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', startkurs:briefStart, zielkurs:briefStart?briefStart*(1+t.anstiegProzent/100):null, anstiegProzent:parseFloat(t.anstiegProzent), stopLossProzent:t.stopLossProzent, verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
+        var richtung = t.richtung || 'long';
+        // Zielkurs richtungsabhaengig: bei SHORT liegt das Ziel UNTER dem Startkurs (Gewinn bei fallendem Kurs),
+        // vorher wurde hier immer die LONG-Formel verwendet, auch fuer als SHORT markierte Tipps.
+        var ziel = briefStart ? (richtung==='short' ? briefStart*(1-t.anstiegProzent/100) : briefStart*(1+t.anstiegProzent/100)) : null;
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), stopLossProzent:t.stopLossProzent, verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
@@ -768,13 +897,17 @@ function buildTippCard(t, i) {
   var hatSpanne = pctMax > pct + 0.3;
   var sym = t.waehrung==='EUR'?'EUR ':t.waehrung==='GBP'?'GBP ':'USD ';
   var start = t.startkurs;
-  var ziel = (start&&!isNaN(start)) ? start*(1+pct/100) : null;
-  var gewinn = (start&&ziel) ? ziel-start : null;
+  var isShort = t.richtung==='short';
+  // Zielkurs richtungsabhaengig: bei SHORT liegt das Ziel UNTER dem Startkurs (Gewinn bei
+  // fallendem Kurs). Vorher wurde hier immer die LONG-Formel verwendet.
+  var ziel = (start&&!isNaN(start)) ? (isShort ? start*(1-pct/100) : start*(1+pct/100)) : null;
+  var gewinn = (start&&ziel) ? (isShort ? start-ziel : ziel-start) : null;
   var rate = t.waehrung!=='EUR' ? eurRate : null;
   var insider = !!t.insiderSignal;
   var accent = insider ? 'var(--orange)' : 'var(--accent)';
   var borderColor = insider ? 'rgba(251,146,60,0.3)' : 'rgba(91,163,255,0.15)';
-  var isShort = t.richtung==='short';
+  var isinOk = t.isin ? isinGueltig(t.isin) : null;
+  var wknOk = t.wkn ? wknFormatGueltig(t.wkn) : null;
   var m = t.metrics || {};
 
   // Signal-Badges
@@ -840,12 +973,15 @@ function buildTippCard(t, i) {
   var briefAufschlag = t.briefAufschlagProzent || 0.2;
   var briefPreis = start ? start * (1 + briefAufschlag/100) : null;
   var eurBrief = fmtEur(briefPreis, rate, t.waehrung);
-  var nettoRendite = ziel && briefPreis ? ((ziel - briefPreis) / briefPreis * 100) : pct;
-  var nettoGewinn = ziel && briefPreis ? ziel - briefPreis : gewinn;
+  var nettoRendite = (ziel && briefPreis) ? (isShort ? ((briefPreis-ziel)/briefPreis*100) : ((ziel-briefPreis)/briefPreis*100)) : pct;
+  var nettoGewinn = (ziel && briefPreis) ? (isShort ? (briefPreis-ziel) : (ziel-briefPreis)) : gewinn;
   var eurNettoGewinn = fmtEur(nettoGewinn, rate, t.waehrung);
   var kaufBisDatum = addTradingDays(new Date(), t.kaufFensterTage||1).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   var verkaufBisDatum = addTradingDays(new Date(), t.verkaufNachTagen||3).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-  var kaufHinweis = t.kaufFensterTage === 1 ? 'Heute kaufen!' : 'Kaufen bis '+kaufBisDatum;
+  var marktOffen = istUSMarktOffen();
+  var kaufHinweis = t.kaufFensterTage === 1
+    ? (marktOffen ? 'Jetzt kaufen!' : 'Markt geschlossen - zur Eroeffnung kaufen')
+    : 'Kaufen bis '+kaufBisDatum;
 
   // Gehebelter Verkaufskurs (Hebel-Produkt: Kursbewegung x Hebel)
   var hebel = t.hebelEmpfehlung || 3;
@@ -865,19 +1001,20 @@ function buildTippCard(t, i) {
     ? 'Kauf ' + hebel + 'x-Hebel mit ' + eurHebelEinstieg.replace('EUR ','€') + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + eurHebelZiel.replace('EUR ','€')
     : '';
 
-  // Stop-Loss Berechnung
+  // Stop-Loss Berechnung: bei SHORT liegt die Schwelle OBERHALB des Einstiegs (Verlust bei
+  // steigendem Kurs), vorher wurde hier immer die LONG-Formel verwendet.
   var stopLossPct = t.stopLossProzent || 3.0;
-  var stopLossPreis = briefPreis ? briefPreis * (1 - stopLossPct/100) : null;
+  var stopLossPreis = briefPreis ? (isShort ? briefPreis*(1+stopLossPct/100) : briefPreis*(1-stopLossPct/100)) : null;
   var eurStopLoss = fmtEur(stopLossPreis, rate, t.waehrung);
   var stopLossHebelPreis = hebelProduktEinstieg ? hebelProduktEinstieg * (1 - (stopLossPct*hebel)/100) : null;
   var eurStopLossHebel = fmtEur(stopLossHebelPreis, rate, t.waehrung);
   var stopLossHtml = stopLossPreis ? '<div class="stoploss-block">' +
-    '<div class="sl-label">STOP-LOSS (Basiswert bei -'+stopLossPct.toFixed(1)+'%)</div>' +
+    '<div class="sl-label">STOP-LOSS (Basiswert bei '+(isShort?'+':'-')+stopLossPct.toFixed(1)+'%)</div>' +
     '<div class="sl-row">' +
       '<div><div class="sl-sub">Basiswert</div><div class="sl-value">'+fmtP(stopLossPreis,eurStopLoss,sym)+'</div></div>' +
       (stopLossHebelPreis ? '<div><div class="sl-sub">'+hebel+'x-Schein</div><div class="sl-value">'+fmtP(Math.max(0,stopLossHebelPreis),eurStopLossHebel,sym)+'</div></div>' : '') +
     '</div>' +
-    '<div class="sl-hint">Bei Unterschreitung: These widerlegt, Position schliessen</div>' +
+    '<div class="sl-hint">Bei '+(isShort?'Ueberschreitung':'Unterschreitung')+': These widerlegt, Position schliessen</div>' +
   '</div>' : '';
   richtungHtml += stopLossHtml;
 
@@ -891,9 +1028,10 @@ function buildTippCard(t, i) {
           (insider?'<span class="insider-badge">Politiker-Trade</span>':'') +
         '</div>' +
         ((t.wkn||t.isin)?'<div style="display:flex;gap:10px;margin-bottom:6px;flex-wrap:wrap;">' +
-          (t.wkn?'<span style="font-size:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;color:var(--text2);">WKN: <span style="color:var(--text);font-weight:500;">'+esc(t.wkn)+'</span></span>':'') +
-          (t.isin?'<span style="font-size:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;color:var(--text2);">ISIN: <span style="color:var(--text);font-weight:500;">'+esc(t.isin)+'</span></span>':'') +
+          (t.wkn?'<span style="font-size:10px;background:var(--bg3);border:1px solid '+(wknOk?'var(--border2)':'rgba(244,63,94,0.4)')+';border-radius:4px;padding:2px 8px;color:var(--text2);">WKN: <span style="color:'+(wknOk?'var(--text)':'var(--red)')+';font-weight:500;">'+esc(t.wkn)+(wknOk?'':' ⚠')+'</span></span>':'') +
+          (t.isin?'<span style="font-size:10px;background:var(--bg3);border:1px solid '+(isinOk?'var(--border2)':'rgba(244,63,94,0.4)')+';border-radius:4px;padding:2px 8px;color:var(--text2);">ISIN: <span style="color:'+(isinOk?'var(--text)':'var(--red)')+';font-weight:500;">'+esc(t.isin)+(isinOk?'':' ⚠')+'</span></span>':'') +
         '</div>':'') +
+        ((wknOk===false||isinOk===false)?'<div style="font-size:10px;color:var(--red);margin-bottom:6px;">⚠ Pruefsumme/Format nicht plausibel - vor Nutzung im Broker unbedingt gegenchecken</div>':'') +
         '<div class="card-these">'+esc(t.these)+'</div>' +
         (t.haupttreiber?'<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>':'') +
         (insider&&t.insiderInfo?'<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>':'') +
@@ -902,12 +1040,12 @@ function buildTippCard(t, i) {
     '</div>' +
     metricsHtml +
     '<div class="kurs-block">' +
-      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value-big" style="color:var(--text)">'+fmtP(briefPreis,eurBrief,sym)+'</div><div class="kc-sub live" style="color:'+(t.kaufFensterTage===1?'var(--red)':'var(--green)')+'">'+kaufHinweis+'</div></div>' +
+      '<div><div class="kc-label">Brief (Kaufkurs)</div><div class="kc-value-big" style="color:var(--text)">'+fmtP(briefPreis,eurBrief,sym)+'</div><div class="kc-sub live" style="color:'+((t.kaufFensterTage===1&&marktOffen)?'var(--red)':(t.kaufFensterTage===1?'var(--gold)':'var(--green)'))+'">'+kaufHinweis+'</div></div>' +
       '<div class="kc-arrow">→</div>' +
       '<div class="kc-right"><div class="kc-label">Zielkurs (Geld)</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(ziel,eurZiel,sym)+'</div><div class="kc-sub" style="color:var(--red)">Verkaufen bis '+verkaufBisDatum+'</div></div>' +
       '<div class="kc-divider"><div class="kc-label">Netto/Aktie</div><div class="kc-value-big" style="color:var(--green)">'+fmtP(nettoGewinn,eurNettoGewinn,sym)+'</div><div class="kc-sub" style="color:var(--green)">+'+nettoRendite.toFixed(1)+'% netto</div></div>' +
     '</div>' +
-    '<div class="kv-satz">Bei '+hebel+'x-Hebelprodukten: passendes Zertifikat im Broker suchen (Basispreis nahe '+fmt(briefPreis,sym)+'), Kursziel des Basiswerts oben massgeblich fuer Verkaufsentscheidung.</div>' +
+    '<div class="kv-satz">Bei '+hebel+'x-Hebelprodukten: passendes '+(isShort?'Put-/Short-':'Call-/Long-')+'Zertifikat im Broker suchen (Richtwert-Basispreis nahe '+fmt(briefPreis,sym)+'). Der hier gezeigte Hebelprodukt-Preis ist eine grobe Naeherung (1/'+hebel+' des Basiswerts) - NICHT die echte Kursstellung des Emittenten (Spread, Aufgeld, Restlaufzeit fehlen). Kursziel des Basiswerts oben ist fuer die Verkaufsentscheidung massgeblich, nicht der genaue Hebelprodukt-Preis.</div>' +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
     '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
     richtungHtml +
@@ -947,25 +1085,27 @@ function fetchAndApplyKurse(silent) {
       if (verlauf.length<=1) verlauf.push({date:today,price:res.price});
       else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price};
       else verlauf.push({date:today,price:res.price});
-      // Hoechstkurs seit Scan-Start fortschreiben (unabhaengig vom letzten Snapshot).
-      // Grund: Ohne das geht ein zwischenzeitlich erreichtes Kursziel verloren, wenn der
-      // Kurs bis zum naechsten manuellen/automatischen Update wieder gefallen ist.
-      var peakPrice = Math.max(p.peakPrice || p.startkurs || 0, res.price);
-      var peakDate = (p.peakPrice==null || res.price>=p.peakPrice) ? today : p.peakDate;
+      // Hoechstguenstiger Kurs seit Scan-Start fortschreiben (unabhaengig vom letzten Snapshot).
+      // Bei LONG das Maximum, bei SHORT das Minimum (siehe bestPreis()). Grund: Ohne das geht ein
+      // zwischenzeitlich erreichtes Kursziel verloren, wenn der Kurs bis zum naechsten Update
+      // wieder in die ungueustige Richtung gelaufen ist.
+      var peakPrice = bestPreis(p.peakPrice, res.price, p.startkurs, p.richtung);
+      var warNeuerBestwert = (p.peakPrice==null) || (p.richtung==='short' ? res.price<=p.peakPrice : res.price>=p.peakPrice);
+      var peakDate = warNeuerBestwert ? today : p.peakDate;
 
       // Vorzeitiger Abschluss: was erledigt ist, muss nicht mehr taeglich abgefragt werden -
-      // es sei denn, die Tendenz haelt weiter an.
+      // es sei denn, die Tendenz haelt weiter an. Alle Berechnungen richtungsabhaengig (LONG/SHORT):
       // - Stop-Loss verletzt -> immer sofort erledigt (Risikomanagement: These widerlegt, fertig).
-      // - Ziel erreicht -> nur erledigt, wenn der Aufwaertstrend NICHT mehr anhaelt (Kurs gegenueber
-      //   dem letzten Snapshot nicht mehr gestiegen). Steigt er weiter, lohnt sich Weiterverfolgen
+      // - Ziel erreicht -> nur erledigt, wenn der guenstige Trend NICHT mehr anhaelt (bei LONG: Kurs
+      //   steigt nicht mehr; bei SHORT: Kurs faellt nicht mehr). Haelt er an, lohnt sich Weiterverfolgen
       //   (Gewinne laufen lassen) - dann bleibt die Position aktiv und wird weiter abgefragt.
       // - Ohne Vergleichsbasis (erstes Update ueberhaupt) wird NICHT vorzeitig geschlossen.
-      var aktPctNeu = (p.startkurs) ? ((res.price-p.startkurs)/p.startkurs*100) : null;
+      var aktPctNeu = pctGewinn(p.startkurs, res.price, p.richtung);
       var zielErreicht = aktPctNeu!=null && aktPctNeu>=(p.anstiegProzent||0);
-      var stopLossKurs = (p.startkurs&&p.stopLossProzent)?p.startkurs*(1-p.stopLossProzent/100):null;
-      var stopLossVerletzt = stopLossKurs!=null && res.price<=stopLossKurs;
-      var trendPositiv = (last && last.price!=null) ? (res.price > last.price) : null;
-      var zielVorzeitigErledigt = zielErreicht && trendPositiv===false;
+      var stopLossKurs = stopLossSchwelle(p.startkurs, p.stopLossProzent, p.richtung);
+      var stopLossVerletzt = stopLossIstVerletzt(stopLossKurs, res.price, p.richtung);
+      var trendGuenstigNoch = trendGuenstig(last?last.price:null, res.price, p.richtung);
+      var zielVorzeitigErledigt = zielErreicht && trendGuenstigNoch===false;
       var vorzeitigAbschluss = stopLossVerletzt || zielVorzeitigErledigt;
       var abschlussGrund = stopLossVerletzt ? 'stoploss' : (zielVorzeitigErledigt ? 'ziel' : (tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3) ? 'zeit' : null));
 
@@ -1026,26 +1166,29 @@ function renderTracking() {
       var sym = p.currency==='EUR'?'EUR ':'USD ';
       var rate = p.currency!=='EUR'?(p.eurRate||eurRate):null;
       var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
-      var aktPct = (aktuell&&p.startkurs)?((aktuell-p.startkurs)/p.startkurs*100):null;
+      var aktPct = pctGewinn(p.startkurs, aktuell, p.richtung);
       var tageNoch = Math.max(0,3-daysDiff(p.scanDate));
       var fortschritt = Math.min(100,(daysDiff(p.scanDate)/3)*100);
       var isUp = aktPct!==null&&aktPct>=0;
       var pctColor = isUp?'var(--green)':'var(--red)';
+      var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:9px;padding:2px 8px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
 
-      // Hoechstkurs seit Scan-Start - bleibt sichtbar, auch wenn der Kurs seither wieder gefallen ist.
+      // Hoechstguenstiger Kurs seit Scan-Start (Maximum bei LONG, Minimum bei SHORT) - bleibt
+      // sichtbar, auch wenn der Kurs seither wieder in die ungueustige Richtung gelaufen ist.
       // p.peakPrice fehlt bei aelteren, vor diesem Update gespeicherten Prognosen -> dann einfach
       // keine Peak-Zeile anzeigen (kein Fehler, fuellt sich beim naechsten Kurs-Update selbst auf).
-      var peakPct = (p.peakPrice&&p.startkurs)?((p.peakPrice-p.startkurs)/p.startkurs*100):null;
+      var peakPct = pctGewinn(p.startkurs, p.peakPrice, p.richtung);
       var peakZielErreicht = peakPct!==null&&peakPct>=(p.anstiegProzent||0);
       var zeigtPeakHinweis = peakPct!==null&&aktPct!==null&&Math.abs(peakPct-aktPct)>0.15;
 
-      // Stop-Loss-Check: aktueller Kurs auf/unter dem beim Scan berechneten Stop-Loss-Niveau
-      var stopLossKurs = (p.startkurs&&p.stopLossProzent)?p.startkurs*(1-p.stopLossProzent/100):null;
-      var stopLossVerletzt = stopLossKurs!=null&&aktuell!=null&&aktuell<=stopLossKurs;
+      // Stop-Loss-Check: aktueller Kurs auf/hinter dem beim Scan berechneten Stop-Loss-Niveau
+      // (bei LONG darunter, bei SHORT darueber)
+      var stopLossKurs = stopLossSchwelle(p.startkurs, p.stopLossProzent, p.richtung);
+      var stopLossVerletzt = stopLossIstVerletzt(stopLossKurs, aktuell, p.richtung);
 
       html += '<div class="tracking-card" style="'+(stopLossVerletzt?'border:1px solid rgba(244,63,94,0.4);':'')+'">' +
         '<div class="tracking-header">' +
-          '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span></div>' +
+          '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span>'+richtungBadge+'</div>' +
           '<div style="font-size:10px;color:var(--text3)">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
           '<div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
             '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
@@ -1069,13 +1212,15 @@ function renderTracking() {
 
   var ausSection = document.getElementById('auswertungSection');
   if (abgeschlossene.length) {
-    // Treffer-Wertung nutzt den Hoechstkurs seit Scan-Start (peakPrice), nicht nur den letzten
-    // Snapshot - sonst zaehlt ein zwischenzeitlich erreichtes Ziel faelschlich als "Verfehlt",
-    // wenn der Kurs bis zum Abschluss der Position wieder gefallen ist. Bei aelteren Prognosen
-    // ohne peakPrice faellt die Wertung automatisch auf den letzten bekannten Kurs zurueck.
+    // Treffer-Wertung nutzt den hoechstguenstigen Kurs seit Scan-Start (peakPrice, richtungsabhaengig
+    // via pctGewinn), nicht nur den letzten Snapshot - sonst zaehlt ein zwischenzeitlich erreichtes
+    // Ziel faelschlich als "Verfehlt", wenn der Kurs bis zum Abschluss der Position wieder in die
+    // ungueustige Richtung gelaufen ist. Bei aelteren Prognosen ohne peakPrice faellt die Wertung
+    // automatisch auf den letzten bekannten Kurs zurueck.
     var treffer = abgeschlossene.filter(function(p) {
       var bestpreis = (p.peakPrice!=null) ? p.peakPrice : (p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null);
-      return bestpreis&&p.startkurs&&((bestpreis-p.startkurs)/p.startkurs*100)>=(p.anstiegProzent||0)*0.8;
+      var bestPct = pctGewinn(p.startkurs, bestpreis, p.richtung);
+      return bestPct!=null && bestPct>=(p.anstiegProzent||0)*0.8;
     }).length;
     var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung (Treffer = min. 80% des Kursziels je zwischenzeitlich erreicht)</div>' +
       '<div class="summary-grid">' +
@@ -1085,16 +1230,17 @@ function renderTracking() {
       '</div>';
     abgeschlossene.slice(0,15).forEach(function(p) {
       var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
-      var endPct = (aktuell&&p.startkurs)?((aktuell-p.startkurs)/p.startkurs*100):null;
-      var peakPct = (p.peakPrice&&p.startkurs)?((p.peakPrice-p.startkurs)/p.startkurs*100):null;
+      var endPct = pctGewinn(p.startkurs, aktuell, p.richtung);
+      var peakPct = pctGewinn(p.startkurs, p.peakPrice, p.richtung);
       var bestPct = peakPct!=null?peakPct:endPct;
       var hit = bestPct!==null&&bestPct>=(p.anstiegProzent||0)*0.8;
       var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
       var zeigtPeakZeile = peakPct!=null&&endPct!=null&&Math.abs(peakPct-endPct)>0.15;
+      var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:8px;padding:1px 6px;margin-left:6px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
       var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', stoploss:'Vorzeitig beendet: Stop-Loss verletzt', zeit:'Beendet: Zeitfenster abgelaufen'}[p.abschlussGrund] || '';
       var grundColor = p.abschlussGrund==='stoploss'?'var(--red)':(p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)');
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
-        '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
+        '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
         '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div></div>' +
         '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Ergebnis</div><div style="font-size:16px;font-weight:500;color:'+endColor+'">'+(endPct!=null?(endPct>=0?'+':'')+endPct.toFixed(1)+'%':'--')+'</div></div>' +
         '<div style="font-size:16px;color:'+(hit?'var(--green)':'var(--red)')+'">'+(hit?'✓':'✗')+'</div>' +
@@ -1141,19 +1287,72 @@ function resetDaten() {
   renderTracking();
 }
 
+// ── Backup Export/Import ────────────────────────────────────────────────
+// Einzige Persistenz ist localStorage - beim Loeschen der Browserdaten oder Geraetewechsel
+// geht die komplette Tracking-Historie inkl. Trefferquote sonst ersatzlos verloren.
+function exportDaten() {
+  try {
+    var data = JSON.stringify(loadPrognosen(), null, 2);
+    var blob = new Blob([data], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var datumStr = formatDatumLokal(new Date());
+    a.href = url;
+    a.download = 'markttipps-backup-' + datumStr + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  } catch(e) {
+    showError('trackingError', 'Export fehlgeschlagen: ' + e.message);
+  }
+}
+function importDaten(event) {
+  var file = event.target.files && event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function() {
+    try {
+      var imported = JSON.parse(reader.result);
+      if (!Array.isArray(imported)) throw new Error('kein Array');
+      if (!confirm('Backup importieren? Das ersetzt alle ' + loadPrognosen().length + ' aktuell gespeicherten Prognosen durch ' + imported.length + ' Eintraege aus der Datei.')) {
+        event.target.value = '';
+        return;
+      }
+      savePrognosen(imported);
+      updateTrackingCount();
+      renderTracking();
+      clearError('trackingError');
+    } catch(e) {
+      showError('trackingError', 'Import fehlgeschlagen: Datei ist kein gueltiges MarktTipps-Backup.');
+    }
+    event.target.value = '';
+  };
+  reader.onerror = function() {
+    showError('trackingError', 'Datei konnte nicht gelesen werden.');
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ── Politiker Trades ──────────────────────────────────────
 function renderPolitikerTrades(trades) {
   var cont = document.getElementById('politikerContent');
   if (!cont||!trades) return;
   cont.innerHTML = trades.map(function(t) {
     var isKauf = t.aktion==='Kauf';
+    // Meldedatum kann laut STOCK Act bis zu 45 Tage nach dem tatsaechlichen Trade liegen.
+    // Wenn die KI beide Daten unterscheiden konnte, wird der Meldeverzug sichtbar gemacht statt
+    // "letzten 30 Tage" so zu verstehen, als waere der Trade selbst erst kuerzlich passiert.
+    var zeigtMeldedatum = t.meldedatum && t.datum && t.meldedatum !== t.datum;
     return '<div class="trade-card">' +
       '<div class="trade-header">' +
         '<span style="font-size:15px;font-weight:500;color:var(--accent)">'+esc(t.ticker||'?')+'</span>' +
         '<span style="font-family:var(--serif);font-size:12px;font-style:italic;color:var(--text2)">'+esc(t.name||'')+'</span>' +
         '<span class="trade-action '+(isKauf?'kauf':'verk')+'">'+esc(t.aktion||'?')+'</span>' +
       '</div>' +
-      '<div style="font-size:11px;color:var(--orange);margin-bottom:4px">'+esc(t.politiker||'')+' - '+esc(t.betrag||'')+' - '+esc(t.datum||'')+'</div>' +
+      '<div style="font-size:11px;color:var(--orange);margin-bottom:4px">'+esc(t.politiker||'')+' - '+esc(t.betrag||'')+' - Trade: '+esc(t.datum||'unbekannt')+'</div>' +
+      (zeigtMeldedatum?'<div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Gemeldet erst: '+esc(t.meldedatum)+' (STOCK-Act-Meldefrist bis zu 45 Tage)</div>':'') +
       '<div style="font-size:11px;color:var(--text2);line-height:1.6">'+esc(t.relevanz||'')+'</div>' +
     '</div>';
   }).join('');
@@ -1166,7 +1365,7 @@ function loadPolitikerTrades() {
   setHTML('politikerBtnIcon','<div class="spinner-sm"></div>');
   clearError('politikerError');
   var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
-  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades der letzten 30 Tage von Trump/Familie und Nancy/Paul Pelosi auf capitoltrades.com oder quiverquant.com. Nur Trades der letzten 30 Tage. Nur JSON:\n{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","relevanz":"1 Satz warum relevant"}]}\nNur JSON, deutsch.';
+  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades von Trump/Familie und Nancy/Paul Pelosi auf capitoltrades.com oder quiverquant.com, die in den letzten 30 Tagen GEMELDET wurden. WICHTIG: Nach dem STOCK Act koennen bis zu 45 Tage zwischen dem tatsaechlichen Trade und der Meldung liegen - "gemeldet" bedeutet NICHT "kuerzlich gehandelt". Gib fuer jeden Trade BEIDE Daten separat an, falls unterscheidbar: das tatsaechliche Transaktionsdatum (datum) und das Meldedatum (meldedatum). Nur JSON:\n{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ (Transaktion)","meldedatum":"TT.MM.JJJJ (Meldung, falls abweichend)","relevanz":"1 Satz warum relevant"}]}\nNur JSON, deutsch.';
   callClaude(prompt,800)
     .then(function(raw) {
       var result = tryParse(raw);
@@ -1187,7 +1386,7 @@ function autoCheckPolitiker() {
     return;
   }
   var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
-  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades der letzten 30 Tage von Trump/Familie und Pelosi. Nur JSON: {"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","relevanz":"Warum relevant"}]} Nur JSON, deutsch.';
+  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades von Trump/Familie und Pelosi, die in den letzten 30 Tagen GEMELDET wurden. STOCK Act erlaubt bis zu 45 Tage Meldeverzug - gib Transaktionsdatum (datum) und Meldedatum (meldedatum) separat an, falls unterscheidbar. Nur JSON: {"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","meldedatum":"TT.MM.JJJJ","relevanz":"Warum relevant"}]} Nur JSON, deutsch.';
   callClaude(prompt,800)
     .then(function(raw) {
       var result = tryParse(raw);
