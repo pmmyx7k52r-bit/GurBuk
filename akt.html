@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.12</title>
+<title>MarktTipps V2.13</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -156,7 +156,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.12</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.13</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -226,7 +226,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.12 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.13 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -689,9 +689,10 @@ function startScan() {
     ' Geopolitik, Zinsen, Earnings, Energie, Trump/Pelosi-Trades beruecksichtigen. WICHTIG: Waehle Aktien aus VERSCHIEDENEN Sektoren (nicht 2x Energie, nicht 2x Tech etc.). Jeder Tipp muss einen anderen Hauptsektor haben.' +
     ' Antworte NUR mit diesem JSON-Format (keine anderen Zeichen):\n' +
     '{"eurUsdRate":0.92,"katalysator":"Treiber in 1 Satz","kontext":"Marktlage in 1 Satz","kandidaten":["TICK1","TICK2","TICK3","TICK4","TICK5","TICK6","TICK7","TICK8"]}\n' +
-    'Ersetze TICK1-TICK8 mit echten NYSE/NASDAQ Tickern. Nur JSON, deutsch.';
+    'Ersetze TICK1-TICK8 mit echten NYSE/NASDAQ Tickern. Nur JSON, deutsch. ' +
+    'WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens, kein Kommentar zur Recherche davor.';
 
-  callClaude(promptSchritt1, 1500)
+  callClaude(promptSchritt1, 3000)
     .then(function(raw) {
       var result = tryParse(raw);
       if (!result) {
@@ -800,9 +801,9 @@ function startScan() {
           '4. Schaetze das optimale Verkaufsdatum in Tagen ab heute (verkaufNachTagen: 1-5 Tage).\n' +
           '5. Schaetze einen realistischen Stop-Loss in Prozent (stopLossProzent: 2-6%, wie viel Verlust vom Basiswert bevor die These widerlegt ist - z.B. Unterschreitung wichtiger Unterstuetzung).\n' +
           '6. Gib WKN und ISIN an.\n' +
-          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":4.0,"anstiegProzentMax":12.0,"stopLossProzent":3.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch.';
+          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":4.0,"anstiegProzentMax":12.0,"stopLossProzent":3.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch. WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
 
-        return callClaude(promptSchritt3, 1500).then(function(raw2) {
+        return callClaude(promptSchritt3, 2500).then(function(raw2) {
           var erklaerung = tryParse(raw2);
           var tipMap = {};
           if (erklaerung && erklaerung.tipps) {
@@ -1372,8 +1373,8 @@ function loadPolitikerTrades() {
   setHTML('politikerBtnIcon','<div class="spinner-sm"></div>');
   clearError('politikerError');
   var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
-  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades von Trump/Familie und Nancy/Paul Pelosi auf capitoltrades.com oder quiverquant.com, die in den letzten 30 Tagen GEMELDET wurden. WICHTIG: Nach dem STOCK Act koennen bis zu 45 Tage zwischen dem tatsaechlichen Trade und der Meldung liegen - "gemeldet" bedeutet NICHT "kuerzlich gehandelt". Gib fuer jeden Trade BEIDE Daten separat an, falls unterscheidbar: das tatsaechliche Transaktionsdatum (datum) und das Meldedatum (meldedatum). Nur JSON:\n{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ (Transaktion)","meldedatum":"TT.MM.JJJJ (Meldung, falls abweichend)","relevanz":"1 Satz warum relevant"}]}\nNur JSON, deutsch.';
-  callClaude(prompt,1500)
+  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades von Trump/Familie und Nancy/Paul Pelosi auf capitoltrades.com oder quiverquant.com, die in den letzten 30 Tagen GEMELDET wurden. WICHTIG: Nach dem STOCK Act koennen bis zu 45 Tage zwischen dem tatsaechlichen Trade und der Meldung liegen - "gemeldet" bedeutet NICHT "kuerzlich gehandelt". Gib fuer jeden Trade BEIDE Daten separat an, falls unterscheidbar: das tatsaechliche Transaktionsdatum (datum) und das Meldedatum (meldedatum). Nur JSON:\n{"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ (Transaktion)","meldedatum":"TT.MM.JJJJ (Meldung, falls abweichend)","relevanz":"1 Satz warum relevant"}]}\nNur JSON, deutsch. WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
+  callClaude(prompt,2500)
     .then(function(raw) {
       var result = tryParse(raw);
       if (!result||!result.trades||!result.trades.length) throw new Error('Keine Trades gefunden');
@@ -1393,8 +1394,8 @@ function autoCheckPolitiker() {
     return;
   }
   var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
-  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades von Trump/Familie und Pelosi, die in den letzten 30 Tagen GEMELDET wurden. STOCK Act erlaubt bis zu 45 Tage Meldeverzug - gib Transaktionsdatum (datum) und Meldedatum (meldedatum) separat an, falls unterscheidbar. Nur JSON: {"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","meldedatum":"TT.MM.JJJJ","relevanz":"Warum relevant"}]} Nur JSON, deutsch.';
-  callClaude(prompt,1500)
+  var prompt = 'Heute: '+today+'. Recherchiere Aktien-Trades von Trump/Familie und Pelosi, die in den letzten 30 Tagen GEMELDET wurden. STOCK Act erlaubt bis zu 45 Tage Meldeverzug - gib Transaktionsdatum (datum) und Meldedatum (meldedatum) separat an, falls unterscheidbar. Nur JSON: {"trades":[{"politiker":"Name","ticker":"TICKER","name":"Firma","aktion":"Kauf","betrag":"$X","datum":"TT.MM.JJJJ","meldedatum":"TT.MM.JJJJ","relevanz":"Warum relevant"}]} Nur JSON, deutsch. WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
+  callClaude(prompt,2500)
     .then(function(raw) {
       var result = tryParse(raw);
       if (result&&result.trades&&result.trades.length) {
