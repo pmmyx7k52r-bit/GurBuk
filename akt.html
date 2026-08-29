@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.14</title>
+<title>MarktTipps V2.15</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -98,12 +98,6 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .hkb-arrow { font-size: 16px; color: var(--gold); align-self: center; }
 .hkb-gewinn { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(240,180,41,0.15); }
 .kv-satz { background: var(--bg3); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin-top: 10px; font-size: 13px; color: var(--text); line-height: 1.6; font-weight: 500; }
-.stoploss-block { background: rgba(244,63,94,0.05); border: 1px solid rgba(244,63,94,0.2); border-radius: 7px; padding: 10px 14px; margin-top: 10px; }
-.sl-label { font-size: 9px; color: var(--red); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
-.sl-row { display: flex; gap: 20px; }
-.sl-sub { font-size: 9px; color: var(--text3); margin-bottom: 2px; }
-.sl-value { font-size: 15px; font-weight: 600; color: var(--red); }
-.sl-hint { font-size: 10px; color: var(--text3); margin-top: 6px; }
 .kc-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
 .kc-sub.live { color: var(--green); }
 .kc-right { text-align: right; }
@@ -156,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.14</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.15</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -185,6 +179,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
       </div>
       <div id="scanBtnIcon" class="scan-btn-arrow">→</div>
     </button>
+    <div id="gekauftSperreHinweis" style="display:none;font-size:11px;color:var(--gold);background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.25);border-radius:6px;padding:8px 12px;margin-bottom:10px;"></div>
     <div id="statusMsg" class="status-msg" style="display:none"></div>
     <div id="errorBox" class="error-box"></div>
     <div id="kontextBox" class="info-box" style="display:none"></div>
@@ -226,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.14 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.15 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -375,15 +370,6 @@ function bestPreis(vorherigerBest, neuerPreis, startkurs, richtung) {
   var basis = (vorherigerBest != null) ? vorherigerBest : startkurs;
   if (basis == null) return neuerPreis;
   return (richtung === 'short') ? Math.min(basis, neuerPreis) : Math.max(basis, neuerPreis);
-}
-// Stop-Loss-Schwelle: bei LONG unterhalb des Startkurses, bei SHORT oberhalb (Verlust bei Kursanstieg).
-function stopLossSchwelle(startkurs, stopLossProzent, richtung) {
-  if (startkurs == null || !stopLossProzent) return null;
-  return (richtung === 'short') ? startkurs * (1 + stopLossProzent / 100) : startkurs * (1 - stopLossProzent / 100);
-}
-function stopLossIstVerletzt(schwelle, preis, richtung) {
-  if (schwelle == null || preis == null) return false;
-  return (richtung === 'short') ? (preis >= schwelle) : (preis <= schwelle);
 }
 // Haelt der Trend in die fuer die Position guenstige Richtung weiter an? (fuer vorzeitigen Abschluss)
 function trendGuenstig(letzterPreis, neuerPreis, richtung) {
@@ -657,6 +643,12 @@ function callClaude(prompt, maxTokens) {
 
 // ── Scan ──────────────────────────────────────────────────
 function startScan() {
+  // Absicherung zusaetzlich zum disabled-Button: solange eine Position als gekauft markiert
+  // ist, keinen Scan starten (spart Tokens - siehe updateScanButtonState).
+  if (hatAktiveGekaufterPosition()) {
+    updateScanButtonState();
+    return;
+  }
   // Cache leeren
   metricsCache = {};
   priceCache = {};
@@ -799,9 +791,8 @@ function startScan() {
              'anstiegProzentMax muss groesser als anstiegProzent sein, sonst identisch setzen falls keine Spannbreite plausibel ist.\n' +
           '3. Schaetze das optimale Zeitfenster in Tagen (kaufFensterTage: 1, 2 oder 3 - wie lange ist die Einstiegschance noch offen?).\n' +
           '4. Schaetze das optimale Verkaufsdatum in Tagen ab heute (verkaufNachTagen: 1-5 Tage).\n' +
-          '5. Schaetze einen realistischen Stop-Loss in Prozent (stopLossProzent: 2-6%, wie viel Verlust vom Basiswert bevor die These widerlegt ist - z.B. Unterschreitung wichtiger Unterstuetzung).\n' +
-          '6. Gib WKN und ISIN an.\n' +
-          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":4.0,"anstiegProzentMax":12.0,"stopLossProzent":3.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch. WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
+          '5. Gib WKN und ISIN an.\n' +
+          'Nur JSON:\n{"tipps":[{"ticker":"X","anstiegProzent":4.0,"anstiegProzentMax":12.0,"kaufFensterTage":1,"verkaufNachTagen":2,"briefAufschlagProzent":0.2,"these":"Warum profitiert X konkret?","haupttreiber":"Spezifischer Treiber","wkn":"123456","isin":"US0000000000","insiderSignal":false,"insiderInfo":""}]}\nNur JSON, deutsch. WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
 
         return callClaude(promptSchritt3, 2500).then(function(raw2) {
           var erklaerung = tryParse(raw2);
@@ -824,7 +815,6 @@ function startScan() {
               startkurs: m.price,
               anstiegProzent: Math.min(25, Math.max(4, erkl.anstiegProzent || (item.signal.score * 4.0))),
               anstiegProzentMax: Math.min(50, Math.max(erkl.anstiegProzentMax || 0, erkl.anstiegProzent || (item.signal.score * 4.0))),
-              stopLossProzent: Math.min(6, Math.max(2, erkl.stopLossProzent || 3.0)),
               kaufFensterTage: erkl.kaufFensterTage || 2,
               verkaufNachTagen: erkl.verkaufNachTagen || 3,
               briefAufschlagProzent: erkl.briefAufschlagProzent || 0.2,
@@ -878,7 +868,7 @@ function startScan() {
         // Zielkurs richtungsabhaengig: bei SHORT liegt das Ziel UNTER dem Startkurs (Gewinn bei fallendem Kurs),
         // vorher wurde hier immer die LONG-Formel verwendet, auch fuer als SHORT markierte Tipps.
         var ziel = briefStart ? (richtung==='short' ? briefStart*(1-t.anstiegProzent/100) : briefStart*(1+t.anstiegProzent/100)) : null;
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), stopLossProzent:t.stopLossProzent, verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber };
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
@@ -952,8 +942,6 @@ function buildTippCard(t, i) {
     extraBadges += '<span class="rtag" style="background:rgba(34,197,94,0.1);color:var(--green);">MACD +</span>';
   }
 
-  var stopLossPct = t.stopLossProzent || 3.0;
-
   // Richtung & Hebel
   var richtungHtml = '<div class="richtung-block">' +
     '<span class="rtag '+(isShort?'short':'long')+'">'+(isShort?'SHORT':'LONG')+'</span>';
@@ -1006,23 +994,6 @@ function buildTippCard(t, i) {
   var kaufVerkaufSatzEur = (eurHebelEinstieg && eurHebelZiel)
     ? 'Kauf ' + hebel + 'x-Hebel mit ' + eurHebelEinstieg.replace('EUR ','€') + ' und Verkauf bis ' + verkaufBisDatum + ' zu ' + eurHebelZiel.replace('EUR ','€')
     : '';
-
-  // Stop-Loss Berechnung: bei SHORT liegt die Schwelle OBERHALB des Einstiegs (Verlust bei
-  // steigendem Kurs), vorher wurde hier immer die LONG-Formel verwendet.
-  var stopLossPct = t.stopLossProzent || 3.0;
-  var stopLossPreis = briefPreis ? (isShort ? briefPreis*(1+stopLossPct/100) : briefPreis*(1-stopLossPct/100)) : null;
-  var eurStopLoss = fmtEur(stopLossPreis, rate, t.waehrung);
-  var stopLossHebelPreis = hebelProduktEinstieg ? hebelProduktEinstieg * (1 - (stopLossPct*hebel)/100) : null;
-  var eurStopLossHebel = fmtEur(stopLossHebelPreis, rate, t.waehrung);
-  var stopLossHtml = stopLossPreis ? '<div class="stoploss-block">' +
-    '<div class="sl-label">STOP-LOSS (Basiswert bei '+(isShort?'+':'-')+stopLossPct.toFixed(1)+'%)</div>' +
-    '<div class="sl-row">' +
-      '<div><div class="sl-sub">Basiswert</div><div class="sl-value">'+fmtP(stopLossPreis,eurStopLoss,sym)+'</div></div>' +
-      (stopLossHebelPreis ? '<div><div class="sl-sub">'+hebel+'x-Schein</div><div class="sl-value">'+fmtP(Math.max(0,stopLossHebelPreis),eurStopLossHebel,sym)+'</div></div>' : '') +
-    '</div>' +
-    '<div class="sl-hint">Bei '+(isShort?'Ueberschreitung':'Unterschreitung')+': These widerlegt, Position schliessen</div>' +
-  '</div>' : '';
-  richtungHtml += stopLossHtml;
 
   card.innerHTML = '<div class="card-body">' +
     signalHtml +
@@ -1100,22 +1071,18 @@ function fetchAndApplyKurse(silent) {
       var peakDate = warNeuerBestwert ? today : p.peakDate;
 
       // Vorzeitiger Abschluss: was erledigt ist, muss nicht mehr taeglich abgefragt werden -
-      // es sei denn, die Tendenz haelt weiter an. Alle Berechnungen richtungsabhaengig (LONG/SHORT):
-      // - Stop-Loss verletzt -> immer sofort erledigt (Risikomanagement: These widerlegt, fertig).
+      // es sei denn, die Tendenz haelt weiter an. Richtungsabhaengig (LONG/SHORT):
       // - Ziel erreicht -> nur erledigt, wenn der guenstige Trend NICHT mehr anhaelt (bei LONG: Kurs
       //   steigt nicht mehr; bei SHORT: Kurs faellt nicht mehr). Haelt er an, lohnt sich Weiterverfolgen
       //   (Gewinne laufen lassen) - dann bleibt die Position aktiv und wird weiter abgefragt.
       // - Ohne Vergleichsbasis (erstes Update ueberhaupt) wird NICHT vorzeitig geschlossen.
       var aktPctNeu = pctGewinn(p.startkurs, res.price, p.richtung);
       var zielErreicht = aktPctNeu!=null && aktPctNeu>=(p.anstiegProzent||0);
-      var stopLossKurs = stopLossSchwelle(p.startkurs, p.stopLossProzent, p.richtung);
-      var stopLossVerletzt = stopLossIstVerletzt(stopLossKurs, res.price, p.richtung);
       var trendGuenstigNoch = trendGuenstig(last?last.price:null, res.price, p.richtung);
       var zielVorzeitigErledigt = zielErreicht && trendGuenstigNoch===false;
-      var vorzeitigAbschluss = stopLossVerletzt || zielVorzeitigErledigt;
-      var abschlussGrund = stopLossVerletzt ? 'stoploss' : (zielVorzeitigErledigt ? 'ziel' : (tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3) ? 'zeit' : null));
+      var abschlussGrund = zielVorzeitigErledigt ? 'ziel' : (tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3) ? 'zeit' : null);
 
-      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:vorzeitigAbschluss||tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
+      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:zielVorzeitigErledigt||tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -1186,19 +1153,20 @@ function renderTracking() {
       var peakPct = pctGewinn(p.startkurs, p.peakPrice, p.richtung);
       var peakZielErreicht = peakPct!==null&&peakPct>=(p.anstiegProzent||0);
       var zeigtPeakHinweis = peakPct!==null&&aktPct!==null&&Math.abs(peakPct-aktPct)>0.15;
+      var gekauftBadge = p.gekauft ? '<span class="rtag" style="background:rgba(240,180,41,0.15);color:var(--gold);font-size:9px;padding:2px 8px;">GEKAUFT</span>' : '';
 
-      // Stop-Loss-Check: aktueller Kurs auf/hinter dem beim Scan berechneten Stop-Loss-Niveau
-      // (bei LONG darunter, bei SHORT darueber)
-      var stopLossKurs = stopLossSchwelle(p.startkurs, p.stopLossProzent, p.richtung);
-      var stopLossVerletzt = stopLossIstVerletzt(stopLossKurs, aktuell, p.richtung);
-
-      html += '<div class="tracking-card" style="'+(stopLossVerletzt?'border:1px solid rgba(244,63,94,0.4);':'')+'">' +
+      html += '<div class="tracking-card" style="'+(p.gekauft?'border:1px solid rgba(240,180,41,0.35);':'')+'">' +
         '<div class="tracking-header">' +
-          '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span>'+richtungBadge+'</div>' +
+          '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span>'+richtungBadge+gekauftBadge+'</div>' +
           '<div style="font-size:10px;color:var(--text3)">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
           '<div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
             '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
-            '<button onclick="deleteProgose(\''+p.id+'\')" style="background:none;border:1px solid rgba(244,63,94,0.3);border-radius:5px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;font-family:var(--mono);">Entfernen</button>' +
+            '<div style="display:flex;gap:6px;">' +
+              (p.gekauft
+                ? '<button onclick="markiereVerkauft(\''+p.id+'\')" style="background:none;border:1px solid rgba(240,180,41,0.4);border-radius:5px;padding:3px 8px;color:var(--gold);font-size:10px;cursor:pointer;font-family:var(--mono);">Verkauft</button>'
+                : '<button onclick="markiereGekauft(\''+p.id+'\')" style="background:none;border:1px solid rgba(34,197,94,0.4);border-radius:5px;padding:3px 8px;color:var(--green);font-size:10px;cursor:pointer;font-family:var(--mono);">Gekauft</button>') +
+              '<button onclick="deleteProgose(\''+p.id+'\')" style="background:none;border:1px solid rgba(244,63,94,0.3);border-radius:5px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;font-family:var(--mono);">Entfernen</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         (p.these?'<div style="font-size:11px;color:#8aa4c4;line-height:1.6;margin-bottom:8px;">'+esc(p.these)+(p.konfidenz?' <span style="color:var(--text3);">(Konfidenz '+p.konfidenz+'%)</span>':'')+'</div>':'') +
@@ -1211,10 +1179,9 @@ function renderTracking() {
         '<div class="progress-bar"><span style="font-size:9px;color:var(--text3);white-space:nowrap">3 Tage</span><div class="pb-track"><div class="pb-fill" style="width:'+fortschritt+'%"></div></div><span style="font-size:9px;color:var(--text3)">Tag '+Math.min(3,daysDiff(p.scanDate))+'</span></div>' +
         (aktPct!==null?'<div class="tracking-status"><span style="color:'+pctColor+'">'+(isUp?'+':'')+aktPct.toFixed(2)+'%</span> von Ziel <span style="color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</span> - '+(aktPct>=(p.anstiegProzent||0)?'<span style="color:var(--green)">Ziel erreicht!</span>':'noch '+((p.anstiegProzent||0)-aktPct).toFixed(1)+'% fehlen')+'</div>':'') +
         (zeigtPeakHinweis?'<div style="font-size:10px;color:var(--text3);margin-top:4px;">Hoechstkurs seit Start: <span style="color:'+(peakZielErreicht?'var(--green)':'var(--text2)')+'">'+(peakPct>=0?'+':'')+peakPct.toFixed(1)+'%</span>'+(p.peakDate?' am '+new Date(p.peakDate).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'')+(peakZielErreicht?' - Ziel wurde zwischenzeitlich erreicht':'')+'</div>':'') +
-        (stopLossVerletzt?'<div style="font-size:10px;color:var(--red);margin-top:6px;padding:6px 10px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.25);border-radius:5px;">⚠ Stop-Loss-Niveau erreicht ('+fmt(stopLossKurs,sym)+') - These moeglicherweise widerlegt</div>':'') +
-        (p.letzteAnalyse?'<div style="font-size:10px;color:'+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--text2)')+';margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:5px;border-left:2px solid '+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--accent)')+';">Update ('+new Date(p.letzteAnalyse.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'): '+esc(p.letzteAnalyse.einschaetzung)+(p.letzteAnalyse.gueltig===false?' ⚠ These moeglicherweise ueberholt':'')+'</div>':'') +
+        (p.letzteAnalyse?'<div style="font-size:10px;color:'+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--text2)')+';margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:5px;border-left:2px solid '+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--accent)')+';">Vorschau ('+new Date(p.letzteAnalyse.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'): '+esc(p.letzteAnalyse.einschaetzung)+(p.letzteAnalyse.gueltig===false?' ⚠ These moeglicherweise ueberholt':'')+'</div>':'') +
         '<div style="margin-top:8px;">' +
-          '<button id="recheck-'+p.id+'" onclick="reCheckPosition(\''+p.id+'\')" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:5px 10px;color:var(--accent);font-size:10px;cursor:pointer;font-family:var(--mono);">Analyse aktualisieren</button>' +
+          '<button id="recheck-'+p.id+'" onclick="reCheckPosition(\''+p.id+'\')" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:5px 10px;color:var(--accent);font-size:10px;cursor:pointer;font-family:var(--mono);">3-7-Tage-Vorschau aktualisieren</button>' +
         '</div>' +
       '</div>';
     });
@@ -1248,8 +1215,8 @@ function renderTracking() {
       var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
       var zeigtPeakZeile = peakPct!=null&&endPct!=null&&Math.abs(peakPct-endPct)>0.15;
       var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:8px;padding:1px 6px;margin-left:6px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
-      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', stoploss:'Vorzeitig beendet: Stop-Loss verletzt', zeit:'Beendet: Zeitfenster abgelaufen'}[p.abschlussGrund] || '';
-      var grundColor = p.abschlussGrund==='stoploss'?'var(--red)':(p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)');
+      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', zeit:'Beendet: Zeitfenster abgelaufen'}[p.abschlussGrund] || '';
+      var grundColor = p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)';
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
         '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
         '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div>'+(p.konfidenz?'<div style="font-size:9px;color:var(--text3);margin-top:2px">Konf. '+p.konfidenz+'%</div>':'')+'</div>' +
@@ -1291,6 +1258,55 @@ function deleteProgose(id) {
   renderTracking();
 }
 
+// ── Gekauft/Verkauft ─────────────────────────────────────────────────────
+// Markiert eine Position als tatsaechlich gekauft (nicht nur vorgeschlagen). Solange
+// mindestens eine Position "gekauft" ist, sperrt updateScanButtonState() den Scan-Button -
+// spart Tokens, weil dann keine neuen Kandidaten-Scans mehr laufen, waehrend eine echte
+// Position offen ist. Stattdessen: "3-7-Tage-Vorschau aktualisieren" fuer die gekaufte Position nutzen.
+function markiereGekauft(id) {
+  var fresh = loadPrognosen();
+  var updated = fresh.map(function(p) {
+    if (p.id !== id) return p;
+    return Object.assign({}, p, { gekauft: true, gekauftDatum: new Date().toISOString() });
+  });
+  savePrognosen(updated);
+  renderTracking();
+  updateScanButtonState();
+}
+function markiereVerkauft(id) {
+  if (!confirm('Als verkauft markieren? Der Scan-Button wird dadurch wieder freigeschaltet (falls keine andere Position noch als gekauft markiert ist).')) return;
+  var fresh = loadPrognosen();
+  var updated = fresh.map(function(p) {
+    if (p.id !== id) return p;
+    return Object.assign({}, p, { gekauft: false, verkauftDatum: new Date().toISOString() });
+  });
+  savePrognosen(updated);
+  renderTracking();
+  updateScanButtonState();
+}
+function hatAktiveGekaufterPosition() {
+  return loadPrognosen().some(function(p) { return p.gekauft && !p.abgeschlossen; });
+}
+// Sperrt den Scan-Button, solange eine Position als gekauft markiert ist - verhindert, dass
+// waehrend einer offenen echten Position aus Versehen weitere (teure) Kandidaten-Scans laufen.
+function updateScanButtonState() {
+  var btn = document.getElementById('scanBtn');
+  if (!btn) return;
+  var gekaufte = loadPrognosen().filter(function(p) { return p.gekauft && !p.abgeschlossen; });
+  if (gekaufte.length) {
+    btn.disabled = true;
+    setText('scanBtnTitle', 'Gesperrt: '+gekaufte.map(function(p){return p.ticker;}).join(', ')+' aktiv');
+    setText('scanBtnIcon', '🔒');
+    setText('gekauftSperreHinweis', 'Neue Scans sind gesperrt, solange '+gekaufte.map(function(p){return p.ticker;}).join(', ')+' als gekauft markiert '+(gekaufte.length===1?'ist':'sind')+' - spart Tokens. In Tracking auf "Verkauft" tippen, um wieder freizuschalten.');
+    showEl('gekauftSperreHinweis');
+  } else {
+    btn.disabled = false;
+    setText('scanBtnTitle', '3-Tage-Signale suchen');
+    setText('scanBtnIcon', '→');
+    hideEl('gekauftSperreHinweis');
+  }
+}
+
 // Gezielte Neubewertung EINER laufenden Position - unabhaengig vom breiten Marktscan (der ja
 // aktive Ticker sogar bewusst ausschliesst). Fragt die KI: gilt der urspruengliche Katalysator
 // noch, oder ist er schon eingepreist/ueberholt? Aendert NUR letzteAnalyse, ruehrt Startkurs,
@@ -1300,7 +1316,7 @@ function reCheckPosition(id) {
   var p = fresh.find(function(x) { return x.id === id; });
   if (!p) return;
   var btn = document.getElementById('recheck-'+id);
-  if (btn) { btn.disabled = true; btn.textContent = 'Prueft ...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Vorschau laeuft ...'; }
   clearError('trackingError');
   var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
   var aktuell = p.verlauf.length>0 ? p.verlauf[p.verlauf.length-1].price : null;
@@ -1309,8 +1325,8 @@ function reCheckPosition(id) {
     (p.these ? ' Urspruengliche These: '+p.these : '') +
     (p.haupttreiber ? ' Haupttreiber: '+p.haupttreiber+'.' : '') +
     ' Bisherige Kursentwicklung: '+(aktPct!=null?(aktPct>=0?'+':'')+aktPct.toFixed(1)+'%':'unbekannt')+'.' +
-    ' Recherchiere aktuelle Nachrichten der letzten 24-48 Stunden zu diesem Ticker. Ist der urspruengliche Katalysator noch intakt, oder bereits eingepreist/ueberholt/widerlegt?' +
-    ' Nur JSON: {"gueltig":true,"einschaetzung":"1-2 Saetze zur aktuellen Lage und Ausblick"}' +
+    ' Recherchiere aktuelle Nachrichten der letzten 24-48 Stunden zu diesem Ticker. Gib eine kurze Prognose fuer die naechsten 3-7 Tage: Ist der urspruengliche Katalysator noch intakt, bereits eingepreist, oder ueberholt/widerlegt? Wie ist der Ausblick fuer diesen Zeitraum?' +
+    ' Nur JSON: {"gueltig":true,"einschaetzung":"1-2 Saetze: aktuelle Lage + 3-7-Tage-Ausblick"}' +
     ' WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
   callClaude(prompt, 1200)
     .then(function(raw) {
@@ -1325,7 +1341,7 @@ function reCheckPosition(id) {
     })
     .catch(function(err) {
       showError('trackingError', 'Analyse-Check fehlgeschlagen: ' + (err.message||'Unbekannter Fehler'));
-      if (btn) { btn.disabled = false; btn.textContent = 'Analyse aktualisieren'; }
+      if (btn) { btn.disabled = false; btn.textContent = '3-7-Tage-Vorschau aktualisieren'; }
     });
 }
 
@@ -1451,6 +1467,7 @@ function autoCheckPolitiker() {
 
 // ── Init ──────────────────────────────────────────────────
 updateTrackingCount();
+updateScanButtonState();
 autoCheckPolitiker();
 maybeAutoUpdate();
 </script>
