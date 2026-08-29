@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.17</title>
+<title>MarktTipps V2.18</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.17</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.18</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.17 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.18 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -1184,6 +1184,13 @@ function renderTracking() {
       var aktPct = pctGewinn(p.startkurs, aktuell, p.richtung);
       var tageNoch = Math.max(0,3-daysDiff(p.scanDate));
       var fortschritt = Math.min(100,(daysDiff(p.scanDate)/3)*100);
+      // Fuer gekaufte Positionen ergibt der urspruengliche 3-Tage-Signal-Countdown keinen Sinn mehr
+      // (die Position wird ja bewusst unbefristet gehalten, bis der Nutzer selbst verkauft) - daher
+      // "Gehalten seit X Tagen" statt eines Countdowns, der einfach bei 0/3 stehen bleibt.
+      var gehaltenSeitTage = daysDiff(p.gekauftDatum || p.scanDate);
+      var startZeile = p.gekauft
+        ? 'Gehalten seit '+gehaltenSeitTage+' Tag'+(gehaltenSeitTage!==1?'en':'')+' (Signal vom '+new Date(p.scanDate).toLocaleDateString('de-DE')+')'
+        : 'Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'');
       var isUp = aktPct!==null&&aktPct>=0;
       var pctColor = isUp?'var(--green)':'var(--red)';
       var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:9px;padding:2px 8px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
@@ -1200,7 +1207,7 @@ function renderTracking() {
       html += '<div class="tracking-card" style="'+(p.gekauft?'border:1px solid rgba(240,180,41,0.35);':'')+'">' +
         '<div class="tracking-header">' +
           '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span>'+richtungBadge+gekauftBadge+'</div>' +
-          '<div style="font-size:10px;color:var(--text3)">Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+'</div></div>' +
+          '<div style="font-size:10px;color:var(--text3)">'+startZeile+'</div></div>' +
           '<div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
             '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
             '<div style="display:flex;gap:6px;">' +
@@ -1218,10 +1225,14 @@ function renderTracking() {
           kgCell('Ziel',fmt(p.zielkurs,sym),fmtEur(p.zielkurs,rate,p.currency),'var(--accent)') +
           kgCell('Prognose','+'+(p.anstiegProzent||0).toFixed(1)+'%',null,'var(--accent)') +
         '</div>' +
-        '<div class="progress-bar"><span style="font-size:9px;color:var(--text3);white-space:nowrap">3 Tage</span><div class="pb-track"><div class="pb-fill" style="width:'+fortschritt+'%"></div></div><span style="font-size:9px;color:var(--text3)">Tag '+Math.min(3,daysDiff(p.scanDate))+'</span></div>' +
+        (p.gekauft?'':'<div class="progress-bar"><span style="font-size:9px;color:var(--text3);white-space:nowrap">3 Tage</span><div class="pb-track"><div class="pb-fill" style="width:'+fortschritt+'%"></div></div><span style="font-size:9px;color:var(--text3)">Tag '+Math.min(3,daysDiff(p.scanDate))+'</span></div>') +
         (aktPct!==null?'<div class="tracking-status"><span style="color:'+pctColor+'">'+(isUp?'+':'')+aktPct.toFixed(2)+'%</span> von Ziel <span style="color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</span> - '+(aktPct>=(p.anstiegProzent||0)?'<span style="color:var(--green)">Ziel erreicht!</span>':'noch '+((p.anstiegProzent||0)-aktPct).toFixed(1)+'% fehlen')+'</div>':'') +
         (zeigtPeakHinweis?'<div style="font-size:10px;color:var(--text3);margin-top:4px;">Hoechstkurs seit Start: <span style="color:'+(peakZielErreicht?'var(--green)':'var(--text2)')+'">'+(peakPct>=0?'+':'')+peakPct.toFixed(1)+'%</span>'+(p.peakDate?' am '+new Date(p.peakDate).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'')+(peakZielErreicht?' - Ziel wurde zwischenzeitlich erreicht':'')+'</div>':'') +
-        (p.letzteAnalyse?'<div style="font-size:10px;color:'+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--text2)')+';margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:5px;border-left:2px solid '+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--accent)')+';">Vorschau ('+new Date(p.letzteAnalyse.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'): '+esc(p.letzteAnalyse.einschaetzung)+(p.letzteAnalyse.gueltig===false?' ⚠ These moeglicherweise ueberholt':'')+'</div>':'') +
+        (p.letzteAnalyse?'<div style="font-size:10px;color:'+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--text2)')+';margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:5px;border-left:2px solid '+(p.letzteAnalyse.gueltig===false?'var(--red)':'var(--accent)')+';">' +
+          '<div style="font-size:9px;color:var(--text3);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;">Vorschau ('+new Date(p.letzteAnalyse.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+')</div>' +
+          (p.letzteAnalyse.prognoseProzent!=null?'<div style="font-size:16px;font-weight:700;color:'+(p.letzteAnalyse.prognoseProzent>=0?'var(--green)':'var(--red)')+';margin-bottom:6px;">Prognose (3-7 Tage): '+(p.letzteAnalyse.prognoseProzent>=0?'+':'')+p.letzteAnalyse.prognoseProzent.toFixed(1)+'%</div>':'') +
+          esc(p.letzteAnalyse.einschaetzung)+(p.letzteAnalyse.gueltig===false?' ⚠ These moeglicherweise ueberholt':'') +
+        '</div>':'') +
         '<div style="margin-top:8px;">' +
           '<button id="recheck-'+p.id+'" onclick="reCheckPosition(\''+p.id+'\')" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:5px 10px;color:var(--accent);font-size:10px;cursor:pointer;font-family:var(--mono);">3-7-Tage-Vorschau aktualisieren</button>' +
         '</div>' +
@@ -1376,7 +1387,8 @@ function reCheckPosition(id) {
     (p.haupttreiber ? ' Haupttreiber: '+p.haupttreiber+'.' : '') +
     ' Bisherige Kursentwicklung: '+(aktPct!=null?(aktPct>=0?'+':'')+aktPct.toFixed(1)+'%':'unbekannt')+'.' +
     ' Recherchiere aktuelle Nachrichten der letzten 24-48 Stunden zu diesem Ticker. Gib eine kurze Prognose fuer die naechsten 3-7 Tage: Ist der urspruengliche Katalysator noch intakt, bereits eingepreist, oder ueberholt/widerlegt? Wie ist der Ausblick fuer diesen Zeitraum?' +
-    ' Nur JSON: {"gueltig":true,"einschaetzung":"1-2 Saetze: aktuelle Lage + 3-7-Tage-Ausblick"}' +
+    ' Schaetze zusaetzlich eine konkrete erwartete Kursbewegung in Prozent fuer die naechsten 3-7 Tage (prognoseProzent) - positiv, wenn sich der Kurs in die fuer diese '+(p.richtung==='short'?'SHORT':'LONG')+'-Position guenstige Richtung bewegen duerfte, negativ wenn ungueustig.' +
+    ' Nur JSON: {"gueltig":true,"einschaetzung":"1-2 Saetze: aktuelle Lage + 3-7-Tage-Ausblick","prognoseProzent":2.5}' +
     ' WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
   callClaude(prompt, 1200)
     .then(function(raw) {
@@ -1384,7 +1396,7 @@ function reCheckPosition(id) {
       if (!result || typeof result.einschaetzung !== 'string') throw new Error('Antwort nicht auswertbar');
       var updated = loadPrognosen().map(function(x) {
         if (x.id !== id) return x;
-        return Object.assign({}, x, { letzteAnalyse: { datum: new Date().toISOString(), gueltig: result.gueltig !== false, einschaetzung: result.einschaetzung } });
+        return Object.assign({}, x, { letzteAnalyse: { datum: new Date().toISOString(), gueltig: result.gueltig !== false, einschaetzung: result.einschaetzung, prognoseProzent: (typeof result.prognoseProzent === 'number') ? result.prognoseProzent : null } });
       });
       savePrognosen(updated);
       renderTracking();
