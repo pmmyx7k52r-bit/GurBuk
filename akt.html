@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.15</title>
+<title>MarktTipps V2.17</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.15</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.17</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.15 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.17 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -659,7 +659,7 @@ function startScan() {
   clearError('errorBox');
   hideEl('kontextBox'); hideEl('zeitraumBox'); hideEl('tippsLabel');
   setHTML('tippsList','');
-  showEl('statusMsg'); setText('statusMsg','Schritt 1/3: Aktuelle Nachrichten werden recherchiert ...');
+  showEl('statusMsg'); setText('statusMsg','Schritt 1/4: Aktuelle Nachrichten werden recherchiert ...');
 
   var today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
   var in3 = new Date(Date.now()+3*86400000).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
@@ -708,11 +708,11 @@ function startScan() {
       setText('zeitraumBox','3-Tage-Prognose: '+today+' bis '+in3);
       showEl('zeitraumBox');
 
-      setText('statusMsg','Schritt 2/3: Signal-Filter laueft (RSI, Volumen, Momentum) ...');
+      setText('statusMsg','Schritt 2/4: Signal-Filter laueft (RSI, Volumen, Momentum) ...');
 
       // Schritt 2: Technische Metriken fuer alle Kandidaten laden
       var kandidaten = result.kandidaten.slice(0, 10);
-      setText('statusMsg','Schritt 2/3: Technische Daten + Earnings + Short-Interest werden geladen ...');
+      setText('statusMsg','Schritt 2/4: Technische Daten + Earnings + Short-Interest werden geladen ...');
       // Anfragen pro Ticker zeitlich entzerrt starten (250ms Versatz), NICHT alle gleichzeitig.
       // Grund: Finnhub Free-Plan erlaubt nur 60 Calls/Min (~30/Sek Burst-Cap). Bei 8 Kandidaten x
       // bis zu 6 Finnhub-Calls waeren das ~48 Calls quasi zeitgleich - reisst die Burst-Grenze und
@@ -768,7 +768,7 @@ function startScan() {
         // Top 3 nach Signal-Score
         var top3 = gefiltert.sort(function(a,b) { return b.signal.score - a.signal.score; }).slice(0,3);
 
-        setText('statusMsg','Schritt 3/3: KI erklaert die Signal-Aktien ...');
+        setText('statusMsg','Schritt 3/4: KI erklaert die Signal-Aktien ...');
 
         // Schritt 3: KI erklaert nur noch WARUM - entscheidet nicht mehr
         var metricsInfo = top3.map(function(t) {
@@ -833,15 +833,50 @@ function startScan() {
               signals: item.signal.signals,
             };
           });
+        }).then(function(vorlaeufig) {
+          // Schritt 4: Unabhaengige Verifikation - eine FRISCHE Recherche prueft jeden Kandidaten
+          // gegen, statt Schritt 3 blind zu uebernehmen. Kandidaten, die durchfallen, werden weiter
+          // unten aussortiert statt angezeigt - das ist der "keine Raterei"-Teil.
+          if (!vorlaeufig.length) return vorlaeufig;
+          setText('statusMsg','Schritt 4/4: Unabhaengige Verifikation der Kandidaten ...');
+          var promptVerifikation = 'Heute: '+today+'. Verifiziere folgende Aktien-Tipps mit einer FRISCHEN, unabhaengigen Recherche - verlasse dich NICHT auf vorherige Annahmen:\n' +
+            vorlaeufig.map(function(t,i) { return (i+1)+'. '+t.ticker+' ('+t.name+'): These = "'+t.these+'". Geschaetzte Bewegung: +'+t.anstiegProzent.toFixed(1)+'% bis +'+t.anstiegProzentMax.toFixed(1)+'%. WKN='+(t.wkn||'keine')+', ISIN='+(t.isin||'keine')+'.'; }).join('\n') +
+            '\n\nPruefe fuer JEDEN Ticker: (1) Ist der genannte Katalysator durch aktuelle, seriöse Quellen bestaetigt? (2) Ist die geschaetzte Kursbewegung angesichts der tatsaechlichen Nachrichtenlage plausibel, oder deutlich zu optimistisch/spekulativ? (3) Passt der Firmenname wirklich zu diesem Ticker?' +
+            ' Antworte NUR mit JSON: {"verifizierung":[{"ticker":"X","bestaetigt":true,"hinweis":"kurze Begruendung falls Zweifel oder Einschraenkung, sonst leerer String"}]}' +
+            ' WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
+          return callClaude(promptVerifikation, 2000).then(function(raw3) {
+            var verif = tryParse(raw3);
+            var verifMap = {};
+            if (verif && verif.verifizierung) {
+              verif.verifizierung.forEach(function(v) { verifMap[v.ticker] = v; });
+            }
+            return vorlaeufig.map(function(t) {
+              var v = verifMap[t.ticker];
+              return Object.assign({}, t, {
+                verifiziert: v ? (v.bestaetigt !== false) : null,
+                verifikationsHinweis: (v && v.hinweis) ? v.hinweis : ''
+              });
+            });
+          }).catch(function() {
+            // Wenn die Verifikation selbst technisch scheitert (Netzwerk, Parse etc.): nicht den
+            // ganzen Scan abbrechen, sondern ungeprueft (verifiziert:null) durchreichen. Der
+            // Downstream-Filter behandelt null wie "durchgelassen", nicht wie "durchgefallen".
+            return vorlaeufig.map(function(t) { return Object.assign({}, t, {verifiziert:null, verifikationsHinweis:''}); });
+          });
         });
       });
     })
     .then(function(enriched) {
-      // Nur Tipps mit mindestens 4% Potenzial anzeigen
-      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3 && t.startkurs != null && t.startkurs > 0; });
+      // Nur Tipps mit mindestens 4% Potenzial UND bestandener Verifikation anzeigen.
+      // verifiziert===false -> durchgefallen, raus. verifiziert===true/null -> durchgelassen
+      // (null = Verifikation selbst technisch nicht moeglich, dann nicht automatisch verwerfen).
+      var vorFilterAnzahl = enriched.length;
+      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3 && t.startkurs != null && t.startkurs > 0 && t.verifiziert !== false; });
       if (!enriched.length) {
         hideEl('statusMsg');
-        showError('errorBox', 'Keine Aktien mit mindestens 4% Potenzial gefunden. Bitte erneut scannen.');
+        showError('errorBox', vorFilterAnzahl>0
+          ? 'Alle '+vorFilterAnzahl+' Kandidaten sind bei der Verifikation durchgefallen (Katalysator nicht bestaetigt oder unplausibel). Bitte erneut scannen.'
+          : 'Keine Aktien mit mindestens 4% Potenzial gefunden. Bitte erneut scannen.');
         document.getElementById('scanBtn').disabled = false;
         setText('scanBtnTitle', 'Erneut scannen');
         setText('scanBtnIcon', '→');
@@ -1011,6 +1046,8 @@ function buildTippCard(t, i) {
         ((wknOk===false||isinOk===false)?'<div style="font-size:10px;color:var(--red);margin-bottom:6px;">⚠ Pruefsumme/Format nicht plausibel - vor Nutzung im Broker unbedingt gegenchecken</div>':'') +
         '<div class="card-these">'+esc(t.these)+'</div>' +
         (t.haupttreiber?'<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>':'') +
+        (t.verifiziert===true?'<div style="font-size:9px;color:var(--green);margin-top:4px;">✓ Unabhaengig verifiziert'+(t.verifikationsHinweis?': '+esc(t.verifikationsHinweis):'')+'</div>':'') +
+        (t.verifiziert===null?'<div style="font-size:9px;color:var(--gold);margin-top:4px;">⚠ Verifikation technisch nicht moeglich - ungeprueft</div>':'') +
         (insider&&t.insiderInfo?'<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>':'') +
       '</div>' +
       '<div class="card-right"><div class="pct-label">3 Tage</div><div class="pct-value">'+(hatSpanne?('+'+pct.toFixed(1)+'% bis +'+pctMax.toFixed(1)+'%'):('+'+pct.toFixed(1)+'%'))+'</div></div>' +
@@ -1034,7 +1071,7 @@ function buildTippCard(t, i) {
 // Kernlogik ohne UI-Abhaengigkeit - fuer manuellen Button UND Auto-Update nutzbar
 function fetchAndApplyKurse(silent) {
   var frisch = loadPrognosen();
-  var aktiv = frisch.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
+  var aktiv = frisch.filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
   if (!aktiv.length) return Promise.resolve({updated:0,failed:[]});
 
   var results = [];
@@ -1076,13 +1113,18 @@ function fetchAndApplyKurse(silent) {
       //   steigt nicht mehr; bei SHORT: Kurs faellt nicht mehr). Haelt er an, lohnt sich Weiterverfolgen
       //   (Gewinne laufen lassen) - dann bleibt die Position aktiv und wird weiter abgefragt.
       // - Ohne Vergleichsbasis (erstes Update ueberhaupt) wird NICHT vorzeitig geschlossen.
+      // - GEKAUFTE Positionen werden NIE automatisch geschlossen (weder Ziel-Trend noch Zeitfenster) -
+      //   die reale Position besteht unabhaengig vom internen Beobachtungsfenster weiter, bis der
+      //   Nutzer selbst auf "Verkauft" tippt. Sonst faellt eine tatsaechlich gehaltene Aktie einfach
+      //   aus dem Tracking raus, nur weil die App-interne Uhr abgelaufen ist.
       var aktPctNeu = pctGewinn(p.startkurs, res.price, p.richtung);
       var zielErreicht = aktPctNeu!=null && aktPctNeu>=(p.anstiegProzent||0);
       var trendGuenstigNoch = trendGuenstig(last?last.price:null, res.price, p.richtung);
-      var zielVorzeitigErledigt = zielErreicht && trendGuenstigNoch===false;
-      var abschlussGrund = zielVorzeitigErledigt ? 'ziel' : (tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3) ? 'zeit' : null);
+      var zielVorzeitigErledigt = !p.gekauft && zielErreicht && trendGuenstigNoch===false;
+      var zeitAbgelaufen = !p.gekauft && tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3);
+      var abschlussGrund = zielVorzeitigErledigt ? 'ziel' : (zeitAbgelaufen ? 'zeit' : null);
 
-      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:zielVorzeitigErledigt||tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3)});
+      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:zielVorzeitigErledigt||zeitAbgelaufen});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -1111,7 +1153,7 @@ function updateKurse() {
 var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 function maybeAutoUpdate() {
   var last = parseInt(localStorage.getItem(STORE_LAST_UPDATE) || '0', 10);
-  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
+  var aktive = loadPrognosen().filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
   if (!aktive.length) return;
   if (Date.now() - last < AUTO_UPDATE_INTERVAL_MS) return;
   var indicator = document.getElementById('autoUpdateIndicator');
@@ -1129,7 +1171,7 @@ function maybeAutoUpdate() {
 // ── Render Tracking ───────────────────────────────────────
 function renderTracking() {
   var fresh = loadPrognosen();
-  var aktive = fresh.filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
+  var aktive = fresh.filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
   var abgeschlossene = fresh.filter(function(p){return p.abgeschlossen;});
   updateTrackingCount();
   var aktiveSection = document.getElementById('aktiveSection');
@@ -1215,7 +1257,7 @@ function renderTracking() {
       var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
       var zeigtPeakZeile = peakPct!=null&&endPct!=null&&Math.abs(peakPct-endPct)>0.15;
       var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:8px;padding:1px 6px;margin-left:6px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
-      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', zeit:'Beendet: Zeitfenster abgelaufen'}[p.abschlussGrund] || '';
+      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', zeit:'Beendet: Zeitfenster abgelaufen', verkauft:'Beendet: Als verkauft markiert'}[p.abschlussGrund] || '';
       var grundColor = p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)';
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
         '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
@@ -1224,14 +1266,15 @@ function renderTracking() {
         '<div style="font-size:16px;color:'+(hit?'var(--green)':'var(--red)')+'">'+(hit?'✓':'✗')+'</div>' +
         '</div>' +
         '<div style="font-size:10px;color:var(--text3);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:6px;">' +
-          'Start: '+fmt(p.startkurs, (p.currency==='EUR'?'€':'$'))+' → ' +
-          'Aktuell: <span style="color:'+(endColor)+'">'+(aktuell?fmt(aktuell,(p.currency==='EUR'?'€':'$')):'--')+'</span>' +
+          'Start: '+fmt(p.startkurs, (p.currency==='EUR'?'€':'$'))+(fmtEur(p.startkurs,p.currency!=='EUR'?p.eurRate:null,p.currency)?' ('+fmtEur(p.startkurs,p.currency!=='EUR'?p.eurRate:null,p.currency).replace('EUR ','€')+')':'')+' → ' +
+          'Aktuell: <span style="color:'+(endColor)+'">'+(aktuell?fmt(aktuell,(p.currency==='EUR'?'€':'$')):'--')+(aktuell&&fmtEur(aktuell,p.currency!=='EUR'?p.eurRate:null,p.currency)?' ('+fmtEur(aktuell,p.currency!=='EUR'?p.eurRate:null,p.currency).replace('EUR ','€')+')':'')+'</span>' +
           (endPct!==null?' ('+( endPct>=0?'+':'')+endPct.toFixed(2)+'%)':'') +
           ' · Ziel war: +' + (p.anstiegProzent||0).toFixed(1)+'%' +
         '</div>' +
         (grundLabel?'<div style="font-size:10px;color:'+grundColor+';padding:2px 0;">'+grundLabel+'</div>':'') +
         (zeigtPeakZeile?'<div style="font-size:10px;color:var(--text3);padding:2px 0;">Hoechstkurs zwischenzeitlich: <span style="color:'+(peakPct>=(p.anstiegProzent||0)?'var(--green)':'var(--text2)')+'">'+(peakPct>=0?'+':'')+peakPct.toFixed(1)+'%</span></div>':'') +
-        (p.these?'<div style="font-size:10px;color:#8aa4c4;padding:4px 0 0;line-height:1.5;">'+esc(p.these)+'</div>':'');
+        (p.these?'<div style="font-size:10px;color:#8aa4c4;padding:4px 0 0;line-height:1.5;">'+esc(p.these)+'</div>':'') +
+        (p.abschlussGrund!=='verkauft'?'<div style="margin-top:8px;"><button onclick="markiereGekauft(\''+p.id+'\')" style="background:none;border:1px solid rgba(34,197,94,0.4);border-radius:5px;padding:4px 10px;color:var(--green);font-size:10px;cursor:pointer;font-family:var(--mono);">Doch gekauft - Tracking reaktivieren</button></div>':'');
     });
     ausSection.innerHTML = ausHtml;
   } else { ausSection.innerHTML = ''; }
@@ -1242,11 +1285,15 @@ function renderTracking() {
 }
 
 function kgCell(label,value,eur,color) {
-  return '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">'+label+'</div><div style="font-size:11px;font-weight:500;color:'+color+'">'+value+'</div>'+(eur?'<div style="font-size:9px;color:var(--text3)">('+eur+')</div>':'')+'</div>';
+  return '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">'+label+'</div>' +
+    (eur
+      ? '<div style="font-size:14px;font-weight:700;color:'+color+'">'+eur+'</div><div style="font-size:9px;color:var(--text3);margin-top:1px">'+value+'</div>'
+      : '<div style="font-size:11px;font-weight:500;color:'+color+'">'+value+'</div>') +
+  '</div>';
 }
 
 function updateTrackingCount() {
-  var aktive = loadPrognosen().filter(function(p){return !p.abgeschlossen&&daysDiff(p.scanDate)<=6;});
+  var aktive = loadPrognosen().filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
   setText('trackingCount',aktive.length>0?'('+aktive.length+')':'');
 }
 
@@ -1267,18 +1314,21 @@ function markiereGekauft(id) {
   var fresh = loadPrognosen();
   var updated = fresh.map(function(p) {
     if (p.id !== id) return p;
-    return Object.assign({}, p, { gekauft: true, gekauftDatum: new Date().toISOString() });
+    // abgeschlossen:false zuruecksetzen - falls die Position durch Zeitfenster/Ziel-Trend schon
+    // automatisch geschlossen wurde, bevor der Nutzer sie als gekauft markieren konnte (die reale
+    // Position besteht ja unabhaengig vom internen Beobachtungsfenster weiter).
+    return Object.assign({}, p, { gekauft: true, gekauftDatum: new Date().toISOString(), abgeschlossen: false, abschlussGrund: null });
   });
   savePrognosen(updated);
   renderTracking();
   updateScanButtonState();
 }
 function markiereVerkauft(id) {
-  if (!confirm('Als verkauft markieren? Der Scan-Button wird dadurch wieder freigeschaltet (falls keine andere Position noch als gekauft markiert ist).')) return;
+  if (!confirm('Als verkauft markieren? Die Position wird damit abgeschlossen und wandert in die Auswertung. Der Scan-Button wird wieder freigeschaltet (falls keine andere Position noch als gekauft markiert ist).')) return;
   var fresh = loadPrognosen();
   var updated = fresh.map(function(p) {
     if (p.id !== id) return p;
-    return Object.assign({}, p, { gekauft: false, verkauftDatum: new Date().toISOString() });
+    return Object.assign({}, p, { gekauft: false, verkauftDatum: new Date().toISOString(), abgeschlossen: true, abschlussGrund: 'verkauft' });
   });
   savePrognosen(updated);
   renderTracking();
