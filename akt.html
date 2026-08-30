@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.19</title>
+<title>MarktTipps V2.20</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.19</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.20</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.19 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.20 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -1387,8 +1387,8 @@ function reCheckPosition(id) {
     (p.haupttreiber ? ' Haupttreiber: '+p.haupttreiber+'.' : '') +
     ' Bisherige Kursentwicklung: '+(aktPct!=null?(aktPct>=0?'+':'')+aktPct.toFixed(1)+'%':'unbekannt')+'.' +
     ' Recherchiere aktuelle Nachrichten der letzten 24-48 Stunden zu diesem Ticker. Gib eine kurze Prognose fuer die naechsten 3-7 Tage: Ist der urspruengliche Katalysator noch intakt, bereits eingepreist, oder ueberholt/widerlegt? Wie ist der Ausblick fuer diesen Zeitraum?' +
-    ' Schaetze zusaetzlich eine konkrete erwartete Kursbewegung in Prozent fuer die naechsten 3-7 Tage (prognoseProzent) - positiv, wenn sich der Kurs in die fuer diese '+(p.richtung==='short'?'SHORT':'LONG')+'-Position guenstige Richtung bewegen duerfte, negativ wenn ungueustig.' +
-    ' Nur JSON: {"gueltig":true,"einschaetzung":"1-2 Saetze: aktuelle Lage + 3-7-Tage-Ausblick","prognoseProzent":<deine eigene Zahl, negativ oder positiv, keine Beispielzahl uebernehmen>}' +
+    ' Schaetze zusaetzlich eine konkrete erwartete Kursbewegung in Prozent fuer die naechsten 3-7 Tage (prognoseProzent) - positiv, wenn sich der Kurs in die fuer diese '+(p.richtung==='short'?'SHORT':'LONG')+'-Position guenstige Richtung bewegen duerfte, negativ wenn ungueustig. Die Zahl im folgenden JSON ist nur ein Formatbeispiel - nicht diesen Wert uebernehmen, sondern deine eigene Schaetzung eintragen.' +
+    ' Nur JSON: {"gueltig":true,"einschaetzung":"1-2 Saetze: aktuelle Lage + 3-7-Tage-Ausblick","prognoseProzent":-1.3}' +
     ' WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens.';
   callClaude(prompt, 1200)
     .then(function(raw) {
