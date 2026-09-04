@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.20</title>
+<title>MarktTipps V2.21</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.20</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.21</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.20 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.21 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -676,11 +676,12 @@ function startScan() {
     : '';
 
   var promptSchritt1 = 'Heute: '+today+'. Aktienanalyst. Recherchiere Nachrichten der letzten 48 Stunden.' + ausschlussHinweis +
-    ' Identifiziere den staerksten Katalysator bis '+in3+'.' +
-    ' Schlage 8 US-Ticker vor die direkt profitieren (Big Player + Zulieferer + Mid-Caps).' +
-    ' Geopolitik, Zinsen, Earnings, Energie, Trump/Pelosi-Trades beruecksichtigen. WICHTIG: Waehle Aktien aus VERSCHIEDENEN Sektoren (nicht 2x Energie, nicht 2x Tech etc.). Jeder Tipp muss einen anderen Hauptsektor haben.' +
+    ' Identifiziere MINDESTENS 3 UNABHAENGIGE Katalysatoren bis '+in3+' - also verschiedene Ereignisse/Themen, nicht Variationen desselben Auslösers.' +
+    ' Schlage insgesamt 8 US-Ticker vor, verteilt auf diese unabhaengigen Katalysatoren (hoechstens 3 Ticker pro Katalysator).' +
+    ' KRITISCH: Unterschiedliches Sektor-Label allein macht Ticker NICHT unabhaengig voneinander. Beispiel: Wenn der Katalysator "starke Nvidia-Zahlen" ist, zaehlen ein Kuehltechnik-Zulieferer, ein Kupferproduzent (Rechenzentrums-Stromversorgung), ein Netzwerk-Hardware-Hersteller und ein KI-Softwareanbieter trotz 4 verschiedener GICS-Sektoren alle als DIESELBE Wette, weil sie am selben Ereignis haengen und gemeinsam fallen, wenn dieses Ereignis enttaeuscht. Davon hoechstens 2-3 Ticker nehmen, den Rest aus einem Katalysator mit einem GENUIN ANDEREN Ausloeser (anderes Ereignis, andere Branche, andere Zeitachse).' +
+    ' Geopolitik, Zinsen, Einzel-Earnings verschiedener Unternehmen, Energie, Trump/Pelosi-Trades als moegliche unabhaengige Katalysatoren beruecksichtigen.' +
     ' Antworte NUR mit diesem JSON-Format (keine anderen Zeichen):\n' +
-    '{"eurUsdRate":0.92,"katalysator":"Treiber in 1 Satz","kontext":"Marktlage in 1 Satz","kandidaten":["TICK1","TICK2","TICK3","TICK4","TICK5","TICK6","TICK7","TICK8"]}\n' +
+    '{"eurUsdRate":0.92,"katalysator":"Kurzueberblick ueber die identifizierten Katalysatoren in 1-2 Saetzen","kontext":"Marktlage in 1 Satz","kandidaten":["TICK1","TICK2","TICK3","TICK4","TICK5","TICK6","TICK7","TICK8"]}\n' +
     'Ersetze TICK1-TICK8 mit echten NYSE/NASDAQ Tickern. Nur JSON, deutsch. ' +
     'WICHTIG: Deine Antwort beginnt SOFORT mit dem Zeichen { - kein Vorspann, keine Erklaerung deines Vorgehens, kein Kommentar zur Recherche davor.';
 
