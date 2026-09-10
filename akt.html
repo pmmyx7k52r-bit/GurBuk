@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.21</title>
+<title>MarktTipps V2.23</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -81,7 +81,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .pct-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
 .pct-value { font-size: 22px; font-weight: 600; color: var(--green); letter-spacing: -0.5px; line-height: 1.25; text-align: right; max-width: 140px; }
 .card-these { font-size: 11px; color: #8aa4c4; line-height: 1.65; margin-bottom: 4px; }
-.card-treiber { font-size: 10px; color: var(--text3); }
+.card-treiber { font-size: 11px; color: var(--text); line-height: 1.6; }
 .card-treiber span { color: var(--green); }
 .kurs-block { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: start; gap: 6px; background: var(--bg); border-radius: 7px; padding: 10px 12px; margin-bottom: 10px; }
 .kc-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.21</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.23</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.21 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.23 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -868,15 +868,29 @@ function startScan() {
       });
     })
     .then(function(enriched) {
-      // Nur Tipps mit mindestens 4% Potenzial UND bestandener Verifikation anzeigen.
-      // verifiziert===false -> durchgefallen, raus. verifiziert===true/null -> durchgelassen
-      // (null = Verifikation selbst technisch nicht moeglich, dann nicht automatisch verwerfen).
+      // Prueft, ob der heute bereits realisierte Tages-Move das 3-Tage-Ziel schon selbst deckt
+      // (direktionsabhaengig: bei LONG zaehlt ein positiver Tages-Move, bei SHORT ein negativer).
+      // Ist das der Fall, ist ein Grossteil oder die gesamte erwartete Bewegung moeglicherweise schon
+      // vor dem Einstieg gelaufen - "kaufen und auf weitere +X% warten" ergibt dann wenig Sinn, da man
+      // erst NACH dem Move einsteigt. anteil >= 1 -> Ziel schon voll durch Tages-Move erreicht -> raus.
+      // anteil >= 0.5 -> relevanter Teil schon realisiert -> sichtbar markieren, aber nicht ausschliessen.
+      enriched.forEach(function(t) {
+        var change = t.metrics && t.metrics.change;
+        if (change != null && t.anstiegProzent) {
+          var guenstigeBewegung = (t.richtung === 'short') ? -change : change;
+          t.zielBereitsRealisiertAnteil = guenstigeBewegung / t.anstiegProzent;
+        } else {
+          t.zielBereitsRealisiertAnteil = null;
+        }
+      });
+      // Nur Tipps mit mindestens 4% Potenzial, bestandener Verifikation UND noch nicht durch den
+      // Tages-Move bereits voll erreichtem Ziel anzeigen.
       var vorFilterAnzahl = enriched.length;
-      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3 && t.startkurs != null && t.startkurs > 0 && t.verifiziert !== false; });
+      enriched = enriched.filter(function(t) { return t.anstiegProzent >= 4 && (t.hebelEmpfehlung||3) >= 3 && t.startkurs != null && t.startkurs > 0 && t.verifiziert !== false && (t.zielBereitsRealisiertAnteil == null || t.zielBereitsRealisiertAnteil < 1); });
       if (!enriched.length) {
         hideEl('statusMsg');
         showError('errorBox', vorFilterAnzahl>0
-          ? 'Alle '+vorFilterAnzahl+' Kandidaten sind bei der Verifikation durchgefallen (Katalysator nicht bestaetigt oder unplausibel). Bitte erneut scannen.'
+          ? 'Alle '+vorFilterAnzahl+' Kandidaten sind aussortiert worden (Verifikation nicht bestanden oder Ziel bereits durch den heutigen Tages-Move erreicht). Bitte erneut scannen.'
           : 'Keine Aktien mit mindestens 4% Potenzial gefunden. Bitte erneut scannen.');
         document.getElementById('scanBtn').disabled = false;
         setText('scanBtnTitle', 'Erneut scannen');
@@ -1047,6 +1061,7 @@ function buildTippCard(t, i) {
         ((wknOk===false||isinOk===false)?'<div style="font-size:10px;color:var(--red);margin-bottom:6px;">⚠ Pruefsumme/Format nicht plausibel - vor Nutzung im Broker unbedingt gegenchecken</div>':'') +
         '<div class="card-these">'+esc(t.these)+'</div>' +
         (t.haupttreiber?'<div class="card-treiber"><span>+</span> '+esc(t.haupttreiber)+'</div>':'') +
+        (t.zielBereitsRealisiertAnteil!=null&&t.zielBereitsRealisiertAnteil>=0.5?'<div style="font-size:10px;color:var(--gold);margin-top:4px;padding:6px 10px;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.25);border-radius:5px;">⚠ Bereits '+Math.round(t.zielBereitsRealisiertAnteil*100)+'% des 3-Tage-Ziels durch den heutigen Tages-Move erreicht - ein Grossteil der erwarteten Bewegung koennte schon vor dem Einstieg gelaufen sein</div>':'') +
         (t.verifiziert===true?'<div style="font-size:9px;color:var(--green);margin-top:4px;">✓ Unabhaengig verifiziert'+(t.verifikationsHinweis?': '+esc(t.verifikationsHinweis):'')+'</div>':'') +
         (t.verifiziert===null?'<div style="font-size:9px;color:var(--gold);margin-top:4px;">⚠ Verifikation technisch nicht moeglich - ungeprueft</div>':'') +
         (insider&&t.insiderInfo?'<div style="font-size:10px;margin-top:4px;color:'+accent+'">'+esc(t.insiderInfo)+'</div>':'') +
