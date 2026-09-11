@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.23</title>
+<title>MarktTipps V2.24</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.23</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.24</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.23 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.24 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -375,6 +375,18 @@ function bestPreis(vorherigerBest, neuerPreis, startkurs, richtung) {
 function trendGuenstig(letzterPreis, neuerPreis, richtung) {
   if (letzterPreis == null || neuerPreis == null) return null;
   return (richtung === 'short') ? (neuerPreis < letzterPreis) : (neuerPreis > letzterPreis);
+}
+
+// ── TopTipp/Flop-Bewertung fuer Tracking ───────────────────────────────────
+// TopTipp: Hoechstkurs hat je mind. 80% des Ziels erreicht (gleiche Schwelle wie die Treffer-Definition
+// der Auswertung - konsistente Sprache im ganzen Tracking). Flop: aktueller Stand liegt bei mind. 50%
+// des Zielbetrags in Verlustrichtung. Dazwischen bewusst KEIN Label - nicht jede Position markieren,
+// nur klare Faelle sollen auffallen.
+function bewertungTop(peakPct, ziel) {
+  return peakPct != null && ziel && peakPct >= ziel * 0.8;
+}
+function bewertungFlop(aktPct, ziel) {
+  return aktPct != null && ziel && aktPct <= -ziel * 0.5;
 }
 
 // ── WKN/ISIN-Plausibilitaetspruefung ───────────────────────────────────────
@@ -1219,10 +1231,14 @@ function renderTracking() {
       var peakZielErreicht = peakPct!==null&&peakPct>=(p.anstiegProzent||0);
       var zeigtPeakHinweis = peakPct!==null&&aktPct!==null&&Math.abs(peakPct-aktPct)>0.15;
       var gekauftBadge = p.gekauft ? '<span class="rtag" style="background:rgba(240,180,41,0.15);color:var(--gold);font-size:9px;padding:2px 8px;">GEKAUFT</span>' : '';
+      var istTop = bewertungTop(peakPct, p.anstiegProzent);
+      var istFlop = bewertungFlop(aktPct, p.anstiegProzent);
+      var bewertungBadge = istTop ? '<span class="rtag" style="background:rgba(34,197,94,0.15);color:var(--green);font-size:9px;padding:2px 8px;">TOPTIPP</span>'
+        : istFlop ? '<span class="rtag" style="background:rgba(244,63,94,0.15);color:var(--red);font-size:9px;padding:2px 8px;">FLOP</span>' : '';
 
       html += '<div class="tracking-card" style="'+(p.gekauft?'border:1px solid rgba(240,180,41,0.35);':'')+'">' +
         '<div class="tracking-header">' +
-          '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span>'+richtungBadge+gekauftBadge+'</div>' +
+          '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;"><span style="font-size:16px;font-weight:500;color:var(--accent)">'+p.ticker+'</span><span style="font-family:var(--serif);font-size:11px;font-style:italic;color:var(--text2)">'+p.name+'</span>'+richtungBadge+gekauftBadge+bewertungBadge+'</div>' +
           '<div style="font-size:10px;color:var(--text3)">'+startZeile+'</div></div>' +
           '<div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
             '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Aktuell</div><div style="font-size:18px;font-weight:500;color:'+pctColor+'">'+(aktPct!==null?(isUp?'+':'')+aktPct.toFixed(1)+'%':'--')+'</div></div>' +
@@ -1284,10 +1300,13 @@ function renderTracking() {
       var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
       var zeigtPeakZeile = peakPct!=null&&endPct!=null&&Math.abs(peakPct-endPct)>0.15;
       var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:8px;padding:1px 6px;margin-left:6px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
+      var istFlop = bewertungFlop(endPct, p.anstiegProzent);
+      var bewertungBadge = hit ? '<span class="rtag" style="background:rgba(34,197,94,0.15);color:var(--green);font-size:8px;padding:1px 6px;margin-left:4px;">TOPTIPP</span>'
+        : istFlop ? '<span class="rtag" style="background:rgba(244,63,94,0.15);color:var(--red);font-size:8px;padding:1px 6px;margin-left:4px;">FLOP</span>' : '';
       var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', zeit:'Beendet: Zeitfenster abgelaufen', verkauft:'Beendet: Als verkauft markiert'}[p.abschlussGrund] || '';
       var grundColor = p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)';
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
-        '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
+        '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+bewertungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
         '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div>'+(p.konfidenz?'<div style="font-size:9px;color:var(--text3);margin-top:2px">Konf. '+p.konfidenz+'%</div>':'')+'</div>' +
         '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Ergebnis</div><div style="font-size:16px;font-weight:500;color:'+endColor+'">'+(endPct!=null?(endPct>=0?'+':'')+endPct.toFixed(1)+'%':'--')+'</div></div>' +
         '<div style="font-size:16px;color:'+(hit?'var(--green)':'var(--red)')+'">'+(hit?'✓':'✗')+'</div>' +
