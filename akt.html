@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.24</title>
+<title>MarktTipps V2.25</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -135,7 +135,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .pb-track { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
 .pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
 .tracking-status { font-size: 10px; color: var(--text3); }
-.summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
 .aus-card { background: var(--bg2); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 .trade-card { background: var(--bg); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
 .trade-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.24</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.25</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.24 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.25 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -557,9 +557,13 @@ function scoreSignal(m) {
     else if (m.volumeRatio >= 1.2) { signals.push({label:'Volumen +'+Math.round((m.volumeRatio-1)*100)+'%', type:'volume'}); score += 1; }
   }
 
-  // Momentum
+  // Momentum: sehr starkes Momentum (>8% in 5 Tagen) wird NICHT mehr automatisch als bullisch
+  // gewertet - die Auswertung ueber mehrere Wochen zeigte, dass ueber 50% der so gescorten
+  // Positionen nie ueber den Einstiegskurs kamen (moegliches "am Hoch gekauft"-Muster). Moderates
+  // Momentum (3-8%) bleibt ein bullisches Signal, extremes wird neutral/vorsichtig behandelt.
   if (m.momentum5d != null) {
-    if (m.momentum5d > 3) { signals.push({label:'Momentum +'+m.momentum5d+'% (5T)', type:'bullish'}); score += 2; }
+    if (m.momentum5d > 8) { signals.push({label:'Momentum bereits stark gelaufen (+'+m.momentum5d+'% in 5T) - Fortsetzung unsicher', type:'neutral'}); }
+    else if (m.momentum5d > 3) { signals.push({label:'Momentum +'+m.momentum5d+'% (5T)', type:'bullish'}); score += 2; }
     else if (m.momentum5d < -3) { signals.push({label:'Momentum '+m.momentum5d+'% (5T)', type:'bearish'}); score += 1; }
   }
 
@@ -840,7 +844,7 @@ function startScan() {
               insiderInfo: erkl.insiderInfo || '',
               richtung: m.rsi && m.rsi > 65 ? 'short' : 'long',
               hebelEmpfehlung: hebel,
-              hebelBegruendung: 'Konfidenz '+konfidenz+'% -> '+hebel+'x gemaess Regelwerk',
+              hebelBegruendung: 'Signal-Staerke '+konfidenz+'% -> '+hebel+'x gemaess Regelwerk',
               shortMoeglich: m.rsi && m.rsi > 60,
               metrics: m,
               signals: item.signal.signals,
@@ -1089,7 +1093,7 @@ function buildTippCard(t, i) {
     '</div>' +
     '<div class="kv-satz">Bei '+hebel+'x-Hebelprodukten: passendes '+(isShort?'Put-/Short-':'Call-/Long-')+'Zertifikat im Broker suchen (Richtwert-Basispreis nahe '+fmt(briefPreis,sym)+'). Der hier gezeigte Hebelprodukt-Preis ist eine grobe Naeherung (1/'+hebel+' des Basiswerts) - NICHT die echte Kursstellung des Emittenten (Spread, Aufgeld, Restlaufzeit fehlen). Kursziel des Basiswerts oben ist fuer die Verkaufsentscheidung massgeblich, nicht der genaue Hebelprodukt-Preis.</div>' +
     '<div class="bar-row"><span class="bar-label">Potenzial</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,pct*4)+'%;background:linear-gradient(90deg,var(--accent),var(--purple));"></div></div><span class="bar-val" style="color:'+accent+'">+'+pct.toFixed(1)+'%</span></div>' +
-    '<div class="bar-row"><span class="bar-label">Konfidenz</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
+    '<div class="bar-row"><span class="bar-label">Signal-Staerke</span><div class="bar-track"><div class="bar-fill" style="width:'+t.konfidenz+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><span class="bar-val" style="color:var(--green)">'+t.konfidenz+'%</span></div>' +
     richtungHtml +
   '</div>';
   return card;
@@ -1250,7 +1254,7 @@ function renderTracking() {
             '</div>' +
           '</div>' +
         '</div>' +
-        (p.these?'<div style="font-size:11px;color:#8aa4c4;line-height:1.6;margin-bottom:8px;">'+esc(p.these)+(p.konfidenz?' <span style="color:var(--text3);">(Konfidenz '+p.konfidenz+'%)</span>':'')+'</div>':'') +
+        (p.these?'<div style="font-size:11px;color:#8aa4c4;line-height:1.6;margin-bottom:8px;">'+esc(p.these)+(p.konfidenz?' <span style="color:var(--text3);">(Signal-Staerke '+p.konfidenz+'%)</span>':'')+'</div>':'') +
         '<div class="kurs-grid">' +
           kgCell('Start',fmt(p.startkurs,sym),fmtEur(p.startkurs,rate,p.currency),'var(--text)') +
           kgCell('Aktuell',fmt(aktuell,sym),fmtEur(aktuell,rate,p.currency),pctColor) +
@@ -1285,11 +1289,20 @@ function renderTracking() {
       var bestPct = pctGewinn(p.startkurs, bestpreis, p.richtung);
       return bestPct!=null && bestPct>=(p.anstiegProzent||0)*0.8;
     }).length;
+    // Realistischere Zweitquote: gegen den TATSAECHLICHEN Schlusskurs bei Abschluss gerechnet, nicht
+    // gegen den (rein hypothetischen) Hoechstkurs. Die Hoechstkurs-Quote zeigt "waere im besten Fall
+    // erreichbar gewesen", diese hier "haette ein Verkauf am Ende des Fensters tatsaechlich gebracht".
+    var trefferReal = abgeschlossene.filter(function(p) {
+      var letzterPreis = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
+      var realPct = pctGewinn(p.startkurs, letzterPreis, p.richtung);
+      return realPct!=null && realPct>=(p.anstiegProzent||0)*0.8;
+    }).length;
     var ausHtml = '<div class="section-label" style="margin-top:16px">Auswertung (Treffer = min. 80% des Kursziels je zwischenzeitlich erreicht)</div>' +
       '<div class="summary-grid">' +
-        '<div><div style="font-size:24px;font-weight:500;color:var(--green)">'+treffer+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Treffer</div></div>' +
+        '<div><div style="font-size:24px;font-weight:500;color:var(--green)">'+treffer+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Treffer (Hoechstkurs)</div></div>' +
         '<div><div style="font-size:24px;font-weight:500;color:var(--red)">'+(abgeschlossene.length-treffer)+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Verfehlt</div></div>' +
-        '<div><div style="font-size:24px;font-weight:500;color:var(--accent)">'+Math.round(safeDiv(treffer,abgeschlossene.length)*100)+'%</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Trefferquote</div></div>' +
+        '<div><div style="font-size:24px;font-weight:500;color:var(--accent)">'+Math.round(safeDiv(treffer,abgeschlossene.length)*100)+'%</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Trefferquote (Bestfall)</div></div>' +
+        '<div><div style="font-size:24px;font-weight:500;color:var(--accent)">'+Math.round(safeDiv(trefferReal,abgeschlossene.length)*100)+'%</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Trefferquote (real. Schlusskurs)</div></div>' +
       '</div>';
     abgeschlossene.slice(0,15).forEach(function(p) {
       var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
@@ -1307,7 +1320,7 @@ function renderTracking() {
       var grundColor = p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)';
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
         '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+bewertungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
-        '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div>'+(p.konfidenz?'<div style="font-size:9px;color:var(--text3);margin-top:2px">Konf. '+p.konfidenz+'%</div>':'')+'</div>' +
+        '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div>'+(p.konfidenz?'<div style="font-size:9px;color:var(--text3);margin-top:2px">Sig-St. '+p.konfidenz+'%</div>':'')+'</div>' +
         '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Ergebnis</div><div style="font-size:16px;font-weight:500;color:'+endColor+'">'+(endPct!=null?(endPct>=0?'+':'')+endPct.toFixed(1)+'%':'--')+'</div></div>' +
         '<div style="font-size:16px;color:'+(hit?'var(--green)':'var(--red)')+'">'+(hit?'✓':'✗')+'</div>' +
         '</div>' +
