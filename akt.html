@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.25</title>
+<title>MarktTipps V2.26</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.25</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.26</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,10 +221,14 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.25 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.26 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
+// Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
+// spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
+// statt das anhand von Datumsvergleichen schaetzen zu muessen.
+var APP_VERSION = 'V2.26';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
@@ -846,6 +850,7 @@ function startScan() {
               hebelEmpfehlung: hebel,
               hebelBegruendung: 'Signal-Staerke '+konfidenz+'% -> '+hebel+'x gemaess Regelwerk',
               shortMoeglich: m.rsi && m.rsi > 60,
+              score: item.signal.score,
               metrics: m,
               signals: item.signal.signals,
             };
@@ -934,7 +939,8 @@ function startScan() {
         // Zielkurs richtungsabhaengig: bei SHORT liegt das Ziel UNTER dem Startkurs (Gewinn bei fallendem Kurs),
         // vorher wurde hier immer die LONG-Formel verwendet, auch fuer als SHORT markierte Tipps.
         var ziel = briefStart ? (richtung==='short' ? briefStart*(1-t.anstiegProzent/100) : briefStart*(1+t.anstiegProzent/100)) : null;
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber };
+        var m = t.metrics || {};
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null} };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
