@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.26</title>
+<title>MarktTipps V2.27</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.26</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.27</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,7 +221,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.26 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.27 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
@@ -1150,19 +1150,24 @@ function fetchAndApplyKurse(silent) {
       // - Ziel erreicht -> nur erledigt, wenn der guenstige Trend NICHT mehr anhaelt (bei LONG: Kurs
       //   steigt nicht mehr; bei SHORT: Kurs faellt nicht mehr). Haelt er an, lohnt sich Weiterverfolgen
       //   (Gewinne laufen lassen) - dann bleibt die Position aktiv und wird weiter abgefragt.
+      // - Flop erkannt (mind. 50% des Zielbetrags in Verlustrichtung, gleiche Schwelle wie das
+      //   FLOP-Badge) -> sofort erledigt, kein Stop-Loss-Kurs noetig. Ein Flop ist ein falscher Tipp,
+      //   kein Kursniveau-Problem - weiteres Verfolgen bringt keine neue Erkenntnis, kostet nur
+      //   unnoetig Finnhub-Calls.
       // - Ohne Vergleichsbasis (erstes Update ueberhaupt) wird NICHT vorzeitig geschlossen.
-      // - GEKAUFTE Positionen werden NIE automatisch geschlossen (weder Ziel-Trend noch Zeitfenster) -
-      //   die reale Position besteht unabhaengig vom internen Beobachtungsfenster weiter, bis der
-      //   Nutzer selbst auf "Verkauft" tippt. Sonst faellt eine tatsaechlich gehaltene Aktie einfach
-      //   aus dem Tracking raus, nur weil die App-interne Uhr abgelaufen ist.
+      // - GEKAUFTE Positionen werden NIE automatisch geschlossen (weder Ziel-Trend noch Zeitfenster
+      //   noch Flop) - die reale Position besteht unabhaengig vom internen Beobachtungsfenster weiter,
+      //   bis der Nutzer selbst auf "Verkauft" tippt. Sonst faellt eine tatsaechlich gehaltene Aktie
+      //   einfach aus dem Tracking raus, nur weil die App-interne Uhr abgelaufen ist.
       var aktPctNeu = pctGewinn(p.startkurs, res.price, p.richtung);
       var zielErreicht = aktPctNeu!=null && aktPctNeu>=(p.anstiegProzent||0);
       var trendGuenstigNoch = trendGuenstig(last?last.price:null, res.price, p.richtung);
       var zielVorzeitigErledigt = !p.gekauft && zielErreicht && trendGuenstigNoch===false;
+      var flopErkannt = !p.gekauft && bewertungFlop(aktPctNeu, p.anstiegProzent);
       var zeitAbgelaufen = !p.gekauft && tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3);
-      var abschlussGrund = zielVorzeitigErledigt ? 'ziel' : (zeitAbgelaufen ? 'zeit' : null);
+      var abschlussGrund = zielVorzeitigErledigt ? 'ziel' : (flopErkannt ? 'flop' : (zeitAbgelaufen ? 'zeit' : null));
 
-      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:zielVorzeitigErledigt||zeitAbgelaufen});
+      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:zielVorzeitigErledigt||flopErkannt||zeitAbgelaufen});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -1322,8 +1327,8 @@ function renderTracking() {
       var istFlop = bewertungFlop(endPct, p.anstiegProzent);
       var bewertungBadge = hit ? '<span class="rtag" style="background:rgba(34,197,94,0.15);color:var(--green);font-size:8px;padding:1px 6px;margin-left:4px;">TOPTIPP</span>'
         : istFlop ? '<span class="rtag" style="background:rgba(244,63,94,0.15);color:var(--red);font-size:8px;padding:1px 6px;margin-left:4px;">FLOP</span>' : '';
-      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', zeit:'Beendet: Zeitfenster abgelaufen', verkauft:'Beendet: Als verkauft markiert'}[p.abschlussGrund] || '';
-      var grundColor = p.abschlussGrund==='ziel'?'var(--green)':'var(--text3)';
+      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', flop:'Vorzeitig beendet: Flop erkannt - falscher Tipp, weiteres Tracking eingestellt', zeit:'Beendet: Zeitfenster abgelaufen', verkauft:'Beendet: Als verkauft markiert'}[p.abschlussGrund] || '';
+      var grundColor = p.abschlussGrund==='ziel'?'var(--green)':(p.abschlussGrund==='flop'?'var(--red)':'var(--text3)');
       ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
         '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+bewertungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
         '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div>'+(p.konfidenz?'<div style="font-size:9px;color:var(--text3);margin-top:2px">Sig-St. '+p.konfidenz+'%</div>':'')+'</div>' +
