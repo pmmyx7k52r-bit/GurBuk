@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.27</title>
+<title>MarktTipps V2.28</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.27</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.28</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,14 +221,14 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.27 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.28 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 // Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
 // spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
 // statt das anhand von Datumsvergleichen schaetzen zu muessen.
-var APP_VERSION = 'V2.26';
+var APP_VERSION = 'V2.28';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
@@ -805,7 +805,7 @@ function startScan() {
         var promptSchritt3 = 'Heute: '+today+'. Katalysator: '+katalysator+
           '\n\nDiese 3 Aktien haben objektive technische Signale ausgeloest (RSI/Momentum/Volumen-basiert):\n'+metricsInfo+
           '\n\nFuer jede Aktie:\n' +
-          '1. Erklaere in 1 Satz WARUM sie vom Katalysator profitiert.\n' +
+          '1. Erklaere in 1 Satz WARUM sie vom Katalysator profitiert. WICHTIG: haupttreiber muss EIN einzelner, konkreter Grund sein, der direkt mit diesem Ticker zusammenhaengt - KEINE Aufzaehlung mehrerer Themen. Faellt dir kein einzelner klarer Grund fuer diesen Ticker ein, waehle stattdessen einen anderen Kandidaten mit klarerem Bezug.\n' +
           '2. Schaetze eine realistische MINDEST-Rendite (anstiegProzent: konservativ, mind. 4%) UND eine realistische MAXIMAL-Rendite (anstiegProzentMax: optimistisch, falls der Katalysator voll durchschlaegt, bis zu 30% moeglich). ' +
              'WICHTIG: Berechne vom BRIEF-PREIS (Ask/Kaufkurs = Kurs + 0.1-0.3% Spread). ' +
              'Die Nettorendite nach Spread muss beim Minimalwert mindestens 3% betragen. ' +
@@ -940,7 +940,7 @@ function startScan() {
         // vorher wurde hier immer die LONG-Formel verwendet, auch fuer als SHORT markierte Tipps.
         var ziel = briefStart ? (richtung==='short' ? briefStart*(1-t.anstiegProzent/100) : briefStart*(1+t.anstiegProzent/100)) : null;
         var m = t.metrics || {};
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null} };
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, verifiziert:(typeof t.verifiziert!=='undefined')?t.verifiziert:null, verifikationsHinweis:t.verifikationsHinweis||'', metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null} };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
