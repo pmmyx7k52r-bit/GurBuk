@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.28</title>
+<title>MarktTipps V2.29</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.28</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.29</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,14 +221,14 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.28 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.29 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 // Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
 // spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
 // statt das anhand von Datumsvergleichen schaetzen zu muessen.
-var APP_VERSION = 'V2.28';
+var APP_VERSION = 'V2.29';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
@@ -571,6 +571,15 @@ function scoreSignal(m) {
     else if (m.momentum5d < -3) { signals.push({label:'Momentum '+m.momentum5d+'% (5T)', type:'bearish'}); score += 1; }
   }
 
+  // Relative Staerke zum S&P500 (4 Wochen) - NEUES, bisher ungetestetes Signal (siehe Worker-
+  // Kommentar). Bewusst nur +1 Punkt statt +2/+3 wie bei den etablierten Signalen, weil wir noch
+  // keine einzige Trefferdatenpunkt dafuer haben - soll erstmal mitlaufen und Daten sammeln
+  // (landet im metricsSnapshot), nicht das Scoring dominieren, bis sich zeigt ob es etwas taugt.
+  if (m.relStaerke4W != null) {
+    if (m.relStaerke4W > 0) { signals.push({label:'Staerker als S&P500 (4W): +'+m.relStaerke4W+'%', type:'bullish'}); score += 1; }
+    else { signals.push({label:'Schwaecher als S&P500 (4W): '+m.relStaerke4W+'%', type:'neutral'}); }
+  }
+
   // Tagesveraenderung
   if (m.change != null) {
     if (Math.abs(m.change) > 2) {
@@ -834,8 +843,11 @@ function startScan() {
               macd: m.macd || null,
               waehrung: m.currency || 'USD',
               startkurs: m.price,
-              anstiegProzent: Math.min(25, Math.max(4, erkl.anstiegProzent || (item.signal.score * 4.0))),
-              anstiegProzentMax: Math.min(50, Math.max(erkl.anstiegProzentMax || 0, erkl.anstiegProzent || (item.signal.score * 4.0))),
+              // Obergrenze von vorher 25%/50% auf 10%/20% gesenkt: eine Bewegung von 20-25% in nur
+              // 3-4 Tagen ist ausserhalb echter binaerer Sonderereignisse (M&A, FDA-Entscheid) kaum
+              // plausibel. Allgemeine Risiko-Erwaegung, nicht aus den duennen n=3-Daten abgeleitet.
+              anstiegProzent: Math.min(10, Math.max(4, erkl.anstiegProzent || (item.signal.score * 4.0))),
+              anstiegProzentMax: Math.min(20, Math.max(erkl.anstiegProzentMax || 0, erkl.anstiegProzent || (item.signal.score * 4.0))),
               kaufFensterTage: erkl.kaufFensterTage || 2,
               verkaufNachTagen: erkl.verkaufNachTagen || 3,
               briefAufschlagProzent: erkl.briefAufschlagProzent || 0.2,
@@ -940,7 +952,7 @@ function startScan() {
         // vorher wurde hier immer die LONG-Formel verwendet, auch fuer als SHORT markierte Tipps.
         var ziel = briefStart ? (richtung==='short' ? briefStart*(1-t.anstiegProzent/100) : briefStart*(1+t.anstiegProzent/100)) : null;
         var m = t.metrics || {};
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, verifiziert:(typeof t.verifiziert!=='undefined')?t.verifiziert:null, verifikationsHinweis:t.verifikationsHinweis||'', metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null} };
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, verifiziert:(typeof t.verifiziert!=='undefined')?t.verifiziert:null, verifikationsHinweis:t.verifikationsHinweis||'', metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null, relStaerke4W:m.relStaerke4W!=null?m.relStaerke4W:null} };
       });
       savePrognosen(newProg.concat(bereinigte).slice(0,60));
       updateTrackingCount();
