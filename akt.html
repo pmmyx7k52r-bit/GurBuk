@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.29</title>
+<title>MarktTipps V2.30</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.29</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.30</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -221,14 +221,14 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.29 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.30 · Signal-Filter (RSI/Volumen/Momentum) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 // Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
 // spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
 // statt das anhand von Datumsvergleichen schaetzen zu muessen.
-var APP_VERSION = 'V2.29';
+var APP_VERSION = 'V2.30';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
@@ -555,10 +555,14 @@ function scoreSignal(m) {
     else { signals.push({label:'RSI neutral ('+m.rsi+')', type:'neutral'}); }
   }
 
-  // Volumen-Signal
+  // Volumen-Signal: Auswertung ueber 6 Wochen zeigte bei der 1.2x-Schwelle 0/9 Treffer (0%) gegenueber
+  // 15.4% Gesamt-Trefferquote - das schlechteste Einzelsignal im Vergleich. Zaehlt daher nicht mehr
+  // in den Score, bleibt aber als Badge sichtbar (neutral statt bullisch), damit sich die Entwicklung
+  // weiter verfolgen laesst. Die 1.5x-Schwelle bleibt unveraendert - dafuer gibt es bisher nur n=2,
+  // zu wenig um sie zu beurteilen; sie nicht mit derselben Begruendung zu entwerten waere unbegruendet.
   if (m.volumeRatio != null) {
     if (m.volumeRatio >= 1.5) { signals.push({label:'Volumen +'+Math.round((m.volumeRatio-1)*100)+'%', type:'volume'}); score += 2; }
-    else if (m.volumeRatio >= 1.2) { signals.push({label:'Volumen +'+Math.round((m.volumeRatio-1)*100)+'%', type:'volume'}); score += 1; }
+    else if (m.volumeRatio >= 1.2) { signals.push({label:'Volumen +'+Math.round((m.volumeRatio-1)*100)+'% (bisher kein Treffer bei dieser Schwelle)', type:'neutral'}); }
   }
 
   // Momentum: sehr starkes Momentum (>8% in 5 Tagen) wird NICHT mehr automatisch als bullisch
