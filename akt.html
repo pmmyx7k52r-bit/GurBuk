@@ -106,7 +106,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .bar-label { font-size: 9px; color: var(--text3); white-space: nowrap; }
 .bar-track { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; }
+.bar-fill { height: auto; border-radius: 2px; }
 .bar-val { font-size: 10px; white-space: nowrap; }
 .richtung-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .rtag { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; }
@@ -133,7 +133,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .kurs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(--bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
 .progress-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .pb-track { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
+.pb-fill { height: auto; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
 .tracking-status { font-size: 10px; color: var(--text3); }
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
 .aus-card { background: var(--bg2); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -242,7 +242,7 @@ var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
 // Anthropic-/Finnhub-Guthaben verbraucht. Ist kein perfekter Schutz (steht im Seitenquelltext),
 // aber verhindert zufaellig gefundene/gescannte Worker-URLs von automatisiertem Missbrauch.
-var APP_SECRET = 'c5eafb59df235df1caa1da97d33964dbf5ea63935132c48b';
+var APP_SECRET = 'nCJKAlEKyL5dEJCQvY4cOZ39S261PRFS08WFeAXD7U';
 // Zentraler Fetch-Wrapper fuer alle Worker-Aufrufe: haengt das Secret als Header an,
 // ohne dass jede einzelne fetch()-Stelle das selbst tun muss (Risiko, eine Stelle zu vergessen).
 function workerFetch(url, options) {
@@ -1770,3 +1770,4 @@ maybeAutoUpdate();
 </script>
 </body>
 </html>
+
