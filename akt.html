@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.34</title>
+<title>MarktTipps V2.37</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -106,7 +106,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .bar-label { font-size: 9px; color: var(--text3); white-space: nowrap; }
 .bar-track { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: auto; border-radius: 2px; }
+.bar-fill { height: 100%; border-radius: 2px; }
 .bar-val { font-size: 10px; white-space: nowrap; }
 .richtung-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .rtag { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; }
@@ -133,7 +133,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .kurs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(--bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
 .progress-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .pb-track { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.pb-fill { height: auto; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
+.pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
 .tracking-status { font-size: 10px; color: var(--text3); }
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
 .aus-card { background: var(--bg2); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.34</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.37</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -178,6 +178,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
         <label style="flex:1;font-size:10px;color:var(--text3);">Depot (EUR)<input id="depotInput" type="number" inputmode="decimal" min="0" step="100" oninput="speichereDepot()" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:8px;color:var(--text);font-family:var(--mono);font-size:13px;"></label>
         <label style="flex:1;font-size:10px;color:var(--text3);">Risiko pro Trade (%)<input id="risikoInput" type="number" inputmode="decimal" min="0.1" max="5" step="0.1" oninput="speichereDepot()" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:8px;color:var(--text);font-family:var(--mono);font-size:13px;"></label>
       </div>
+      <div style="margin-top:8px;"><label style="display:block;font-size:10px;color:var(--text3);">Kosten Roundtrip in % des Einstiegs (Spread + Waehrung + Gebuehren)<input id="kostenInput" type="number" inputmode="decimal" min="0" max="5" step="0.1" oninput="speichereDepot()" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:8px;color:var(--text);font-family:var(--mono);font-size:13px;"></label><div style="font-size:9px;color:var(--text3);margin-top:3px;line-height:1.5;">Ehrlich schaetzen, z.B. Spread 0,3 + Waehrung 2 x 0,3 + Gebuehren 0,1 = 1,0. Gilt fuer neue Scans, Standard 1,0.</div></div>
       <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6;">Stop = halbes Kursziel (Chance-Risiko 2:1). Positionsgroesse = Risiko / Stop-Abstand, max. 25 % des Depots. Ein Stop garantiert keinen Ausstieg zum Stop-Kurs (Nacht-Gaps, Handelszeiten).</div>
     </div>
     <button class="scan-btn" id="scanBtn" onclick="startScan()">
@@ -209,6 +210,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
       <span>Backup importieren</span><span>↑</span>
     </button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importDaten(event)">
+    <button class="update-btn" onclick="secretZuruecksetzen()" style="margin-bottom:8px;"><span>Zugangs-Secret neu eingeben</span><span>🔑</span></button>
     <button class="reset-btn" onclick="resetDaten()">Alle gespeicherten Prognosen loeschen</button>
     <div id="trackingError" class="error-box"></div>
     <div id="aktiveSection"></div>
@@ -229,20 +231,20 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.34 · Signal-Filter (Momentum/Volumen/Rel. Staerke/Earnings) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.37 · Signal-Filter (Momentum/Volumen/Rel. Staerke/Earnings) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 // Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
 // spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
 // statt das anhand von Datumsvergleichen schaetzen zu muessen.
-var APP_VERSION = 'V2.34';
+var APP_VERSION = 'V2.37';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
 // Anthropic-/Finnhub-Guthaben verbraucht. Ist kein perfekter Schutz (steht im Seitenquelltext),
 // aber verhindert zufaellig gefundene/gescannte Worker-URLs von automatisiertem Missbrauch.
-var APP_SECRET = 'nCJKAlEKyL5dEJCQvY4cOZ39S261PRFS08WFeAXD7U';
+var APP_SECRET = localStorage.getItem('markttipps_secret') || ''; // V2.36: nicht im Code, nur lokal im Browser
 // Zentraler Fetch-Wrapper fuer alle Worker-Aufrufe: haengt das Secret als Header an,
 // ohne dass jede einzelne fetch()-Stelle das selbst tun muss (Risiko, eine Stelle zu vergessen).
 function workerFetch(url, options) {
@@ -533,6 +535,7 @@ function getFreshPrice(ticker) {
       if (!d || d.error) return null;
       var p = (d.c != null && d.c > 0) ? d.c : null;
       if (p) priceCache[ticker] = p;
+      gQuote[ticker] = {o: d.o, h: d.h, l: d.l};
       return p;
     })
     .catch(function(e) { return null; });
@@ -624,23 +627,27 @@ function calcHebelRoh(konfidenz, rsi) {
   return 10;
 }
 
-// ── Risikoplan (V2.32) ───────────────────────────────────
+// ── Risikoplan (V2.32) und Kosten (V2.35) ─────────────────
 var STORE_DEPOT = 'markttipps_depot_v1';
 var POS_MAX_ANTEIL = 0.25; // keine Einzelposition ueber 25 % des Depots
-var KOSTEN_ROUNDTRIP_PCT = 0.5; // Annahme: zusaetzliche Kosten (Gebuehren, FX, Verkaufs-Spread) je Trade
+var KOSTEN_DEFAULT_PCT = 1.0; // Standard-Roundtrip-Kosten in % des Einstiegs (Schaetzung, bitte selbst eintragen)
 function ladeDepot() {
-  try { var d = JSON.parse(localStorage.getItem(STORE_DEPOT) || '{}'); return { depot: parseFloat(d.depot) || 0, risiko: parseFloat(d.risiko) || 1 }; }
-  catch(e) { return { depot: 0, risiko: 1 }; }
+  try {
+    var d = JSON.parse(localStorage.getItem(STORE_DEPOT) || '{}');
+    var k = parseFloat(d.kosten);
+    return { depot: parseFloat(d.depot) || 0, risiko: parseFloat(d.risiko) || 1, kosten: isNaN(k) ? KOSTEN_DEFAULT_PCT : k };
+  } catch(e) { return { depot: 0, risiko: 1, kosten: KOSTEN_DEFAULT_PCT }; }
 }
 function speichereDepot() {
-  var dEl = document.getElementById('depotInput'), rEl = document.getElementById('risikoInput');
-  try { localStorage.setItem(STORE_DEPOT, JSON.stringify({ depot: dEl ? dEl.value : '', risiko: rEl ? rEl.value : '' })); } catch(e) {}
+  var dEl = document.getElementById('depotInput'), rEl = document.getElementById('risikoInput'), kEl = document.getElementById('kostenInput');
+  try { localStorage.setItem(STORE_DEPOT, JSON.stringify({ depot: dEl ? dEl.value : '', risiko: rEl ? rEl.value : '', kosten: kEl ? kEl.value : '' })); } catch(e) {}
 }
 function initDepotFelder() {
   var d = ladeDepot();
-  var dEl = document.getElementById('depotInput'), rEl = document.getElementById('risikoInput');
+  var dEl = document.getElementById('depotInput'), rEl = document.getElementById('risikoInput'), kEl = document.getElementById('kostenInput');
   if (dEl && d.depot > 0) dEl.value = d.depot;
   if (rEl) rEl.value = d.risiko;
+  if (kEl) kEl.value = d.kosten;
 }
 function risikoPlan(briefPreis, anstiegProzent, richtung, waehrung, gruppe) {
   if (!briefPreis || !anstiegProzent) return null;
@@ -706,7 +713,7 @@ function schliesseVerwaiste() {
   // aus Liste UND Statistik. Jetzt werden sie geschlossen und je nach Kursen im Fenster bewertet/unbewertet gezaehlt.
   var alle = loadPrognosen(), geaendert = false;
   alle = alle.map(function(p) {
-    if (!p.abgeschlossen && !p.gekauft && daysDiff(p.scanDate) > 6) { geaendert = true; return Object.assign({}, p, {abgeschlossen:true, abschlussGrund:'zeit'}); }
+    if (!p.abgeschlossen && !p.gekauft && daysDiff(p.scanDate)>AKTIV_TAGE_MAX) { geaendert = true; return Object.assign({}, p, {abgeschlossen:true, abschlussGrund:'zeit'}); }
     return p;
   });
   if (geaendert) savePrognosen(alle);
@@ -719,7 +726,7 @@ var MODEL_STARK = 'claude-sonnet-5';
 var MODEL_GUENSTIG = 'claude-haiku-5-5';
 // Messreihe: Statistik und Go/No-Go zaehlen NUR Positionen mit derselben KONFIG_ID. Bei jeder Aenderung an
 // Scoring, Filtern oder Prompts SIGNAL_REGELWERK hochzaehlen (R2, R3 ...). Modellwechsel startet automatisch eine neue Reihe.
-var SIGNAL_REGELWERK = 'R1';
+var SIGNAL_REGELWERK = 'R2'; // V2.35: neue Messreihe (Stop-Simulation, Eroeffnungs-Einstieg, realistische Kosten)
 var KONFIG_ID = SIGNAL_REGELWERK + '|' + MODEL_STARK + '|' + MODEL_GUENSTIG;
 // Ist heute ein US-Handelstag (Mo-Fr, kein Boersenfeiertag)? Unabhaengig von der Uhrzeit.
 function istUSHandelstag() {
@@ -1032,7 +1039,7 @@ function startScan() {
         // vorher wurde hier immer die LONG-Formel verwendet, auch fuer als SHORT markierte Tipps.
         var ziel = briefStart ? (richtung==='short' ? briefStart*(1-t.anstiegProzent/100) : briefStart*(1+t.anstiegProzent/100)) : null;
         var m = t.metrics || {};
-        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, stopkurs:(briefStart ? (richtung==='short' ? briefStart*(1+t.anstiegProzent/200) : briefStart*(1-t.anstiegProzent/200)) : null), anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart,spy:gSpyStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, konfigId:KONFIG_ID, branche:(m.industry||null), verifiziert:(typeof t.verifiziert!=='undefined')?t.verifiziert:null, verifikationsHinweis:t.verifikationsHinweis||'', metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null, relStaerke4W:m.relStaerke4W!=null?m.relStaerke4W:null} };
+        return { id:t.ticker+'_'+Date.now()+'_'+Math.random().toString(36).slice(2), ticker:t.ticker, name:t.name, currency:t.waehrung||'USD', richtung:richtung, startkurs:briefStart, zielkurs:ziel, stopkurs:(briefStart ? (richtung==='short' ? briefStart*(1+t.anstiegProzent/200) : briefStart*(1-t.anstiegProzent/200)) : null), anstiegProzent:parseFloat(t.anstiegProzent), verkaufNachTagen:t.verkaufNachTagen||3, scanDate:scanDate, verlauf:briefStart?[{date:scanDate,price:briefStart,spy:gSpyStart}]:[], abgeschlossen:false, gekauft:false, eurRate:eurRate, konfidenz:t.konfidenz, these:t.these, haupttreiber:t.haupttreiber, appVersionBeiScan:APP_VERSION, konfigId:KONFIG_ID, branche:(m.industry||null), einstieg:null, einstiegDatum:null, kostenProzent:ladeDepot().kosten, verifiziert:(typeof t.verifiziert!=='undefined')?t.verifiziert:null, verifikationsHinweis:t.verifikationsHinweis||'', metricsSnapshot:{rsi:m.rsi!=null?m.rsi:null, momentum5d:m.momentum5d!=null?m.momentum5d:null, volumeRatio:m.volumeRatio!=null?m.volumeRatio:null, macd:m.macd!=null?m.macd:null, change:m.change!=null?m.change:null, shortRatio:m.shortRatio!=null?m.shortRatio:null, earningsDays:t.earningsDays!=null?t.earningsDays:null, score:t.score!=null?t.score:null, relStaerke4W:m.relStaerke4W!=null?m.relStaerke4W:null} };
       });
       var _alle = newProg.concat(bereinigte);
       savePrognosen(_alle.filter(function(p){return !p.abgeschlossen;}).slice(0,60).concat(_alle.filter(function(p){return p.abgeschlossen;}).slice(0,400)));
@@ -1208,10 +1215,9 @@ function buildTippCard(t, i) {
 // Kernlogik ohne UI-Abhaengigkeit - fuer manuellen Button UND Auto-Update nutzbar
 function fetchAndApplyKurse(silent) {
   var frisch = loadPrognosen();
-  var aktiv = frisch.filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
+  var aktiv = frisch.filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX);});
   if (!aktiv.length) return Promise.resolve({updated:0,failed:[]});
   var spyPromise = getFreshPrice('SPY');
-
   var results = [];
   var idx = 0;
   function nextFetch() {
@@ -1219,55 +1225,32 @@ function fetchAndApplyKurse(silent) {
     var p = aktiv[idx];
     idx++;
     return getFreshPrice(p.ticker).then(function(price) {
-      results.push({id:p.id, ticker:p.ticker, price:price});
+      results.push({id:p.id, ticker:p.ticker, price:price, q:(gQuote[p.ticker]||{})});
       return new Promise(function(r){ setTimeout(r, 150); });
     }).then(nextFetch);
   }
-
   return nextFetch().then(function() { return spyPromise; }).then(function(spyNow) {
     var failed = results.filter(function(r){ return !r.price; }).map(function(r){ return r.ticker; });
-    var today = new Date().toISOString();
+    var nowIso = new Date().toISOString();
     var updated = frisch.map(function(p) {
-      if (p.abgeschlossen||daysDiff(p.scanDate)>6) return p;
+      if (p.abgeschlossen||daysDiff(p.scanDate)>AKTIV_TAGE_MAX) return p;
       var res = results.find(function(r){return r.id===p.id;});
       if (!res||!res.price) return p;
+      var q = res.q || {};
+      var snap = {date:nowIso, price:res.price, spy:spyNow, op:(q.o>0?q.o:null), hi:(q.h>0?q.h:null), lo:(q.l>0?q.l:null)};
       var verlauf = p.verlauf.slice();
       var last = verlauf[verlauf.length-1];
       var sameDay = verlauf.length>1&&last&&new Date(last.date).toDateString()===new Date().toDateString();
-      if (verlauf.length<=1) verlauf.push({date:today,price:res.price,spy:spyNow});
-      else if (sameDay) verlauf[verlauf.length-1]={date:today,price:res.price,spy:spyNow};
-      else verlauf.push({date:today,price:res.price,spy:spyNow});
-      // Hoechstguenstiger Kurs seit Scan-Start fortschreiben (unabhaengig vom letzten Snapshot).
-      // Bei LONG das Maximum, bei SHORT das Minimum (siehe bestPreis()). Grund: Ohne das geht ein
-      // zwischenzeitlich erreichtes Kursziel verloren, wenn der Kurs bis zum naechsten Update
-      // wieder in die ungueustige Richtung gelaufen ist.
-      var peakPrice = bestPreis(p.peakPrice, res.price, p.startkurs, p.richtung);
-      var warNeuerBestwert = (p.peakPrice==null) || (p.richtung==='short' ? res.price<=p.peakPrice : res.price>=p.peakPrice);
-      var peakDate = warNeuerBestwert ? today : p.peakDate;
-
-      // Vorzeitiger Abschluss: was erledigt ist, muss nicht mehr taeglich abgefragt werden -
-      // es sei denn, die Tendenz haelt weiter an. Richtungsabhaengig (LONG/SHORT):
-      // - Ziel erreicht -> nur erledigt, wenn der guenstige Trend NICHT mehr anhaelt (bei LONG: Kurs
-      //   steigt nicht mehr; bei SHORT: Kurs faellt nicht mehr). Haelt er an, lohnt sich Weiterverfolgen
-      //   (Gewinne laufen lassen) - dann bleibt die Position aktiv und wird weiter abgefragt.
-      // - Flop erkannt (mind. 50% des Zielbetrags in Verlustrichtung, gleiche Schwelle wie das
-      //   FLOP-Badge) -> sofort erledigt, kein Stop-Loss-Kurs noetig. Ein Flop ist ein falscher Tipp,
-      //   kein Kursniveau-Problem - weiteres Verfolgen bringt keine neue Erkenntnis, kostet nur
-      //   unnoetig Finnhub-Calls.
-      // - Ohne Vergleichsbasis (erstes Update ueberhaupt) wird NICHT vorzeitig geschlossen.
-      // - GEKAUFTE Positionen werden NIE automatisch geschlossen (weder Ziel-Trend noch Zeitfenster
-      //   noch Flop) - die reale Position besteht unabhaengig vom internen Beobachtungsfenster weiter,
-      //   bis der Nutzer selbst auf "Verkauft" tippt. Sonst faellt eine tatsaechlich gehaltene Aktie
-      //   einfach aus dem Tracking raus, nur weil die App-interne Uhr abgelaufen ist.
-      var aktPctNeu = pctGewinn(p.startkurs, res.price, p.richtung);
-      var zielErreicht = aktPctNeu!=null && aktPctNeu>=(p.anstiegProzent||0);
-      var trendGuenstigNoch = trendGuenstig(last?last.price:null, res.price, p.richtung);
-      var zielVorzeitigErledigt = !p.gekauft && zielErreicht && trendGuenstigNoch===false;
-      var flopErkannt = !p.gekauft && bewertungFlop(aktPctNeu, p.anstiegProzent);
-      var zeitAbgelaufen = !p.gekauft && tradingDaysSince(p.scanDate)>=(p.verkaufNachTagen||3);
-      var abschlussGrund = zielVorzeitigErledigt ? 'ziel' : (flopErkannt ? 'flop' : (zeitAbgelaufen ? 'zeit' : null));
-
-      return Object.assign({},p,{verlauf:verlauf,peakPrice:peakPrice,peakDate:peakDate,abschlussGrund:abschlussGrund,abgeschlossen:zielVorzeitigErledigt||flopErkannt||zeitAbgelaufen});
+      if (verlauf.length<=1||!sameDay) verlauf.push(snap); else verlauf[verlauf.length-1] = snap;
+      // Einstieg: Eroeffnung des Folgehandelstags, einmalig festgelegt
+      var einstieg = p.einstieg, einstiegDatum = p.einstiegDatum||null;
+      if (einstieg == null && q.o > 0 && einstiegMoeglich(p, new Date())) { einstieg = q.o; einstiegDatum = nowIso; }
+      var kopie = auswertungsKopie(Object.assign({}, p, {verlauf:verlauf, einstieg:einstieg, einstiegDatum:einstiegDatum}));
+      // Abschluss nur durch Simulation (Stop, Ziel, Fensterende). Gekaufte Positionen bleiben offen.
+      var folgetag = naechsterHandelstagNY(p.scanDate);
+      var verpasst = !p.gekauft && einstieg == null && folgetag && nyDatumStr(Date.now()) > folgetag;
+      var zu = verpasst || (!p.gekauft && (kopie.grund==='stop'||kopie.grund==='ziel'||kopie.grund==='zeit'));
+      return Object.assign({}, p, {verlauf:verlauf, einstieg:einstieg, einstiegDatum:einstiegDatum, abschlussGrund: verpasst ? 'luecke' : (zu ? kopie.grund : null), abgeschlossen: zu});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -1296,7 +1279,7 @@ function updateKurse() {
 var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 function maybeAutoUpdate() {
   var last = parseInt(localStorage.getItem(STORE_LAST_UPDATE) || '0', 10);
-  var aktive = loadPrognosen().filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
+  var aktive = loadPrognosen().filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX);});
   if (!aktive.length) return;
   if (Date.now() - last < AUTO_UPDATE_INTERVAL_MS) return;
   var indicator = document.getElementById('autoUpdateIndicator');
@@ -1311,47 +1294,127 @@ function maybeAutoUpdate() {
   });
 }
 
-// V2.31: Auswertung nur mit Kursen bis zum Ende des Prognosefensters. Spaeter geoeffnete App
-// (Update erst nach Fensterende) verfaelschte sonst Schlusskurs und Hoechstkurs.
+// ── Auswertung V2.35 ──────────────────────────────────────
+// Einstieg = Eroeffnung des Folgehandelstags nach dem Scan (Finnhub 'o').
+// Ausstieg chronologisch ueber die Snapshots. Pro Snapshot zaehlt die Tagesspanne (Tief/Hoch):
+// Stop oder Ziel gilt als erreicht, wenn der Tagesbereich ihn beruehrt. Liegen beide im selben Tag,
+// gilt der Stop zuerst (konservativ). Gap-Down: Stop wird zur Eroeffnung ausgefuehrt, wenn sie schon darunter liegt.
+// Ziel wird als Limit zum Zielkurs gefuellt. Ohne Stop/Ziel: Verkauf am Fensterende (oder bei manuellem Verkauf).
+// Luecke: fehlt bis zum Ausstieg an einem Handelstag ein Snapshot, ist die Position NICHT bewertbar.
+var gQuote = {};
+var AKTIV_TAGE_MAX = 14; // V2.37: Positionen bis 14 Kalendertage nach dem Scan weiter verfolgen (Fenster bis 5 Handelstage ab Einstieg)
+var STORE_ARCHIV = 'markttipps_archiv_v1';
+var NY_MIN_OEFFNUNG = 9*60+30;
+function nyDatumStr(d) { return new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York' }).format(new Date(d)); }
+function nyInfo(d) {
+  var parts = {};
+  new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', hourCycle:'h23', weekday:'short', hour:'2-digit', minute:'2-digit' })
+    .formatToParts(new Date(d)).forEach(function(x){ parts[x.type] = x.value; });
+  return { datum: nyDatumStr(d), wd: parts.weekday, min: parseInt(parts.hour,10)*60 + parseInt(parts.minute,10) };
+}
+// Einstieg frueehstens am Folgehandelstag nach dem Scan, nach Boersenoeffnung
+function naechsterHandelstagNY(scanIso) {
+  var s = nyDatumStr(scanIso).split('-').map(Number);
+  var d = Date.UTC(s[0], s[1]-1, s[2], 12);
+  for (var i = 0; i < 10; i++) {
+    d += 86400000;
+    var dt = new Date(d), iso = dt.toISOString().slice(0,10), wd = dt.getUTCDay();
+    if (wd !== 0 && wd !== 6 && US_MARKT_FEIERTAGE.indexOf(iso) < 0) return iso;
+  }
+  return null;
+}
+function einstiegMoeglich(p, now) {
+  var n = nyInfo(now);
+  if (n.wd === 'Sat' || n.wd === 'Sun') return false;
+  if (US_MARKT_FEIERTAGE.indexOf(n.datum) >= 0) return false;
+  if (n.min < NY_MIN_OEFFNUNG) return false;
+  return n.datum === naechsterHandelstagNY(p.scanDate);
+}
+// Alle US-Handelstage zwischen Start und Ende (NY-Datum, inklusive)
+function nyTage(startIso, endMs) {
+  var s = nyDatumStr(startIso).split('-').map(Number);
+  var e = nyDatumStr(endMs).split('-').map(Number);
+  var d = Date.UTC(s[0], s[1]-1, s[2], 12), ende = Date.UTC(e[0], e[1]-1, e[2], 12);
+  var out = [];
+  for (; d <= ende; d += 86400000) {
+    var dt = new Date(d), iso = dt.toISOString().slice(0,10), wd = dt.getUTCDay();
+    if (wd !== 0 && wd !== 6 && US_MARKT_FEIERTAGE.indexOf(iso) < 0) out.push(iso);
+  }
+  return out;
+}
+function startDatumVon(p) { return p.einstiegDatum || p.scanDate; }
 function fensterEndeMs(p) {
-  var d = addTradingDays(new Date(p.scanDate), p.verkaufNachTagen||3);
+  var d = addTradingDays(new Date(startDatumVon(p)), p.verkaufNachTagen||3);
   d.setHours(23,59,59,999);
   return d.getTime();
 }
+function stopKursVon(e, richtung, anst) { return richtung==='short' ? e*(1+anst/200) : e*(1-anst/200); }
+function zielKursVon(e, richtung, anst) { return richtung==='short' ? e*(1-anst/100) : e*(1+anst/100); }
 function auswertungsKopie(p) {
-  var v = p.verlauf || [];
-  if (p.gekauftDatum) return Object.assign({}, p, {bewertbar: v.length>1});
-  var ende = fensterEndeMs(p);
-  var vf = v.filter(function(x){ return new Date(x.date).getTime() <= ende; });
-  var peak = p.startkurs;
-  vf.forEach(function(x){ peak = bestPreis(peak, x.price, p.startkurs, p.richtung); });
-  if (p.peakPrice!=null && p.peakDate && new Date(p.peakDate).getTime() <= ende) peak = bestPreis(peak, p.peakPrice, p.startkurs, p.richtung);
-  return Object.assign({}, p, {verlauf: vf, peakPrice: peak, bewertbar: vf.length>1});
-}
-// Erwartungswert nach Kosten + Go/No-Go-Checkliste. Gezaehlt wird nur die aktuelle Messreihe (KONFIG_ID).
-function statistikHtml(liste, unbewertet) {
-  var rows = [];
-  liste.forEach(function(p) {
-    var v = p.verlauf, l = v[v.length-1], f = v[0];
-    var e = pctGewinn(p.startkurs, l ? l.price : null, p.richtung);
-    if (e == null) return;
-    e -= KOSTEN_ROUNDTRIP_PCT;
-    var x = null;
-    if (f && l && f.spy && l.spy && v.length > 1) {
-      var sp = (l.spy - f.spy) / f.spy * 100;
-      x = e - (p.richtung === 'short' ? -sp : sp);
+  var leer = Object.assign({}, p, { bewertbar:false, ergebnis:null, grund:null, ausstieg:null, brutto:null, ueberSpy:null, kostenAnwendung:null });
+  if (!(p.einstieg > 0)) return leer;
+  var startMs = new Date(startDatumVon(p)).getTime();
+  var endeMs = fensterEndeMs(p);
+  var e = p.einstieg, rich = p.richtung, anst = p.anstiegProzent||0;
+  var stop = stopKursVon(e, rich, anst), ziel = zielKursVon(e, rich, anst);
+  var seq = (p.verlauf||[]).filter(function(x){ var t = new Date(x.date).getTime(); return t >= startMs && t <= endeMs && x.price > 0; });
+  if (!seq.length) return leer;
+  var idx = -1, exitP = null, grund = null;
+  for (var i = 0; i < seq.length; i++) {
+    var x = seq[i];
+    var lo = (x.lo > 0) ? x.lo : x.price, hi = (x.hi > 0) ? x.hi : x.price;
+    var op = (x.op > 0) ? x.op : null;
+    if (rich === 'short') {
+      if (hi >= stop) { exitP = (op && op >= stop) ? op : stop; grund = 'stop'; }
+      else if (lo <= ziel) { exitP = ziel; grund = 'ziel'; }
+    } else {
+      if (lo <= stop) { exitP = (op && op <= stop) ? op : stop; grund = 'stop'; }
+      else if (hi >= ziel) { exitP = ziel; grund = 'ziel'; }
     }
-    rows.push({ e: e, x: x, t: new Date(p.scanDate).getTime(), tag: String(p.scanDate).slice(0,10) });
-  });
-  rows.sort(function(a, b) { return a.t - b.t; });
+    if (grund) { idx = i; break; }
+  }
+  if (!grund) {
+    idx = seq.length - 1;
+    exitP = seq[idx].price;
+    grund = (p.abschlussGrund === 'verkauft' || Date.now() >= endeMs) ? 'zeit' : 'offen';
+  }
+  if (grund === 'offen') return Object.assign({}, leer, { grund:'offen' });
+  var exitMs = (grund === 'zeit' && p.abschlussGrund !== 'verkauft') ? endeMs : new Date(seq[idx].date).getTime();
+  var erwartet = nyTage(startDatumVon(p), exitMs);
+  var abgedeckt = seq.slice(0, idx+1).map(function(x){ return nyDatumStr(x.date); });
+  if (erwartet.some(function(d){ return abgedeckt.indexOf(d) < 0; })) return Object.assign({}, leer, { grund:'luecke' });
+  var brutto = pctGewinn(e, exitP, rich);
+  var kosten = (p.kostenProzent != null) ? p.kostenProzent : KOSTEN_DEFAULT_PCT;
+  var ergebnis = brutto - kosten;
+  var spyStart = seq[0].spy, spyEnde = seq[idx].spy, ueber = null;
+  if (spyStart && spyEnde) { var sp = (spyEnde - spyStart) / spyStart * 100; ueber = ergebnis - (rich === 'short' ? -sp : sp); }
+  return Object.assign({}, p, { bewertbar:true, ergebnis:ergebnis, grund:grund, ausstieg:exitP, ausstiegDatum:seq[idx].date, brutto:brutto, kostenAnwendung:kosten, ueberSpy:ueber });
+}
+// Alte Messreihen (andere KONFIG_ID) ins Archiv verschieben. Offene echte Positionen bleiben sichtbar.
+function archiviereAlteReihen() {
+  var alle = loadPrognosen();
+  var alt = alle.filter(function(p){ return p.konfigId !== KONFIG_ID && !(p.gekauft && !p.abgeschlossen); });
+  if (!alt.length) return;
+  var archiv = [];
+  try { archiv = JSON.parse(localStorage.getItem(STORE_ARCHIV) || '[]'); } catch(e) { archiv = []; }
+  try { localStorage.setItem(STORE_ARCHIV, JSON.stringify(archiv.concat(alt))); } catch(e) { return; }
+  savePrognosen(alle.filter(function(p){ return alt.indexOf(p) < 0; }));
+}
+// Hauptkennzahl: Ergebnis pro Tipp nach Kosten, Ausstiegsarten, Go/No-Go-Checkliste (nur aktuelle Messreihe)
+function statistikHtml(liste, unbewertet) {
+  var rows = liste.map(function(p){ return { e:p.ergebnis, x:p.ueberSpy, g:p.grund, kost:p.kostenAnwendung, t:new Date(p.scanDate).getTime(), tag:String(p.scanDate).slice(0,10) }; });
+  rows.sort(function(a,b){ return a.t - b.t; });
   var avg = function(a) { return a.length ? a.reduce(function(s,x){return s+x;},0)/a.length : null; };
-  var erg = rows.map(function(r){return r.e;});
-  var exc = rows.filter(function(r){return r.x!=null;}).map(function(r){return r.x;});
+  var erg = rows.map(function(r){ return r.e; });
+  var exc = rows.filter(function(r){ return r.x != null; }).map(function(r){ return r.x; });
   var win = erg.filter(function(x){return x>0;}), loss = erg.filter(function(x){return x<=0;});
+  var nZiel = rows.filter(function(r){return r.g==='ziel';}).length;
+  var nStop = rows.filter(function(r){return r.g==='stop';}).length;
+  var nZeit = rows.filter(function(r){return r.g==='zeit';}).length;
   var f1 = function(x) { return x==null ? '--' : (x>=0?'+':'') + x.toFixed(2) + '%'; };
   var col = function(x) { return x==null ? 'var(--text3)' : (x>=0 ? 'var(--green)' : 'var(--red)'); };
   var cell = function(label, val) { return '<div><div style="font-size:16px;font-weight:500;color:'+col(val)+'">'+f1(val)+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">'+label+'</div></div>'; };
-  var n = erg.length, m = avg(erg), mx = avg(exc);
+  var n = erg.length, m = avg(erg), mx = avg(exc), kAvg = avg(rows.map(function(r){ return r.kost; }).filter(function(k){ return k != null; }));
   var sd = 0;
   if (n > 1) sd = Math.sqrt(erg.reduce(function(s,x){return s+(x-m)*(x-m);},0)/(n-1));
   var ciLow = (m != null && n > 1) ? m - 1.96*sd/Math.sqrt(n) : null;
@@ -1367,7 +1430,7 @@ function statistikHtml(liste, unbewertet) {
     [laufzeit >= 56, 'Laufzeit: '+Math.floor(laufzeit)+' Tage (min. 56)'],
     [ciLow != null && ciLow > 0, 'Erwartungswert '+f1(m)+', untere 95%-Grenze '+f1(ciLow)+' (muss > 0 sein)'],
     [exc.length >= 30 && mx > 0, 'Ueberrendite vs. SPY '+f1(mx)+' (n='+exc.length+', min. 30)'],
-    [n >= 20 && h1 > 0 && h2 > 0, 'Beide Haelften positiv: '+f1(h1)+' / '+f1(h2)],
+    [n >= 20 && h1 != null && h2 != null && h1 > 0 && h2 > 0, 'Beide Haelften positiv: '+f1(h1)+' / '+f1(h2)],
     [uq < 0.2, 'Unbewertet-Quote '+Math.round(uq*100)+'% (max. 20%)']
   ];
   var ok = kriterien.filter(function(k){return k[0];}).length;
@@ -1377,21 +1440,21 @@ function statistikHtml(liste, unbewertet) {
     ? 'GO nur fuer Mini-Echtgeld: hoechstens 0,25% Risiko pro Trade, max. 2 offene Positionen. Keine Garantie fuer die Zukunft.'
     : 'NOCH KEIN GO: '+ok+' von '+kriterien.length+' Kriterien erfuellt. Nicht mit echtem Geld handeln.';
   var liste_ = kriterien.map(function(k) { return '<div style="color:'+(k[0]?'var(--green)':'var(--text3)')+'">'+(k[0]?'✓ ':'✗ ')+k[1]+'</div>'; }).join('');
-  return '<div class="section-label" style="margin-top:16px">Hauptkennzahl: Erwartungswert pro Tipp nach '+KOSTEN_ROUNDTRIP_PCT.toString().replace('.',',')+'% Kosten (Annahme)</div>' +
+  return '<div class="section-label" style="margin-top:16px">Hauptkennzahl: Ergebnis pro Tipp nach Kosten (Kosten Ø '+(kAvg!=null?kAvg.toFixed(2).replace('.',','):'--')+'%)</div>' +
     '<div class="summary-grid" style="grid-template-columns:1fr;">' +
       '<div><div style="font-size:30px;font-weight:600;color:'+col(m)+'">'+f1(m)+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Ø Ergebnis/Tipp (n='+n+')</div></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' + cell('Ueberrendite vs. SPY (n='+exc.length+')', mx) + cell('Ø Gewinner (n='+win.length+')', avg(win)) + cell('Ø Verlierer (n='+loss.length+')', avg(loss)) + '</div>' +
     '</div>' +
     '<div style="font-size:11px;color:'+uCol+';border-left:3px solid '+uCol+';padding:6px 10px;margin:-4px 0 6px;line-height:1.6;">'+urteil+'</div>' +
     '<div style="font-size:10px;line-height:1.7;margin:0 0 8px 13px;">'+liste_+'</div>' +
-    '<div style="font-size:10px;color:var(--text3);margin:0 0 12px;line-height:1.6;">Messreihe: '+KONFIG_ID+' (nur Positionen dieser Konfiguration, Aenderung an Regelwerk oder Modell startet eine neue Reihe). Zufallsvergleich Trefferquote: ca. 25-35% (grobe Schaetzung). Ausgeblendete Tipps sind enthalten. ' + (unbewertet>0 ? unbewertet+' Position(en) ohne Kurs im Prognosefenster nicht gewertet.' : '') + '</div>';
+    '<div style="font-size:10px;color:var(--text3);margin:0 0 12px;line-height:1.6;">Ausstiege: Ziel '+nZiel+' · Stop '+nStop+' · Fensterende '+nZeit+' · Messreihe '+KONFIG_ID+'. Luecken (fehlende Tage) zaehlen als unbewertet. '+(unbewertet>0 ? unbewertet+' Position(en) nicht gewertet.' : '')+'</div>';
 }
 
 // ── Render Tracking ───────────────────────────────────────
 function renderTracking() {
   schliesseVerwaiste();
   var fresh = loadPrognosen();
-  var aktive = fresh.filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6)) && !p.ausgeblendet;});
+  var aktive = fresh.filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX)) && !p.ausgeblendet;});
   var abgeschlossenRoh = fresh.filter(function(p){return p.abgeschlossen;});
   var abgeschlossene = abgeschlossenRoh.map(auswertungsKopie).filter(function(p){return p.bewertbar;});
   var serie = abgeschlossene.filter(function(p){return p.konfigId === KONFIG_ID;});
@@ -1404,7 +1467,8 @@ function renderTracking() {
       var sym = p.currency==='EUR'?'EUR ':'USD ';
       var rate = p.currency!=='EUR'?(p.eurRate||eurRate):null;
       var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
-      var aktPct = pctGewinn(p.startkurs, aktuell, p.richtung);
+      var aktBasis = (p.einstieg!=null) ? p.einstieg : p.startkurs;
+      var aktPct = pctGewinn(aktBasis, aktuell, p.richtung);
       var tageNoch = Math.max(0,3-daysDiff(p.scanDate));
       var fortschritt = Math.min(100,(daysDiff(p.scanDate)/3)*100);
       // Fuer gekaufte Positionen ergibt der urspruengliche 3-Tage-Signal-Countdown keinen Sinn mehr
@@ -1413,7 +1477,7 @@ function renderTracking() {
       var gehaltenSeitTage = daysDiff(p.gekauftDatum || p.scanDate);
       var startZeile = p.gekauft
         ? 'Gehalten seit '+gehaltenSeitTage+' Tag'+(gehaltenSeitTage!==1?'en':'')+' (Signal vom '+new Date(p.scanDate).toLocaleDateString('de-DE')+')'
-        : 'Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'');
+        : 'Start: '+new Date(p.scanDate).toLocaleDateString('de-DE')+' - Noch '+tageNoch+' Tag'+(tageNoch!==1?'e':'')+(p.einstieg!=null?' | Einstieg '+fmt(p.einstieg,(p.currency==='EUR'?'EUR ':'USD ')):' | Einstieg ausstehend (Eroeffnung Folgetag)');
       var isUp = aktPct!==null&&aktPct>=0;
       var pctColor = isUp?'var(--green)':'var(--red)';
       var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:9px;padding:2px 8px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
@@ -1431,7 +1495,8 @@ function renderTracking() {
       var bewertungBadge = istTop ? '<span class="rtag" style="background:rgba(34,197,94,0.15);color:var(--green);font-size:9px;padding:2px 8px;">TOPTIPP</span>'
         : istFlop ? '<span class="rtag" style="background:rgba(244,63,94,0.15);color:var(--red);font-size:9px;padding:2px 8px;">FLOP</span>' : '';
 
-      var stopK = (p.stopkurs!=null) ? p.stopkurs : (p.startkurs ? (p.richtung==='short' ? p.startkurs*(1+(p.anstiegProzent||0)/200) : p.startkurs*(1-(p.anstiegProzent||0)/200)) : null);
+      var stopBasis = (p.einstieg!=null) ? p.einstieg : p.startkurs;
+      var stopK = stopBasis ? stopKursVon(stopBasis, p.richtung, p.anstiegProzent||0) : null;
       var stopErreicht = aktuell!=null && stopK!=null && (p.richtung==='short' ? aktuell>=stopK : aktuell<=stopK);
       html += '<div class="tracking-card" style="'+(p.gekauft?'border:1px solid rgba(240,180,41,0.35);':'')+'">' +
         '<div class="tracking-header">' +
@@ -1472,62 +1537,22 @@ function renderTracking() {
   } else { aktiveSection.innerHTML = ''; }
 
   var ausSection = document.getElementById('auswertungSection');
-  if (abgeschlossene.length) {
-    // Treffer-Wertung nutzt den hoechstguenstigen Kurs seit Scan-Start (peakPrice, richtungsabhaengig
-    // via pctGewinn), nicht nur den letzten Snapshot - sonst zaehlt ein zwischenzeitlich erreichtes
-    // Ziel faelschlich als "Verfehlt", wenn der Kurs bis zum Abschluss der Position wieder in die
-    // ungueustige Richtung gelaufen ist. Bei aelteren Prognosen ohne peakPrice faellt die Wertung
-    // automatisch auf den letzten bekannten Kurs zurueck.
-    var treffer = serie.filter(function(p) {
-      var bestpreis = (p.peakPrice!=null) ? p.peakPrice : (p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null);
-      var bestPct = pctGewinn(p.startkurs, bestpreis, p.richtung);
-      return bestPct!=null && bestPct>=(p.anstiegProzent||0)*0.8;
-    }).length;
-    // Realistischere Zweitquote: gegen den TATSAECHLICHEN Schlusskurs bei Abschluss gerechnet, nicht
-    // gegen den (rein hypothetischen) Hoechstkurs. Die Hoechstkurs-Quote zeigt "waere im besten Fall
-    // erreichbar gewesen", diese hier "haette ein Verkauf am Ende des Fensters tatsaechlich gebracht".
-    var trefferReal = serie.filter(function(p) {
-      var letzterPreis = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
-      var realPct = pctGewinn(p.startkurs, letzterPreis, p.richtung);
-      return realPct!=null && realPct>=(p.anstiegProzent||0)*0.8;
-    }).length;
-    var ausHtml = statistikHtml(serie, unbewertetAnzahl) + '<div class="section-label" style="margin-top:16px">Nebenkennzahl: Trefferquoten (sagt nichts ueber Gewinn/Verlust; Treffer = min. 80% des Ziels im Fenster)</div>' +
-      '<div class="summary-grid">' +
-        '<div><div style="font-size:24px;font-weight:500;color:var(--green)">'+treffer+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Treffer (Hoechstkurs)</div></div>' +
-        '<div><div style="font-size:24px;font-weight:500;color:var(--red)">'+(serie.length-treffer)+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Verfehlt</div></div>' +
-        '<div><div style="font-size:24px;font-weight:500;color:var(--accent)">'+Math.round(safeDiv(treffer,serie.length)*100)+'%</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Trefferquote (Bestfall)</div></div>' +
-        '<div><div style="font-size:24px;font-weight:500;color:var(--accent)">'+Math.round(safeDiv(trefferReal,serie.length)*100)+'%</div><div style="font-size:10px;color:var(--text3);margin-top:3px">Trefferquote (real. Schlusskurs)</div></div>' +
-      '</div>';
-    abgeschlossene.filter(function(p){return !p.ausgeblendet;}).slice(0,15).forEach(function(p) {
-      var aktuell = p.verlauf.length>0?p.verlauf[p.verlauf.length-1].price:null;
-      var endPct = pctGewinn(p.startkurs, aktuell, p.richtung);
-      var peakPct = pctGewinn(p.startkurs, p.peakPrice, p.richtung);
-      var bestPct = peakPct!=null?peakPct:endPct;
-      var hit = bestPct!==null&&bestPct>=(p.anstiegProzent||0)*0.8;
-      var endColor = (endPct!=null&&endPct>=0)?'var(--green)':'var(--red)';
-      var zeigtPeakZeile = peakPct!=null&&endPct!=null&&Math.abs(peakPct-endPct)>0.15;
-      var richtungBadge = '<span class="rtag '+(p.richtung==='short'?'short':'long')+'" style="font-size:8px;padding:1px 6px;margin-left:6px;">'+(p.richtung==='short'?'SHORT':'LONG')+'</span>';
-      var istFlop = bewertungFlop(endPct, p.anstiegProzent);
-      var bewertungBadge = hit ? '<span class="rtag" style="background:rgba(34,197,94,0.15);color:var(--green);font-size:8px;padding:1px 6px;margin-left:4px;">TOPTIPP</span>'
-        : istFlop ? '<span class="rtag" style="background:rgba(244,63,94,0.15);color:var(--red);font-size:8px;padding:1px 6px;margin-left:4px;">FLOP</span>' : '';
-      var grundLabel = {ziel:'Vorzeitig beendet: Ziel erreicht, Trend gestoppt', flop:'Vorzeitig beendet: Stop-Kurs erreicht (Flop), Tracking eingestellt', zeit:'Beendet: Zeitfenster abgelaufen', verkauft:'Beendet: Als verkauft markiert'}[p.abschlussGrund] || '';
-      var grundColor = p.abschlussGrund==='ziel'?'var(--green)':(p.abschlussGrund==='flop'?'var(--red)':'var(--text3)');
-      ausHtml += '<div class="aus-card" style="border:1px solid '+(hit?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+'">' +
-        '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+p.ticker+richtungBadge+bewertungBadge+'</div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
-        '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Prognose</div><div style="font-size:12px;color:var(--accent)">+'+(p.anstiegProzent||0).toFixed(1)+'%</div>'+(p.konfidenz?'<div style="font-size:9px;color:var(--text3);margin-top:2px">Sig-St. '+p.konfidenz+'%</div>':'')+'</div>' +
-        '<div style="text-align:right"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Ergebnis</div><div style="font-size:16px;font-weight:500;color:'+endColor+'">'+(endPct!=null?(endPct>=0?'+':'')+endPct.toFixed(1)+'%':'--')+'</div></div>' +
-        '<div style="font-size:16px;color:'+(hit?'var(--green)':'var(--red)')+'">'+(hit?'✓':'✗')+'</div>' +
+  if (serie.length) {
+    var ausHtml = statistikHtml(serie, unbewertetAnzahl);
+    var grundTxt = {ziel:'Ziel erreicht (Limit-Verkauf)', stop:'Stop ausgeloest', zeit:'Fensterende bzw. Verkauf'};
+    serie.filter(function(p){return !p.ausgeblendet;}).slice(0,15).forEach(function(p) {
+      var sym = p.currency==='EUR'?'EUR ':'USD ';
+      var col = p.ergebnis>=0?'var(--green)':'var(--red)';
+      ausHtml += '<div class="aus-card" style="border:1px solid '+(p.grund==='ziel'?'rgba(34,197,94,0.2)':'rgba(244,63,94,0.15)')+';display:block;">' +
+        '<div style="display:flex;justify-content:space-between;gap:10px;">' +
+          '<div><div style="font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px">'+esc(p.ticker)+' <span style="font-size:9px;color:var(--text3)">'+(p.richtung==='short'?'SHORT':'LONG')+'</span></div><div style="font-size:10px;color:var(--text3)">'+new Date(p.scanDate).toLocaleDateString('de-DE')+'</div></div>' +
+          '<div style="text-align:right"><div style="font-size:9px;color:var(--text3)">Netto nach Kosten</div><div style="font-size:16px;font-weight:500;color:'+col+'">'+(p.ergebnis>=0?'+':'')+p.ergebnis.toFixed(2)+'%</div></div>' +
         '</div>' +
-        '<div style="font-size:10px;color:var(--text3);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:6px;">' +
-          'Start: '+fmt(p.startkurs, (p.currency==='EUR'?'€':'$'))+(fmtEur(p.startkurs,p.currency!=='EUR'?p.eurRate:null,p.currency)?' ('+fmtEur(p.startkurs,p.currency!=='EUR'?p.eurRate:null,p.currency).replace('EUR ','€')+')':'')+' → ' +
-          'Aktuell: <span style="color:'+(endColor)+'">'+(aktuell?fmt(aktuell,(p.currency==='EUR'?'€':'$')):'--')+(aktuell&&fmtEur(aktuell,p.currency!=='EUR'?p.eurRate:null,p.currency)?' ('+fmtEur(aktuell,p.currency!=='EUR'?p.eurRate:null,p.currency).replace('EUR ','€')+')':'')+'</span>' +
-          (endPct!==null?' ('+( endPct>=0?'+':'')+endPct.toFixed(2)+'%)':'') +
-          ' · Ziel war: +' + (p.anstiegProzent||0).toFixed(1)+'%' +
-        '</div>' +
-        (grundLabel?'<div style="font-size:10px;color:'+grundColor+';padding:2px 0;">'+grundLabel+'</div>':'') +
-        (zeigtPeakZeile?'<div style="font-size:10px;color:var(--text3);padding:2px 0;">Hoechstkurs zwischenzeitlich: <span style="color:'+(peakPct>=(p.anstiegProzent||0)?'var(--green)':'var(--text2)')+'">'+(peakPct>=0?'+':'')+peakPct.toFixed(1)+'%</span></div>':'') +
+        '<div style="font-size:10px;color:var(--text3);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:6px;">Einstieg '+fmt(p.einstieg,sym)+' → Ausstieg '+fmt(p.ausstieg,sym)+' · brutto '+(p.brutto>=0?'+':'')+p.brutto.toFixed(2)+'% · Kosten '+p.kostenAnwendung.toFixed(2)+'%</div>' +
+        '<div style="font-size:10px;color:'+(p.grund==='ziel'?'var(--green)':(p.grund==='stop'?'var(--red)':'var(--text3)'))+';padding:2px 0;">'+(grundTxt[p.grund]||'')+'</div>' +
         (p.these?'<div style="font-size:10px;color:#8aa4c4;padding:4px 0 0;line-height:1.5;">'+esc(p.these)+'</div>':'') +
-        (p.abschlussGrund!=='verkauft'?'<div style="margin-top:8px;"><button onclick="markiereGekauft(\''+p.id+'\')" style="background:none;border:1px solid rgba(34,197,94,0.4);border-radius:5px;padding:4px 10px;color:var(--green);font-size:10px;cursor:pointer;font-family:var(--mono);">Doch gekauft - Tracking reaktivieren</button></div>':'');
+        (p.abschlussGrund!=='verkauft'?'<div style="margin-top:8px;"><button onclick="markiereGekauft(\''+p.id+'\')" style="background:none;border:1px solid rgba(34,197,94,0.4);border-radius:5px;padding:4px 10px;color:var(--green);font-size:10px;cursor:pointer;font-family:var(--mono);">Doch gekauft - Tracking reaktivieren</button></div>':'') +
+        '</div>';
     });
     ausSection.innerHTML = ausHtml;
   } else { ausSection.innerHTML = ''; }
@@ -1546,7 +1571,7 @@ function kgCell(label,value,eur,color) {
 }
 
 function updateTrackingCount() {
-  var aktive = loadPrognosen().filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6)) && !p.ausgeblendet;});
+  var aktive = loadPrognosen().filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX)) && !p.ausgeblendet;});
   setText('trackingCount',aktive.length>0?'('+aktive.length+')':'');
 }
 
@@ -1761,6 +1786,21 @@ function autoCheckPolitiker() {
 }
 
 // ── Init ──────────────────────────────────────────────────
+// V2.36: Secret beim ersten Start einmal pro Browser abfragen, nie in der Datei.
+function secretSetzen(vorgabe) {
+  var s = (vorgabe != null ? vorgabe : prompt('MarktTipps Zugangs-Secret (wird nur in diesem Browser gespeichert):') || '').trim();
+  if (!s) return false;
+  APP_SECRET = s;
+  try { localStorage.setItem('markttipps_secret', s); } catch(e) {}
+  return true;
+}
+function secretZuruecksetzen() {
+  try { localStorage.removeItem('markttipps_secret'); } catch(e) {}
+  APP_SECRET = '';
+  if (secretSetzen()) alert('Secret gespeichert. Bitte Kurse neu laden.');
+}
+if (!APP_SECRET) secretSetzen();
+archiviereAlteReihen();
 schliesseVerwaiste();
 initDepotFelder();
 updateTrackingCount();
@@ -1770,4 +1810,3 @@ maybeAutoUpdate();
 </script>
 </body>
 </html>
-
