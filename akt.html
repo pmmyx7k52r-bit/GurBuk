@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.37</title>
+<title>MarktTipps V2.35</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -106,7 +106,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .bar-label { font-size: 9px; color: var(--text3); white-space: nowrap; }
 .bar-track { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; }
+.bar-fill { height: auto; border-radius: 2px; }
 .bar-val { font-size: 10px; white-space: nowrap; }
 .richtung-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .rtag { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; }
@@ -133,7 +133,7 @@ header { padding: 24px 0 14px; border-bottom: 1px solid var(--border); margin-bo
 .kurs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(--bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
 .progress-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .pb-track { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.pb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
+.pb-fill { height: auto; border-radius: 2px; background: linear-gradient(90deg, #1a2540, var(--accent)); }
 .tracking-status { font-size: 10px; color: var(--text3); }
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
 .aus-card { background: var(--bg2); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.37</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.35</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -210,7 +210,6 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
       <span>Backup importieren</span><span>↑</span>
     </button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importDaten(event)">
-    <button class="update-btn" onclick="secretZuruecksetzen()" style="margin-bottom:8px;"><span>Zugangs-Secret neu eingeben</span><span>🔑</span></button>
     <button class="reset-btn" onclick="resetDaten()">Alle gespeicherten Prognosen loeschen</button>
     <div id="trackingError" class="error-box"></div>
     <div id="aktiveSection"></div>
@@ -231,20 +230,20 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.37 · Signal-Filter (Momentum/Volumen/Rel. Staerke/Earnings) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.35 · Signal-Filter (Momentum/Volumen/Rel. Staerke/Earnings) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 // Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
 // spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
 // statt das anhand von Datumsvergleichen schaetzen zu muessen.
-var APP_VERSION = 'V2.37';
+var APP_VERSION = 'V2.35';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
 // Anthropic-/Finnhub-Guthaben verbraucht. Ist kein perfekter Schutz (steht im Seitenquelltext),
 // aber verhindert zufaellig gefundene/gescannte Worker-URLs von automatisiertem Missbrauch.
-var APP_SECRET = localStorage.getItem('markttipps_secret') || ''; // V2.36: nicht im Code, nur lokal im Browser
+var APP_SECRET = 'c5eafb59df235df1caa1da97d33964dbf5ea63935132c48b';
 // Zentraler Fetch-Wrapper fuer alle Worker-Aufrufe: haengt das Secret als Header an,
 // ohne dass jede einzelne fetch()-Stelle das selbst tun muss (Risiko, eine Stelle zu vergessen).
 function workerFetch(url, options) {
@@ -713,7 +712,7 @@ function schliesseVerwaiste() {
   // aus Liste UND Statistik. Jetzt werden sie geschlossen und je nach Kursen im Fenster bewertet/unbewertet gezaehlt.
   var alle = loadPrognosen(), geaendert = false;
   alle = alle.map(function(p) {
-    if (!p.abgeschlossen && !p.gekauft && daysDiff(p.scanDate)>AKTIV_TAGE_MAX) { geaendert = true; return Object.assign({}, p, {abgeschlossen:true, abschlussGrund:'zeit'}); }
+    if (!p.abgeschlossen && !p.gekauft && daysDiff(p.scanDate) > 6) { geaendert = true; return Object.assign({}, p, {abgeschlossen:true, abschlussGrund:'zeit'}); }
     return p;
   });
   if (geaendert) savePrognosen(alle);
@@ -1215,7 +1214,7 @@ function buildTippCard(t, i) {
 // Kernlogik ohne UI-Abhaengigkeit - fuer manuellen Button UND Auto-Update nutzbar
 function fetchAndApplyKurse(silent) {
   var frisch = loadPrognosen();
-  var aktiv = frisch.filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX);});
+  var aktiv = frisch.filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
   if (!aktiv.length) return Promise.resolve({updated:0,failed:[]});
   var spyPromise = getFreshPrice('SPY');
   var results = [];
@@ -1233,7 +1232,7 @@ function fetchAndApplyKurse(silent) {
     var failed = results.filter(function(r){ return !r.price; }).map(function(r){ return r.ticker; });
     var nowIso = new Date().toISOString();
     var updated = frisch.map(function(p) {
-      if (p.abgeschlossen||daysDiff(p.scanDate)>AKTIV_TAGE_MAX) return p;
+      if (p.abgeschlossen||daysDiff(p.scanDate)>6) return p;
       var res = results.find(function(r){return r.id===p.id;});
       if (!res||!res.price) return p;
       var q = res.q || {};
@@ -1247,10 +1246,8 @@ function fetchAndApplyKurse(silent) {
       if (einstieg == null && q.o > 0 && einstiegMoeglich(p, new Date())) { einstieg = q.o; einstiegDatum = nowIso; }
       var kopie = auswertungsKopie(Object.assign({}, p, {verlauf:verlauf, einstieg:einstieg, einstiegDatum:einstiegDatum}));
       // Abschluss nur durch Simulation (Stop, Ziel, Fensterende). Gekaufte Positionen bleiben offen.
-      var folgetag = naechsterHandelstagNY(p.scanDate);
-      var verpasst = !p.gekauft && einstieg == null && folgetag && nyDatumStr(Date.now()) > folgetag;
-      var zu = verpasst || (!p.gekauft && (kopie.grund==='stop'||kopie.grund==='ziel'||kopie.grund==='zeit'));
-      return Object.assign({}, p, {verlauf:verlauf, einstieg:einstieg, einstiegDatum:einstiegDatum, abschlussGrund: verpasst ? 'luecke' : (zu ? kopie.grund : null), abgeschlossen: zu});
+      var zu = !p.gekauft && (kopie.grund==='stop'||kopie.grund==='ziel'||kopie.grund==='zeit');
+      return Object.assign({}, p, {verlauf:verlauf, einstieg:einstieg, einstiegDatum:einstiegDatum, abschlussGrund: zu ? kopie.grund : null, abgeschlossen: zu});
     });
     savePrognosen(updated);
     if (!silent) renderTracking();
@@ -1279,7 +1276,7 @@ function updateKurse() {
 var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 function maybeAutoUpdate() {
   var last = parseInt(localStorage.getItem(STORE_LAST_UPDATE) || '0', 10);
-  var aktive = loadPrognosen().filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX);});
+  var aktive = loadPrognosen().filter(function(p){return p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6);});
   if (!aktive.length) return;
   if (Date.now() - last < AUTO_UPDATE_INTERVAL_MS) return;
   var indicator = document.getElementById('autoUpdateIndicator');
@@ -1302,7 +1299,6 @@ function maybeAutoUpdate() {
 // Ziel wird als Limit zum Zielkurs gefuellt. Ohne Stop/Ziel: Verkauf am Fensterende (oder bei manuellem Verkauf).
 // Luecke: fehlt bis zum Ausstieg an einem Handelstag ein Snapshot, ist die Position NICHT bewertbar.
 var gQuote = {};
-var AKTIV_TAGE_MAX = 14; // V2.37: Positionen bis 14 Kalendertage nach dem Scan weiter verfolgen (Fenster bis 5 Handelstage ab Einstieg)
 var STORE_ARCHIV = 'markttipps_archiv_v1';
 var NY_MIN_OEFFNUNG = 9*60+30;
 function nyDatumStr(d) { return new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York' }).format(new Date(d)); }
@@ -1313,22 +1309,12 @@ function nyInfo(d) {
   return { datum: nyDatumStr(d), wd: parts.weekday, min: parseInt(parts.hour,10)*60 + parseInt(parts.minute,10) };
 }
 // Einstieg frueehstens am Folgehandelstag nach dem Scan, nach Boersenoeffnung
-function naechsterHandelstagNY(scanIso) {
-  var s = nyDatumStr(scanIso).split('-').map(Number);
-  var d = Date.UTC(s[0], s[1]-1, s[2], 12);
-  for (var i = 0; i < 10; i++) {
-    d += 86400000;
-    var dt = new Date(d), iso = dt.toISOString().slice(0,10), wd = dt.getUTCDay();
-    if (wd !== 0 && wd !== 6 && US_MARKT_FEIERTAGE.indexOf(iso) < 0) return iso;
-  }
-  return null;
-}
 function einstiegMoeglich(p, now) {
   var n = nyInfo(now);
   if (n.wd === 'Sat' || n.wd === 'Sun') return false;
   if (US_MARKT_FEIERTAGE.indexOf(n.datum) >= 0) return false;
   if (n.min < NY_MIN_OEFFNUNG) return false;
-  return n.datum === naechsterHandelstagNY(p.scanDate);
+  return n.datum > nyDatumStr(p.scanDate);
 }
 // Alle US-Handelstage zwischen Start und Ende (NY-Datum, inklusive)
 function nyTage(startIso, endMs) {
@@ -1454,7 +1440,7 @@ function statistikHtml(liste, unbewertet) {
 function renderTracking() {
   schliesseVerwaiste();
   var fresh = loadPrognosen();
-  var aktive = fresh.filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX)) && !p.ausgeblendet;});
+  var aktive = fresh.filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6)) && !p.ausgeblendet;});
   var abgeschlossenRoh = fresh.filter(function(p){return p.abgeschlossen;});
   var abgeschlossene = abgeschlossenRoh.map(auswertungsKopie).filter(function(p){return p.bewertbar;});
   var serie = abgeschlossene.filter(function(p){return p.konfigId === KONFIG_ID;});
@@ -1571,7 +1557,7 @@ function kgCell(label,value,eur,color) {
 }
 
 function updateTrackingCount() {
-  var aktive = loadPrognosen().filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=AKTIV_TAGE_MAX)) && !p.ausgeblendet;});
+  var aktive = loadPrognosen().filter(function(p){return (p.gekauft||(!p.abgeschlossen&&daysDiff(p.scanDate)<=6)) && !p.ausgeblendet;});
   setText('trackingCount',aktive.length>0?'('+aktive.length+')':'');
 }
 
@@ -1786,20 +1772,6 @@ function autoCheckPolitiker() {
 }
 
 // ── Init ──────────────────────────────────────────────────
-// V2.36: Secret beim ersten Start einmal pro Browser abfragen, nie in der Datei.
-function secretSetzen(vorgabe) {
-  var s = (vorgabe != null ? vorgabe : prompt('MarktTipps Zugangs-Secret (wird nur in diesem Browser gespeichert):') || '').trim();
-  if (!s) return false;
-  APP_SECRET = s;
-  try { localStorage.setItem('markttipps_secret', s); } catch(e) {}
-  return true;
-}
-function secretZuruecksetzen() {
-  try { localStorage.removeItem('markttipps_secret'); } catch(e) {}
-  APP_SECRET = '';
-  if (secretSetzen()) alert('Secret gespeichert. Bitte Kurse neu laden.');
-}
-if (!APP_SECRET) secretSetzen();
 archiviereAlteReihen();
 schliesseVerwaiste();
 initDepotFelder();
@@ -1810,3 +1782,4 @@ maybeAutoUpdate();
 </script>
 </body>
 </html>
+
