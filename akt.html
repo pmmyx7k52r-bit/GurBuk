@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MarktTipps">
 <meta name="theme-color" content="#080c14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>MarktTipps V2.38</title>
+<title>MarktTipps V2.39</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 :root {
@@ -150,7 +150,7 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
 <div class="app">
   <header>
     <div>
-      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.38</span></div>
+      <div class="logo">Markt<em>Tipps</em> <span style="font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:400">V2.39</span></div>
       <div class="tagline">Signal-System · 3 Tage · Echtzeit</div>
     </div>
     <div class="header-right">
@@ -232,14 +232,14 @@ footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border
     </div>
   </div>
 
-  <footer>V2.38 · Signal-Filter (Momentum/Volumen/Rel. Staerke/Earnings) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
+  <footer>V2.39 · Signal-Filter (Momentum/Volumen/Rel. Staerke/Earnings) · KI-Erklaerung · Finnhub Echtzeit · Keine Gewaehr</footer>
 </div>
 
 <script>
 // Wird bei jedem Scan mit jeder neuen Prognose gespeichert (appVersionBeiScan) - macht bei
 // spaeteren Auswertungen nachvollziehbar, welche Scoring-/Prompt-Version fuer eine Position galt,
 // statt das anhand von Datumsvergleichen schaetzen zu muessen.
-var APP_VERSION = 'V2.38';
+var APP_VERSION = 'V2.39';
 var WORKER = 'https://finnhub-proxy.zzbuk.workers.dev';
 // Muss exakt mit der APP_SECRET Environment-Variable im Cloudflare Worker uebereinstimmen.
 // Schuetzt den Worker davor, dass jemand anderes ueber die (im Client sichtbare) URL dein
@@ -472,7 +472,7 @@ function showError(id, msg) {
   else if (text.includes('HTTP 5') || text.includes('HTTP 4')) text = 'API nicht erreichbar - bitte spaeter versuchen (' + text.slice(0, 40) + ')';
   else if (text.includes('fetch') || text.includes('Load failed')) text = 'Netzwerkproblem - Verbindung pruefen';
   else if (text.includes('Keine') || text.includes('parse')) text = 'Antwortfehler - bitte erneut versuchen';
-  e.textContent = text;
+  e.textContent = text + (msg && msg !== text ? '  [Detail: ' + String(msg).slice(0, 220) + ']' : '');
   e.classList.add('visible');
 }
 function clearError(id) { var e = document.getElementById(id); if (e) { e.textContent = ''; e.classList.remove('visible'); } }
